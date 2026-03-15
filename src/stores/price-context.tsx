@@ -4,7 +4,7 @@ import { createContext, useContext, useMemo } from "react";
 import type { StationWithPrices } from "@/types/fuel";
 import { computeThresholds, type PriceThresholds } from "@/lib/price-utils";
 
-const PriceThresholdsContext = createContext<PriceThresholds>({ q1: 0, q3: 0 });
+const PriceThresholdsContext = createContext<PriceThresholds>({ p10: 0, p50: 0 });
 
 export function PriceThresholdsProvider({
   stations,

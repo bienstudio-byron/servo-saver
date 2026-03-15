@@ -5,7 +5,7 @@ import HeaderSearch from "./HeaderSearch";
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#1a1a1a]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-[1500] border-b border-white/10 bg-[#1a1a1a]/90 backdrop-blur-xl">
       <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-3 gap-3">
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           <div className="h-7 w-7 rounded-md bg-[#4285f4] flex items-center justify-center shadow-lg shadow-[#4285f4]/20">

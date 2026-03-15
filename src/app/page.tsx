@@ -18,7 +18,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showInterstitial, setShowInterstitial] = useState(false);
-  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation } = useFuelStore();
+  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
 
   // Check localStorage on mount
   useEffect(() => {
@@ -38,6 +38,7 @@ export default function HomePage() {
       })
       .then((data) => {
         setStations(data.stations);
+        setAllStations(data.stations);
         setLoading(false);
       })
       .catch((err) => {
@@ -91,8 +92,8 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Global ad banner below map */}
-      <div className="bg-[#1a1a1a] border-t border-white/5 px-4 py-3">
+      {/* Global ad banner below map — desktop only */}
+      <div className="hidden md:block bg-[#1a1a1a] border-t border-white/5 px-4 py-3">
         <div className="max-w-5xl mx-auto">
           <AdSlot slot="global-banner" format="horizontal" />
         </div>

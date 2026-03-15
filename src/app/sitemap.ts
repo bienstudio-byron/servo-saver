@@ -1,6 +1,20 @@
 import type { MetadataRoute } from "next";
+import { fetchMergedStations } from "@/lib/fuel-api";
+import { groupBySuburb, suburbToSlug } from "@/lib/suburbs";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const stations = await fetchMergedStations();
+  const suburbMap = groupBySuburb(stations);
+
+  const suburbPages: MetadataRoute.Sitemap = [...suburbMap.keys()].map(
+    (suburb) => ({
+      url: `https://petrolsaver.live/prices/${suburbToSlug(suburb)}`,
+      lastModified: new Date(),
+      changeFrequency: "hourly" as const,
+      priority: 0.7,
+    })
+  );
+
   return [
     {
       url: "https://petrolsaver.live",
@@ -8,5 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "hourly",
       priority: 1,
     },
+    ...suburbPages,
   ];
 }

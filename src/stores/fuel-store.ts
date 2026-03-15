@@ -15,6 +15,8 @@ interface FuelStore {
   setSelectedStation: (station: StationWithPrices | null) => void;
   flyToTarget: { lat: number; lng: number; zoom: number } | null;
   setFlyToTarget: (target: { lat: number; lng: number; zoom: number } | null) => void;
+  allStations: StationWithPrices[];
+  setAllStations: (stations: StationWithPrices[]) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -30,4 +32,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setSelectedStation: (station) => set({ selectedStation: station }),
   flyToTarget: null,
   setFlyToTarget: (target) => set({ flyToTarget: target }),
+  allStations: [],
+  setAllStations: (stations) => set({ allStations: stations }),
 }));

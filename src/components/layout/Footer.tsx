@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="border-t border-white/5 bg-[#1a1a1a]/50 py-4">
+    <footer className="hidden md:block border-t border-white/5 bg-[#1a1a1a]/50 py-4">
       <div className="mx-auto max-w-7xl px-4 text-center text-xs text-[#9aa0a6]">
         Data sourced from{" "}
         <a

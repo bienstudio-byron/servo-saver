@@ -1,31 +1,31 @@
 import { PRICE_COLORS } from "./constants";
 
 export interface PriceThresholds {
-  q1: number;
-  q3: number;
+  p10: number; // top 10% boundary (cheap)
+  p50: number; // top 50% boundary (mid)
 }
 
-/** Compute quartile boundaries from an array of prices */
+/** Compute percentile boundaries from an array of prices */
 export function computeThresholds(prices: number[]): PriceThresholds {
-  if (prices.length === 0) return { q1: 0, q3: 0 };
+  if (prices.length === 0) return { p10: 0, p50: 0 };
   const sorted = [...prices].sort((a, b) => a - b);
   return {
-    q1: sorted[Math.floor(sorted.length * 0.25)],
-    q3: sorted[Math.floor(sorted.length * 0.75)],
+    p10: sorted[Math.floor(sorted.length * 0.10)],
+    p50: sorted[Math.floor(sorted.length * 0.50)],
   };
 }
 
 export type PriceTier = "cheap" | "mid" | "expensive" | "unknown";
 
-/** Classify a price into a tier based on quartile thresholds */
+/** Classify a price into a tier: top 10% = cheap, up to 50% = mid, rest = expensive */
 export function getPriceTier(
   price: number | null,
   thresholds: PriceThresholds
 ): PriceTier {
-  if (price == null || thresholds.q1 === 0) return "unknown";
-  if (price <= thresholds.q1) return "cheap";
-  if (price >= thresholds.q3) return "expensive";
-  return "mid";
+  if (price == null || thresholds.p10 === 0) return "unknown";
+  if (price <= thresholds.p10) return "cheap";
+  if (price <= thresholds.p50) return "mid";
+  return "expensive";
 }
 
 /** Get hex color for a price tier (used by map markers) */

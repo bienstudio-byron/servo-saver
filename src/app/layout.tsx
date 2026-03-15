@@ -136,7 +136,7 @@ export default function RootLayout({
         )}
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen overflow-hidden md:overflow-auto md:min-h-screen md:h-auto`}
       >
         <Header />
         <main className="flex-1">{children}</main>

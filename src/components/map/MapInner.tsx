@@ -66,17 +66,36 @@ function getPillIcon(brandName: string, price: number, tier: PriceTier): L.DivIc
   return icon;
 }
 
-function AutoLocate() {
+const userLocationIcon = L.divIcon({
+  html: `<div style="position:relative;width:28px;height:28px;transform:translate(-50%,-50%)">
+    <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(66,133,244,0.25);animation:pulse-ring 1.5s ease-out infinite"></div>
+    <div style="position:absolute;inset:0;border-radius:50%;background:rgba(66,133,244,0.12)"></div>
+    <div style="position:absolute;top:6px;left:6px;width:16px;height:16px;border-radius:50%;background:#4285f4;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.5)"></div>
+  </div>`,
+  className: "",
+  iconSize: [0, 0],
+  iconAnchor: [0, 0],
+});
+
+function UserLocationMarker() {
+  const [position, setPosition] = useState<[number, number] | null>(null);
   const map = useMap();
+
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
-      (pos) => { map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 1.2 }); },
+      (pos) => {
+        const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setPosition(latlng);
+        map.flyTo(latlng, 13, { duration: 1.2 });
+      },
       () => {},
       { enableHighAccuracy: false, timeout: 5000 }
     );
   }, [map]);
-  return null;
+
+  if (!position) return null;
+  return <Marker position={position} icon={userLocationIcon} interactive={false} />;
 }
 
 interface ViewportState {
@@ -183,7 +202,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
-        <AutoLocate />
+        <UserLocationMarker />
         <LocationButton />
         <FlyToStation />
         <FlyToTarget />
