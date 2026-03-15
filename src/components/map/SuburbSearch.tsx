@@ -81,7 +81,7 @@ export default function SuburbSearch() {
   return (
     <div
       ref={containerRef}
-      className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] w-[340px]"
+      className="absolute top-3 left-3 right-14 z-[1000] md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[340px]"
     >
       <div className="relative">
         <svg

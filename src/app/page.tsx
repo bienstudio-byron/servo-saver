@@ -83,7 +83,7 @@ export default function HomePage() {
 
   return (
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
-      <div className="relative h-[calc(100vh-7.5rem)]">
+      <div className="relative h-[calc(100vh-3rem)]">
         <FuelMap
           stations={filteredStations}
           selectedFuelType={selectedFuelType}

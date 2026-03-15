@@ -85,7 +85,21 @@ export default function StationModal({
             </div>
           </div>
 
-          <p className="text-sm text-[#9aa0a6] mb-5">{station.address}</p>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <p className="text-sm text-[#9aa0a6] min-w-0 truncate">{station.address}</p>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 inline-flex items-center gap-1.5 bg-[#4285f4] text-white px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors shadow-lg shadow-[#4285f4]/20"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Directions
+            </a>
+          </div>
 
           {/* Featured price */}
           {currentPrice && (

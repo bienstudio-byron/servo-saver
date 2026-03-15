@@ -20,7 +20,6 @@ import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import LocationButton from "./LocationButton";
-import SuburbSearch from "./SuburbSearch";
 import AreaPriceList from "./AreaPriceList";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -115,6 +114,21 @@ function FlyToStation() {
   return null;
 }
 
+function FlyToTarget() {
+  const map = useMap();
+  const target = useFuelStore((s) => s.flyToTarget);
+  const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
+
+  useEffect(() => {
+    if (target) {
+      map.flyTo([target.lat, target.lng], target.zoom, { duration: 1 });
+      setFlyToTarget(null);
+    }
+  }, [target, map, setFlyToTarget]);
+
+  return null;
+}
+
 export default function MapInner({ stations, selectedFuelType, loading }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
@@ -161,7 +175,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         zoom={9}
         className="h-full w-full"
         scrollWheelZoom={true}
-        zoomControl={true}
+        zoomControl={false}
         minZoom={9}
         maxZoom={18}
       >
@@ -171,8 +185,8 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         />
         <AutoLocate />
         <LocationButton />
-        <SuburbSearch />
         <FlyToStation />
+        <FlyToTarget />
         <ViewportTracker onChange={handleViewport} />
 
         {visibleMarkers.map(({ station, price }) => (

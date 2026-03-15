@@ -13,6 +13,8 @@ interface FuelStore {
   setUserLocation: (location: { lat: number; lng: number } | null) => void;
   selectedStation: StationWithPrices | null;
   setSelectedStation: (station: StationWithPrices | null) => void;
+  flyToTarget: { lat: number; lng: number; zoom: number } | null;
+  setFlyToTarget: (target: { lat: number; lng: number; zoom: number } | null) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -26,4 +28,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setUserLocation: (location) => set({ userLocation: location }),
   selectedStation: null,
   setSelectedStation: (station) => set({ selectedStation: station }),
+  flyToTarget: null,
+  setFlyToTarget: (target) => set({ flyToTarget: target }),
 }));
