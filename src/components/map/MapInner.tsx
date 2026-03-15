@@ -20,6 +20,7 @@ import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import LocationButton from "./LocationButton";
+import SuburbSearch from "./SuburbSearch";
 import AreaPriceList from "./AreaPriceList";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -170,6 +171,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         />
         <AutoLocate />
         <LocationButton />
+        <SuburbSearch />
         <FlyToStation />
         <ViewportTracker onChange={handleViewport} />
 
