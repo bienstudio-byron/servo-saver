@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { StationWithPrices } from "@/types/fuel";
 import BrandLogo from "@/components/shared/BrandLogo";
 import PriceBadge from "@/components/shared/PriceBadge";
@@ -52,7 +53,10 @@ export default function AreaPriceList({
   const visibleFuelTypes = showAllFuels || selectedIsOther ? allFuelTypes : mainFuelTypes;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
       className={`
         absolute z-[1000] flex flex-col rounded-2xl border border-white/10
         bg-[#1a1a1a]/95 backdrop-blur-xl shadow-2xl transition-all
@@ -146,8 +150,11 @@ export default function AreaPriceList({
             <div className="py-1">
               {/* Show fewer items on mobile */}
               {sorted.slice(0, MAX_ITEMS).map(({ station, price }, i) => (
-                <button
+                <motion.button
                   key={station.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.03 }}
                   onClick={() => setSelectedStation(station)}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors hover:bg-white/5 active:bg-white/10 group text-left ${
                     i >= MAX_ITEMS_MOBILE ? "hidden md:flex" : "flex"
@@ -168,7 +175,7 @@ export default function AreaPriceList({
                     </div>
                   </div>
                   <PriceBadge price={price} size="sm" />
-                </button>
+                </motion.button>
               ))}
             </div>
           )}
@@ -181,6 +188,6 @@ export default function AreaPriceList({
           <AdSlot slot="panel-bottom" format="fluid" />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

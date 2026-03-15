@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { AnimatePresence } from "framer-motion";
 import FuelMap from "@/components/map/FuelMap";
 import StationModal from "@/components/shared/StationModal";
 import FuelPickerOverlay from "@/components/shared/FuelPickerOverlay";
@@ -86,7 +87,7 @@ export default function HomePage() {
 
   return (
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
-      <div className="relative h-[calc(100vh-3rem)]">
+      <div className="relative h-[calc(100vh-3rem)] overflow-hidden">
         <FuelMap
           stations={mounted ? filteredStations : []}
           selectedFuelType={selectedFuelType}
@@ -101,15 +102,17 @@ export default function HomePage() {
         </div>
       </div>
 
-      {selectedStation && (
-        <StationModal
-          station={selectedStation}
-          allStations={stations}
-          selectedFuelType={selectedFuelType}
-          onClose={() => setSelectedStation(null)}
-          onSelectStation={setSelectedStation}
-        />
-      )}
+      <AnimatePresence>
+        {selectedStation && (
+          <StationModal
+            station={selectedStation}
+            allStations={stations}
+            selectedFuelType={selectedFuelType}
+            onClose={() => setSelectedStation(null)}
+            onSelectStation={setSelectedStation}
+          />
+        )}
+      </AnimatePresence>
 
       {showPicker && <FuelPickerOverlay onSelect={handleFuelPick} />}
 

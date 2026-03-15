@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useFuelStore } from "@/stores/fuel-store";
 import BrandLogo from "@/components/shared/BrandLogo";
 
@@ -67,29 +68,45 @@ export default function HeaderSearch() {
         className="w-full rounded-xl border border-white/10 bg-white/[0.06] pl-10 pr-3 py-1.5 text-white placeholder:text-[#5f6368] hover:border-white/20 focus:border-[#4285f4] focus:bg-white/[0.08] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
       />
 
-      {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-white/10 bg-[#242424] shadow-2xl overflow-hidden z-[2000]">
-          {results.map((station) => (
-            <button
-              key={station.id}
-              onClick={() => handleSelect(station)}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 last:border-0"
-            >
-              <BrandLogo brandName={station.brand?.name ?? "?"} size="sm" />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm text-white truncate">{station.name}</div>
-                <div className="text-[11px] text-[#9aa0a6] truncate">{station.address}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {open && results.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-white/10 bg-[#242424] shadow-2xl overflow-hidden z-[2000]"
+          >
+            {results.map((station, i) => (
+              <motion.button
+                key={station.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() => handleSelect(station)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 last:border-0"
+              >
+                <BrandLogo brandName={station.brand?.name ?? "?"} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-white truncate">{station.name}</div>
+                  <div className="text-[11px] text-[#9aa0a6] truncate">{station.address}</div>
+                </div>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
 
-      {open && query.length >= 2 && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-white/10 bg-[#242424] shadow-2xl overflow-hidden z-[2000] px-3 py-3 text-xs text-[#9aa0a6] text-center">
-          No stations found
-        </div>
-      )}
+        {open && query.length >= 2 && results.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-white/10 bg-[#242424] shadow-2xl overflow-hidden z-[2000] px-3 py-3 text-xs text-[#9aa0a6] text-center"
+          >
+            No stations found
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -99,7 +99,7 @@ export default function RootLayout({
         <meta name="google-adsense-account" content="ca-pub-4918791662575228" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen overflow-hidden md:overflow-auto md:min-h-screen md:h-auto`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         {ADSENSE_PUB_ID && (
           <Script

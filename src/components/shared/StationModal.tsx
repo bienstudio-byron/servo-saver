@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { StationWithPrices } from "@/types/fuel";
 import { nearestStations } from "@/lib/geo";
 import BrandLogo from "./BrandLogo";
@@ -66,12 +67,21 @@ export default function StationModal({
 
   return (
     <>
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-[2001] max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-[#1a1a1a] shadow-2xl md:inset-x-auto md:inset-y-4 md:right-4 md:left-auto md:w-[420px] md:rounded-2xl md:border">
+      <motion.div
+        initial={{ y: "100%", opacity: 0.5 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="fixed inset-x-0 bottom-0 z-[2001] max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-[#1a1a1a] shadow-2xl md:inset-x-auto md:inset-y-4 md:right-4 md:left-auto md:w-[420px] md:rounded-2xl md:border">
         <div className="flex justify-center pt-2 pb-0 md:hidden">
           <div className="h-1 w-10 rounded-full bg-white/20" />
         </div>
@@ -236,7 +246,7 @@ export default function StationModal({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }
