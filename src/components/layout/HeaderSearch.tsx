@@ -62,7 +62,9 @@ export default function HeaderSearch() {
         onChange={(e) => handleInput(e.target.value)}
         onFocus={() => query.length >= 2 && setOpen(true)}
         placeholder="Search station or suburb..."
-        className="w-full rounded-xl border border-white/10 bg-white/[0.06] pl-10 pr-3 py-1.5 text-sm text-white placeholder:text-[#5f6368] hover:border-white/20 focus:border-[#4285f4] focus:bg-white/[0.08] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
+        autoComplete="off"
+        style={{ fontSize: "16px" }}
+        className="w-full rounded-xl border border-white/10 bg-white/[0.06] pl-10 pr-3 py-1.5 text-white placeholder:text-[#5f6368] hover:border-white/20 focus:border-[#4285f4] focus:bg-white/[0.08] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
       />
 
       {open && results.length > 0 && (

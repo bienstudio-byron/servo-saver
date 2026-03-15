@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -95,52 +97,40 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="google-adsense-account" content="ca-pub-4918791662575228" />
-        <script
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen overflow-hidden md:overflow-auto md:min-h-screen md:h-auto`}
+      >
+        {ADSENSE_PUB_ID && (
+          <Script
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUB_ID}`}
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+          />
+        )}
+        <Script
+          id="json-ld"
           type="application/ld+json"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
               name: "PetrolSaver",
               url: "https://petrolsaver.live",
-              description:
-                "Compare fuel prices across 1,600+ stations in Victoria, Australia. Find the cheapest petrol, diesel, and LPG near you.",
+              description: "Compare fuel prices across 1,600+ stations in Victoria, Australia.",
               applicationCategory: "UtilitiesApplication",
               operatingSystem: "Web",
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "AUD",
-              },
-              author: {
-                "@type": "Organization",
-                name: "PetrolSaver",
-              },
-              areaServed: {
-                "@type": "State",
-                name: "Victoria",
-                containedInPlace: {
-                  "@type": "Country",
-                  name: "Australia",
-                },
-              },
+              offers: { "@type": "Offer", price: "0", priceCurrency: "AUD" },
+              author: { "@type": "Organization", name: "PetrolSaver" },
+              areaServed: { "@type": "State", name: "Victoria", containedInPlace: { "@type": "Country", name: "Australia" } },
             }),
           }}
         />
-        {ADSENSE_PUB_ID && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUB_ID}`}
-            crossOrigin="anonymous"
-          />
-        )}
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen overflow-hidden md:overflow-auto md:min-h-screen md:h-auto`}
-      >
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );

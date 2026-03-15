@@ -18,9 +18,10 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showInterstitial, setShowInterstitial] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
 
-  // Check localStorage on mount
+  // Hydration-safe: wait for mount before reading localStorage
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -28,6 +29,7 @@ export default function HomePage() {
     } else {
       setShowPicker(true);
     }
+    setMounted(true);
   }, [setSelectedFuelType]);
 
   useEffect(() => {
@@ -86,9 +88,9 @@ export default function HomePage() {
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
       <div className="relative h-[calc(100vh-3rem)]">
         <FuelMap
-          stations={filteredStations}
+          stations={mounted ? filteredStations : []}
           selectedFuelType={selectedFuelType}
-          loading={loading}
+          loading={loading || !mounted}
         />
       </div>
 
