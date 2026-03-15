@@ -42,7 +42,7 @@ async function apiFetch<T>(path: string): Promise<T> {
 
   const res = await fetch(`${FUEL_API_BASE_URL}${path}`, {
     headers: {
-      "User-Agent": "ServoSaver/1.0",
+      "User-Agent": "PetrolSaver/1.0",
       "x-consumer-id": CONSUMER_ID,
       "x-transactionid": uuidv4(),
     },

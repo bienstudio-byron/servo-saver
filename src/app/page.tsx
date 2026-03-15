@@ -4,17 +4,20 @@ import { useEffect, useState, useMemo } from "react";
 import FuelMap from "@/components/map/FuelMap";
 import StationModal from "@/components/shared/StationModal";
 import FuelPickerOverlay from "@/components/shared/FuelPickerOverlay";
+import AdSlot from "@/components/shared/AdSlot";
 import { useFuelStore } from "@/stores/fuel-store";
 import { PriceThresholdsProvider } from "@/stores/price-context";
 import type { StationWithPrices } from "@/types/fuel";
 
-const STORAGE_KEY = "servosaver-fuel-chosen";
+const STORAGE_KEY = "petrolsaver-fuel-chosen";
+const INTERSTITIAL_KEY = "petrolsaver-interstitial-seen";
 
 export default function HomePage() {
   const [stations, setStations] = useState<StationWithPrices[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [showInterstitial, setShowInterstitial] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation } = useFuelStore();
 
   // Check localStorage on mount
@@ -52,6 +55,14 @@ export default function HomePage() {
     setSelectedFuelType(fuelType);
     localStorage.setItem(STORAGE_KEY, fuelType);
     setShowPicker(false);
+
+    // Show interstitial ad once per session after first fuel pick
+    const seen = sessionStorage.getItem(INTERSTITIAL_KEY);
+    if (!seen) {
+      setShowInterstitial(true);
+      sessionStorage.setItem(INTERSTITIAL_KEY, "1");
+      setTimeout(() => setShowInterstitial(false), 5000);
+    }
   }
 
   if (error) {
@@ -80,6 +91,13 @@ export default function HomePage() {
         />
       </div>
 
+      {/* Global ad banner below map */}
+      <div className="bg-[#1a1a1a] border-t border-white/5 px-4 py-3">
+        <div className="max-w-5xl mx-auto">
+          <AdSlot slot="global-banner" format="horizontal" />
+        </div>
+      </div>
+
       {selectedStation && (
         <StationModal
           station={selectedStation}
@@ -91,6 +109,25 @@ export default function HomePage() {
       )}
 
       {showPicker && <FuelPickerOverlay onSelect={handleFuelPick} />}
+
+      {showInterstitial && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/70 backdrop-blur-md">
+          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[#242424] border border-white/10 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+              <span className="text-[11px] text-[#5f6368] uppercase tracking-wider">Sponsored</span>
+              <button
+                onClick={() => setShowInterstitial(false)}
+                className="text-xs text-[#9aa0a6] hover:text-white transition-colors"
+              >
+                Skip
+              </button>
+            </div>
+            <div className="p-4">
+              <AdSlot slot="interstitial" format="rectangle" />
+            </div>
+          </div>
+        </div>
+      )}
     </PriceThresholdsProvider>
   );
 }

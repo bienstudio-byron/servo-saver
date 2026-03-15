@@ -6,6 +6,7 @@ import BrandLogo from "@/components/shared/BrandLogo";
 import PriceBadge from "@/components/shared/PriceBadge";
 import { useFuelStore } from "@/stores/fuel-store";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
+import AdSlot from "@/components/shared/AdSlot";
 
 interface AreaPriceListProps {
   stations: StationWithPrices[];
@@ -25,7 +26,7 @@ export default function AreaPriceList({
   const rawSetFuelType = useFuelStore((s) => s.setSelectedFuelType);
   const setSelectedFuelType = (id: string) => {
     rawSetFuelType(id);
-    try { localStorage.setItem("servosaver-fuel-chosen", id); } catch {}
+    try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {}
   };
 
   const sorted = stations
@@ -157,6 +158,13 @@ export default function AreaPriceList({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Ad at bottom of panel */}
+      {!collapsed && sorted.length > 0 && (
+        <div className="px-3 pb-3 pt-1 border-t border-white/5">
+          <AdSlot slot="panel-bottom" format="fluid" />
         </div>
       )}
     </div>

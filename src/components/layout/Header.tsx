@@ -25,7 +25,7 @@ export default function Header() {
             </svg>
           </div>
           <span className="text-lg font-bold tracking-tight text-white group-hover:text-[#8ab4f8] transition-colors">
-            ServoSaver
+            PetrolSaver
           </span>
         </Link>
 

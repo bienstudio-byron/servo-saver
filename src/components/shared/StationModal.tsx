@@ -5,6 +5,7 @@ import type { StationWithPrices } from "@/types/fuel";
 import { nearestStations } from "@/lib/geo";
 import BrandLogo from "./BrandLogo";
 import PriceBadge from "./PriceBadge";
+import AdSlot from "./AdSlot";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 
 interface StationModalProps {
@@ -128,6 +129,11 @@ export default function StationModal({
               </div>
             </div>
           )}
+
+          {/* Ad in modal */}
+          <div className="mb-5">
+            <AdSlot slot="station-modal" format="rectangle" />
+          </div>
 
           {/* Nearby stations */}
           {nearby.length > 0 && (
