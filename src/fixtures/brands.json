@@ -1,0 +1,12 @@
+{
+  "brands": [
+    { "id": "1", "name": "Shell", "type": "major" },
+    { "id": "2", "name": "BP", "type": "major" },
+    { "id": "3", "name": "Caltex", "type": "major" },
+    { "id": "4", "name": "7-Eleven", "type": "major" },
+    { "id": "5", "name": "United", "type": "independent" },
+    { "id": "6", "name": "Costco", "type": "independent" },
+    { "id": "7", "name": "Metro", "type": "independent" },
+    { "id": "8", "name": "Puma", "type": "independent" }
+  ]
+}

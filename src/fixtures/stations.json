@@ -1,0 +1,16 @@
+{
+  "stations": [
+    { "id": "S001", "name": "Shell Richmond", "brandId": "1", "address": "123 Bridge Rd", "suburb": "Richmond", "postcode": "3121", "state": "VIC", "location": { "latitude": -37.8180, "longitude": 144.9900 } },
+    { "id": "S002", "name": "BP Collingwood", "brandId": "2", "address": "456 Smith St", "suburb": "Collingwood", "postcode": "3066", "state": "VIC", "location": { "latitude": -37.7980, "longitude": 144.9870 } },
+    { "id": "S003", "name": "Caltex South Yarra", "brandId": "3", "address": "789 Chapel St", "suburb": "South Yarra", "postcode": "3141", "state": "VIC", "location": { "latitude": -37.8430, "longitude": 144.9920 } },
+    { "id": "S004", "name": "7-Eleven Carlton", "brandId": "4", "address": "101 Lygon St", "suburb": "Carlton", "postcode": "3053", "state": "VIC", "location": { "latitude": -37.7990, "longitude": 144.9660 } },
+    { "id": "S005", "name": "United Footscray", "brandId": "5", "address": "55 Barkly St", "suburb": "Footscray", "postcode": "3011", "state": "VIC", "location": { "latitude": -37.7990, "longitude": 144.9000 } },
+    { "id": "S006", "name": "Costco Docklands", "brandId": "6", "address": "1 Waterfront Way", "suburb": "Docklands", "postcode": "3008", "state": "VIC", "location": { "latitude": -37.8150, "longitude": 144.9390 } },
+    { "id": "S007", "name": "Metro Brunswick", "brandId": "7", "address": "300 Sydney Rd", "suburb": "Brunswick", "postcode": "3056", "state": "VIC", "location": { "latitude": -37.7670, "longitude": 144.9600 } },
+    { "id": "S008", "name": "Puma Dandenong", "brandId": "8", "address": "50 Princes Hwy", "suburb": "Dandenong", "postcode": "3175", "state": "VIC", "location": { "latitude": -37.9870, "longitude": 145.2140 } },
+    { "id": "S009", "name": "Shell Geelong", "brandId": "1", "address": "200 Moorabool St", "suburb": "Geelong", "postcode": "3220", "state": "VIC", "location": { "latitude": -38.1499, "longitude": 144.3617 } },
+    { "id": "S010", "name": "BP Ballarat", "brandId": "2", "address": "100 Sturt St", "suburb": "Ballarat", "postcode": "3350", "state": "VIC", "location": { "latitude": -37.5622, "longitude": 143.8503 } },
+    { "id": "S011", "name": "Caltex Bendigo", "brandId": "3", "address": "75 High St", "suburb": "Bendigo", "postcode": "3550", "state": "VIC", "location": { "latitude": -36.7570, "longitude": 144.2794 } },
+    { "id": "S012", "name": "7-Eleven Frankston", "brandId": "4", "address": "88 Nepean Hwy", "suburb": "Frankston", "postcode": "3199", "state": "VIC", "location": { "latitude": -38.1437, "longitude": 145.1260 } }
+  ]
+}

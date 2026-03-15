@@ -1,0 +1,12 @@
+{
+  "fuelTypes": [
+    { "id": "U91", "name": "Unleaded 91" },
+    { "id": "P95", "name": "Premium 95" },
+    { "id": "P98", "name": "Premium 98" },
+    { "id": "DSL", "name": "Diesel" },
+    { "id": "PDSL", "name": "Premium Diesel" },
+    { "id": "E10", "name": "Ethanol E10" },
+    { "id": "E85", "name": "Ethanol E85" },
+    { "id": "LPG", "name": "LPG" }
+  ]
+}
