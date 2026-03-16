@@ -4,6 +4,7 @@ import { extractSuburb, suburbToSlug, slugToDisplay, groupBySuburb } from "@/lib
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 import AdSlot from "@/components/shared/AdSlot";
 import SuburbPageClient from "./SuburbPageClient";
+import SubpageHeader from "@/components/layout/SubpageHeader";
 
 export const revalidate = 3600;
 
@@ -96,22 +97,7 @@ export default async function SuburbPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
-      {/* Header with logo */}
-      <div className="border-b border-white/5 bg-[#1a1a1a]">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 group">
-            <div className="h-7 w-7 rounded-md bg-[#4285f4] flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-white group-hover:text-[#8ab4f8] transition-colors">PetrolSaver</span>
-          </a>
-          <a href="/" className="text-[11px] text-[#8ab4f8] hover:text-white font-semibold transition-colors">
-            Open Map
-          </a>
-        </div>
-      </div>
+      <SubpageHeader />
 
       {/* Hero */}
       <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a]">

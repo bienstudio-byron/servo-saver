@@ -445,7 +445,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
           Service Victoria
         </a>
         , updated every 24hrs &middot;{" "}
-        <a href="/how-it-works" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">How it works</a>
+        <a href="/prices" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
       </div>
     </motion.div>
   );
