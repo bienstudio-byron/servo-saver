@@ -65,9 +65,9 @@ export default function StationModal({
   }, [onClose]);
 
   const verdictColor = !priceInsight ? "text-[#9aa0a6]"
-    : priceInsight.percentile >= 90 ? "text-emerald-400"
-    : priceInsight.percentile >= 50 ? "text-amber-400"
-    : "text-red-400";
+    : priceInsight.percentile >= 90 ? "text-[var(--tier-cheap)]"
+    : priceInsight.percentile >= 50 ? "text-[var(--tier-mid)]"
+    : "text-[var(--tier-exp)]";
 
   const fuelLabel = FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType;
 
@@ -108,7 +108,7 @@ export default function StationModal({
               }).catch(() => {});
             }}
             className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              flagged ? "text-red-400 bg-red-500/10" : "text-[#5f6368] hover:text-red-400 hover:bg-[var(--subtle-hover)]"
+              flagged ? "text-[var(--tier-exp)] bg-red-500/10" : "text-[#5f6368] hover:text-[var(--tier-exp)] hover:bg-[var(--subtle-hover)]"
             }`}
             title={flagged ? "Station flagged" : "Report incorrect data"}
           >
@@ -131,10 +131,10 @@ export default function StationModal({
           {/* Flagged banner */}
           {flagged && (
             <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[var(--tier-exp)] shrink-0" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" />
               </svg>
-              <span className="text-xs text-red-400">
+              <span className="text-xs text-[var(--tier-exp)]">
                 Flagged as potentially incorrect. This station will be hidden from your recommendations.
               </span>
             </div>
@@ -167,19 +167,19 @@ export default function StationModal({
                 </div>
                 <div className="text-right">
                   {priceInsight.percentile >= 90 ? (
-                    <div className="text-emerald-400">
+                    <div className="text-[var(--tier-cheap)]">
                       <div className="text-[9px] uppercase tracking-wider opacity-80">Cheaper than</div>
                       <div className="text-xl font-bold font-mono">{priceInsight.percentile}%</div>
                       <div className="text-[9px] uppercase tracking-wider opacity-80">of stations</div>
                     </div>
                   ) : priceInsight.percentile >= 50 ? (
-                    <div className="text-amber-400">
+                    <div className="text-[var(--tier-mid)]">
                       <div className="text-[9px] uppercase tracking-wider opacity-80">Cheaper than</div>
                       <div className="text-xl font-bold font-mono">{priceInsight.percentile}%</div>
                       <div className="text-[9px] uppercase tracking-wider opacity-80">of stations</div>
                     </div>
                   ) : (
-                    <div className="text-red-400">
+                    <div className="text-[var(--tier-exp)]">
                       <div className="text-[9px] uppercase tracking-wider opacity-80">More expensive than</div>
                       <div className="text-xl font-bold font-mono">{100 - priceInsight.percentile}%</div>
                       <div className="text-[9px] uppercase tracking-wider opacity-80">of stations</div>
@@ -196,7 +196,7 @@ export default function StationModal({
                 </div>
                 <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">Cheapest</div>
-                  <div className="text-[11px] font-bold text-emerald-400 font-mono">{priceInsight.cheapest.toFixed(1)}c</div>
+                  <div className="text-[11px] font-bold text-[var(--tier-cheap)] font-mono">{priceInsight.cheapest.toFixed(1)}c</div>
                 </div>
                 <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">Average</div>
@@ -204,7 +204,7 @@ export default function StationModal({
                 </div>
                 <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">vs Avg</div>
-                  <div className={`text-[11px] font-bold font-mono ${priceInsight.average > currentPrice.price ? "text-emerald-400" : "text-red-400"}`}>
+                  <div className={`text-[11px] font-bold font-mono ${priceInsight.average > currentPrice.price ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>
                     {priceInsight.average > currentPrice.price ? "-" : "+"}{Math.abs(currentPrice.price - priceInsight.average).toFixed(1)}c
                   </div>
                 </div>

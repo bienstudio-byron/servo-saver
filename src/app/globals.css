@@ -9,6 +9,7 @@
   --border: #333333;
   --accent: #4285f4;
   --accent-hover: #5a9bf6;
+  --accent-text: #8ab4f8;
   --muted: #9aa0a6;
   --subtle: rgba(255,255,255,0.05);
   --subtle-hover: rgba(255,255,255,0.08);
@@ -30,6 +31,9 @@
   --toggle-slider: #ffffff;
   --toggle-active: #1a1a1a;
   --toggle-inactive: #5f6368;
+  --tier-cheap: #34d399;
+  --tier-mid: #f59e0b;
+  --tier-exp: #f87171;
   --scrollbar: #444;
   --scrollbar-hover: #555;
 }
@@ -41,8 +45,9 @@
   --card: #ffffff;
   --card-hover: #f1f3f4;
   --border: #dadce0;
-  --accent: #4285f4;
-  --accent-hover: #3367d6;
+  --accent: #1a1a1a;
+  --accent-hover: #3c4043;
+  --accent-text: #1a1a1a;
   --muted: #5f6368;
   --subtle: rgba(0,0,0,0.06);
   --subtle-hover: rgba(0,0,0,0.08);
@@ -64,6 +69,9 @@
   --toggle-slider: #1a1a1a;
   --toggle-active: #ffffff;
   --toggle-inactive: #5f6368;
+  --tier-cheap: #059669;
+  --tier-mid: #e37400;
+  --tier-exp: #dc2626;
   --scrollbar: #c1c1c1;
   --scrollbar-hover: #a0a0a0;
 }

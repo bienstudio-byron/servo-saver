@@ -84,10 +84,10 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
   const getTierColor = (price: number) => {
     const tier = getPriceTier(price, thresholds);
     switch (tier) {
-      case "cheap": return "text-emerald-400";
-      case "mid": return "text-amber-400";
-      case "expensive": return "text-red-400";
-      default: return "text-[#9aa0a6]";
+      case "cheap": return "text-[var(--tier-cheap)]";
+      case "mid": return "text-[var(--tier-mid)]";
+      case "expensive": return "text-[var(--tier-exp)]";
+      default: return "text-[var(--muted)]";
     }
   };
 
@@ -263,7 +263,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
-              className="text-[11px] text-[#8ab4f8] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer flex items-center gap-1"
+              className="text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer flex items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -301,8 +301,8 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                 <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-red-400">Go now — fuel is low</span>
-                    <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded font-bold">URGENT</span>
+                    <span className="text-xs font-bold text-[var(--tier-exp)]">Go now — fuel is low</span>
+                    <span className="text-[9px] bg-red-500/10 text-[var(--tier-exp)] px-1.5 py-0.5 rounded font-bold">URGENT</span>
                   </div>
                   <div className="text-sm font-medium text-[var(--foreground)] truncate">{options[0].station.name}</div>
                   <div className="text-[10px] text-[#9aa0a6]">{options[0].distance.toFixed(1)}km — closest station</div>
@@ -353,14 +353,14 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                       <BrandLogo brandName={opt.station.brand?.name ?? "?"} size={isFirst ? "md" : "sm"} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[10px] font-bold uppercase ${isAvoid ? "text-red-400" : isFirst ? tierColor : "text-[#5f6368]"}`}>{opt.tag}</span>
+                          <span className={`text-[10px] font-bold uppercase ${isAvoid ? "text-[var(--tier-exp)]" : isFirst ? tierColor : "text-[#5f6368]"}`}>{opt.tag}</span>
                           {isAvoid && opt.netSavings < -0.5 && (
-                            <span className="text-[9px] bg-red-500/10 text-red-400 px-1 py-0.5 rounded font-bold">
+                            <span className="text-[9px] bg-red-500/10 text-[var(--tier-exp)] px-1 py-0.5 rounded font-bold">
                               +${Math.abs(opt.netSavings).toFixed(2)} more
                             </span>
                           )}
                           {!isAvoid && opt.netSavings > 0.5 && opt.tag !== "Closest" && (
-                            <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1 py-0.5 rounded font-bold">
+                            <span className="text-[9px] bg-emerald-500/10 text-[var(--tier-cheap)] px-1 py-0.5 rounded font-bold">
                               Saves ${opt.netSavings.toFixed(2)}
                             </span>
                           )}
@@ -372,7 +372,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <div className={`font-bold font-mono ${isAvoid ? "text-red-400 text-sm" : `${tierColor} ${isFirst ? "text-lg" : "text-sm"}`}`}>
+                        <div className={`font-bold font-mono ${isAvoid ? "text-[var(--tier-exp)] text-sm" : `${tierColor} ${isFirst ? "text-lg" : "text-sm"}`}`}>
                           {opt.price.toFixed(1)}c
                         </div>
                         {!isAvoid && (
@@ -403,15 +403,15 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Fuel for detour</span>
-                                  <span className="text-red-400 font-mono">-${detourFuelCost.toFixed(2)}</span>
+                                  <span className="text-[var(--tier-exp)] font-mono">-${detourFuelCost.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Price savings</span>
-                                  <span className="text-emerald-400 font-mono">+${rawSavings.toFixed(2)}</span>
+                                  <span className="text-[var(--tier-cheap)] font-mono">+${rawSavings.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between pt-1 border-t border-[var(--subtle-border)]">
                                   <span className="text-[var(--foreground)] font-semibold">Net saving</span>
-                                  <span className="text-emerald-400 font-bold font-mono">${opt.netSavings.toFixed(2)}</span>
+                                  <span className="text-[var(--tier-cheap)] font-bold font-mono">${opt.netSavings.toFixed(2)}</span>
                                 </div>
                               </div>
                             )}
@@ -422,7 +422,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                                 href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors cursor-pointer"
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -463,9 +463,9 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
 
       {/* Footer: attribution + edit */}
       <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-[var(--subtle-border)] ${minimised ? "hidden md:block" : ""}`}>
-        <a href="/prices" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
+        <a href="/prices" className="text-[var(--accent-text)] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
         {" "}&middot;{" "}
-        <a href="/terms" className="hover:text-[#8ab4f8] cursor-pointer">Terms</a>
+        <a href="/terms" className="hover:text-[var(--accent-text)] cursor-pointer">Terms</a>
       </div>
     </motion.div>
   );
