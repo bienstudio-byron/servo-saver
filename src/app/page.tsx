@@ -102,8 +102,8 @@ export default function HomePage() {
 
   return (
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
-      {/* Fixed full-screen layout */}
-      <div className="fixed inset-0 flex flex-col">
+      {/* Everything is fixed — nothing in document flow */}
+      <div className="fixed inset-0 flex flex-col" style={{ zIndex: 0 }}>
         {/* Map fills available space */}
         <div className="relative flex-1 min-h-0">
           <FuelMap
@@ -114,22 +114,13 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Bottom bar: ad + attribution */}
-        <div className="shrink-0 bg-[#242424] border-t border-white/5">
-          <div className="px-2 py-1.5">
-            <AdSlot slot="bottom-banner" format="horizontal" />
-          </div>
-          <div className="px-3 py-1 text-center text-[9px] text-[#5f6368] border-t border-white/5">
-            Data sourced from{" "}
-            <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[#8ab4f8] hover:text-[#aecbfa]">
-              Service Victoria
-            </a>
-            {" "}&middot; Prices delayed ~24hrs
-          </div>
+        {/* Bottom ad bar — desktop only */}
+        <div className="hidden md:block shrink-0 bg-[#242424] border-t border-white/5 px-2 py-1.5">
+          <AdSlot slot="bottom-banner" format="horizontal" />
         </div>
       </div>
 
-      {/* Overlays — all fixed, completely outside layout flow */}
+      {/* Station modal */}
       <AnimatePresence>
         {selectedStation && (
           <StationModal
@@ -142,6 +133,7 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
+      {/* Onboarding */}
       {showPicker && (
         <FuelPickerOverlay
           onComplete={handleOnboardingComplete}
@@ -149,6 +141,7 @@ export default function HomePage() {
         />
       )}
 
+      {/* Interstitial ad */}
       {showInterstitial && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/70 backdrop-blur-md">
           <div className="w-full max-w-lg mx-4 rounded-2xl bg-[#242424] border border-white/10 shadow-2xl overflow-hidden">

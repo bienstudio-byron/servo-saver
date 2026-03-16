@@ -203,18 +203,29 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
           </motion.button>
         </div>
 
+        {/* Divider */}
+        <div className="px-5 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-[10px] text-[#5f6368] uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+        </div>
+
         {/* Secondary: Trip planner */}
         <div className="px-5 pb-5">
           {!showTrip ? (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setShowTrip(true)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 text-[12px] text-[#9aa0a6] hover:text-white transition-colors"
+              className="w-full py-3.5 rounded-xl border border-white/10 text-[#5f6368] font-bold text-sm hover:border-[#9aa0a6] hover:text-[#9aa0a6] hover:bg-white/5 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
-              Or plan a trip &rarr;
-            </button>
+              Plan a trip
+            </motion.button>
           ) : (
             <motion.div
               initial={{ opacity: 0, height: 0 }}

@@ -148,16 +148,17 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
       });
     };
 
-    // Always show closest first
-    addOption(closest, "Closest");
-    // Show best value if it's meaningfully different
+    // Lead with the best deal, not the closest
+    // 1. Best value — best net savings after detour cost
     if (bestValue && bestValue.netSavings > 1 && bestValue.station.id !== closest.station.id) {
       addOption(bestValue, "Best value");
     }
-    // Show cheapest if different from both
+    // 2. Cheapest — lowest raw price
     if (cheapest.station.id !== closest.station.id && cheapest.price < closest.price) {
       addOption(cheapest, "Cheapest");
     }
+    // 3. Closest — nearest, convenience fallback
+    addOption(closest, "Closest");
 
     // Show most expensive nearby as contrast — "this is what you'd pay"
     const mostExpensive = [...candidates].filter((c) => c.price < 500).sort((a, b) => b.price - a.price)[0];
@@ -202,70 +203,33 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-      className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] rounded-t-2xl md:rounded-2xl border-t md:border border-white/10 bg-[#1a1a1a]/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+      className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-white/10 bg-[#1a1a1a]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5">
-        {/* Fuel type dropdown — dark */}
-        <button
-          onClick={() => setShowFuelPicker(!showFuelPicker)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.08] text-white text-[11px] font-bold shrink-0 hover:bg-white/15 transition-colors"
-        >
-          <span>⛽</span>
-          {fuelShort}
-          <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 text-[#9aa0a6] transition-transform ${showFuelPicker ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {/* Fuel gauge with label */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <div className="w-10 h-3 rounded-sm bg-[#1a1a1a] border border-white/10 overflow-hidden relative">
-            <div className="absolute inset-y-0 left-0 rounded-sm transition-all" style={{ width: `${Math.min(100, (rangeKm / 150) * 100)}%`, background: rangeKm <= 10 ? "#ef4444" : rangeKm <= 30 ? "#f59e0b" : "#4285f4" }} />
-          </div>
-          <span className="text-[9px] text-[#5f6368] font-mono">{rangeKm >= 150 ? "100+" : `~${rangeKm}`}km</span>
+      {/* Headline */}
+      <div className="flex items-center justify-between px-3 py-2.5 shrink-0 border-b border-white/5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-bold text-white">
+            {tripMode === "trip" && tripDestination
+              ? `Trip to ${tripDestination.name}`
+              : "Best deals near you"
+            }
+          </span>
         </div>
-
-        {/* Trip info */}
-        {tripMode === "trip" && tripDestination ? (
-          <div className="flex items-center gap-1 min-w-0 flex-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-[#4285f4] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            </svg>
-            <span className="text-[11px] text-[#9aa0a6] truncate">to {tripDestination.name}</span>
-          </div>
-        ) : (
-          <span className="flex-1" />
-        )}
-
-        {/* Edit button — clear text instead of settings icon */}
         {onChangeTrip && (
-          <button onClick={onChangeTrip} className="text-[10px] text-[#8ab4f8] hover:text-white font-semibold transition-colors shrink-0">
+          <button
+            onClick={onChangeTrip}
+            className="shrink-0 text-[11px] text-[#8ab4f8] hover:text-white font-semibold transition-colors cursor-pointer flex items-center gap-1"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
             Edit
           </button>
         )}
       </div>
 
-      {/* Fuel picker dropdown */}
-      <AnimatePresence>
-        {showFuelPicker && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.15 }} className="overflow-hidden border-t border-white/5">
-            <div className="px-3 py-2.5 flex flex-wrap gap-1.5">
-              {allFuelTypes.filter(([id]) => MAIN_FUEL_IDS.includes(id)).map(([id, label]) => {
-                const short = id === "PDSL" ? "P.Dsl" : label.replace("Unleaded ", "U").replace("Premium ", "P").replace("Ethanol ", "E").replace("Biodiesel ", "B");
-                return (
-                  <button key={id} onClick={() => setSelectedFuelType(id)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${id === selectedFuelType ? "bg-[#4285f4] text-white" : "bg-white/[0.06] text-[#9aa0a6] hover:bg-white/10 hover:text-white"}`}
-                  >{short}</button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Options list */}
-      <div className="border-t border-white/5">
+      <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0">
         <AnimatePresence mode="wait">
           {!userLocation ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 flex items-center gap-2.5">
@@ -303,23 +267,25 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
                 const isFirst = i === 0;
                 const isAvoid = opt.tag === "Avoid";
                 const isExpanded = expandedIndex === i;
+                // Calculate breakdown values for non-closest options
+                const fuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * 8.5 * opt.price) / 100 : 0;
+                const closestOpt = options.find((o) => o.tag === "Closest") || options[options.length - 1];
+                const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * Math.max(0, 50 - (rangeKm / 100) * 8.5)) / 100 : 0;
+
                 return (
                   <div key={opt.station.id} className={i > 0 ? "border-t border-white/5" : ""}>
                     {/* Separator before Avoid */}
                     {isAvoid && (
-                      <div className="px-3 py-1.5 text-center">
+                      <div className="px-3 py-1 text-center">
                         <span className="text-[9px] text-[#5f6368]">· · ·</span>
                       </div>
                     )}
+
+                    {/* Row — click to expand */}
                     <button
-                      onClick={() => {
-                        if (!isAvoid) {
-                          setExpandedIndex(isExpanded ? null : i);
-                          handleGoTo(opt.station);
-                        }
-                      }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${
-                        isAvoid ? "opacity-40 cursor-default" : "hover:bg-white/5 active:bg-white/10"
+                      onClick={() => !isAvoid && setExpandedIndex(isExpanded ? null : i)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
+                        isAvoid ? "opacity-40 cursor-default" : "hover:bg-white/5 active:bg-white/10 cursor-pointer"
                       }`}
                     >
                       <span className={`text-[11px] font-bold w-4 text-center shrink-0 ${isAvoid ? "text-red-400" : isFirst ? tierColor : "text-[#5f6368]"}`}>
@@ -331,7 +297,7 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
                           <span className={`text-[10px] font-bold uppercase ${isAvoid ? "text-red-400" : isFirst ? tierColor : "text-[#5f6368]"}`}>{opt.tag}</span>
                           {isAvoid && opt.netSavings < -0.5 && (
                             <span className="text-[9px] bg-red-500/10 text-red-400 px-1 py-0.5 rounded font-bold">
-                              Costs +${Math.abs(opt.netSavings).toFixed(2)} more
+                              +${Math.abs(opt.netSavings).toFixed(2)} more
                             </span>
                           )}
                           {!isAvoid && opt.netSavings > 0.5 && opt.tag !== "Closest" && (
@@ -343,16 +309,24 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
                         <div className={`font-medium truncate ${isAvoid ? "text-[#5f6368] line-through text-xs" : isFirst ? "text-white text-sm" : "text-white text-xs"}`}>{opt.station.name}</div>
                         <div className="text-[10px] text-[#5f6368]">
                           {opt.distance.toFixed(1)}km
+                          {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
                         </div>
                       </div>
-                      <div className={`font-bold font-mono shrink-0 ${isAvoid ? "text-red-400 text-sm" : `${tierColor} ${isFirst ? "text-lg" : "text-sm"}`}`}>
-                        {opt.price.toFixed(1)}c
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <div className={`font-bold font-mono ${isAvoid ? "text-red-400 text-sm" : `${tierColor} ${isFirst ? "text-lg" : "text-sm"}`}`}>
+                          {opt.price.toFixed(1)}c
+                        </div>
+                        {!isAvoid && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 text-[#5f6368] transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
                       </div>
                     </button>
 
-                    {/* Expanded state */}
+                    {/* Expanded: breakdown + directions */}
                     <AnimatePresence>
-                      {isExpanded && (
+                      {isExpanded && !isAvoid && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
@@ -360,12 +334,35 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
                           transition={{ duration: 0.15 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-3 pb-3 pl-10">
+                          <div className="px-3 pb-3 pl-10 space-y-2">
+                            {/* Breakdown — only for non-closest */}
+                            {opt.tag !== "Closest" && opt.detourKm > 0 && (
+                              <div className="rounded-lg bg-white/[0.03] border border-white/5 p-2 space-y-1 text-[11px]">
+                                <div className="flex justify-between">
+                                  <span className="text-[#5f6368]">Detour</span>
+                                  <span className="text-white font-mono">+{opt.detourKm.toFixed(1)}km · ~{opt.detourMins}min</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#5f6368]">Fuel for detour</span>
+                                  <span className="text-red-400 font-mono">-${fuelCost.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-[#5f6368]">Price savings</span>
+                                  <span className="text-emerald-400 font-mono">+${rawSavings.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between pt-1 border-t border-white/5">
+                                  <span className="text-white font-semibold">Net saving</span>
+                                  <span className="text-emerald-400 font-bold font-mono">${opt.netSavings.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Get directions */}
                             <a
                               href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-full inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors"
+                              className="w-full inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors cursor-pointer"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -392,6 +389,15 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Footer: attribution + edit */}
+      <div className="shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-white/5">
+        Data sourced from{" "}
+        <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[#8ab4f8] cursor-pointer">
+          Service Victoria
+        </a>
+        {" "}&middot; Prices delayed ~24hrs
       </div>
     </motion.div>
   );

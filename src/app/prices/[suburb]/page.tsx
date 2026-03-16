@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fetchMergedStations } from "@/lib/fuel-api";
 import { extractSuburb, suburbToSlug, slugToDisplay, groupBySuburb } from "@/lib/suburbs";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
+import AdSlot from "@/components/shared/AdSlot";
 import SuburbPageClient from "./SuburbPageClient";
 
 export const revalidate = 3600;
@@ -16,9 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Cheapest Fuel Prices in ${display} — PetrolSaver`,
     description: `Compare petrol, diesel, and LPG prices at fuel stations in ${display}, Victoria. Find the cheapest servo near you today.`,
-    alternates: {
-      canonical: `/prices/${suburb}`,
-    },
+    alternates: { canonical: `/prices/${suburb}` },
     openGraph: {
       title: `Fuel Prices in ${display} — PetrolSaver`,
       description: `Compare fuel prices at stations in ${display}, Victoria. Updated hourly.`,
@@ -41,7 +40,6 @@ export default async function SuburbPage({ params }: Props) {
   const stations = await fetchMergedStations();
   const suburbMap = groupBySuburb(stations);
 
-  // Find the matching suburb (case-insensitive slug match)
   let suburbStations: typeof stations = [];
   for (const [name, stns] of suburbMap) {
     if (suburbToSlug(name) === slug) {
@@ -50,7 +48,6 @@ export default async function SuburbPage({ params }: Props) {
     }
   }
 
-  // Compute stats per fuel type
   const allPricesByType = new Map<string, number[]>();
   for (const s of stations) {
     for (const p of s.prices) {
@@ -60,7 +57,6 @@ export default async function SuburbPage({ params }: Props) {
     }
   }
 
-  // Build fuel type summaries for this suburb
   const fuelSummaries: {
     fuelType: string;
     label: string;
@@ -87,8 +83,7 @@ export default async function SuburbPage({ params }: Props) {
     const stateAvg = allState.length > 0 ? allState.reduce((a, b) => a + b, 0) / allState.length : 0;
 
     fuelSummaries.push({
-      fuelType: fuelId,
-      label,
+      fuelType: fuelId, label,
       cheapest: stationsWithFuel[0],
       average: Math.round(avg * 10) / 10,
       stateAverage: Math.round(stateAvg * 10) / 10,
@@ -101,73 +96,91 @@ export default async function SuburbPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
+      {/* Header with logo */}
+      <div className="border-b border-white/5 bg-[#1a1a1a]">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2 group">
+            <div className="h-7 w-7 rounded-md bg-[#4285f4] flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span className="text-sm font-bold text-white group-hover:text-[#8ab4f8] transition-colors">PetrolSaver</span>
+          </a>
+          <a href="/" className="text-[11px] text-[#8ab4f8] hover:text-white font-semibold transition-colors">
+            Open Map
+          </a>
+        </div>
+      </div>
+
       {/* Hero */}
-      <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a] border-b border-white/5">
-        <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
-          <nav className="mb-4">
-            <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa] text-sm transition-colors">
-              &larr; Back to map
-            </a>
-          </nav>
+      <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a]">
+        <div className="max-w-4xl mx-auto px-4 py-8 md:py-10">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
             Fuel Prices in {display}
           </h1>
-          <p className="text-[#9aa0a6] text-sm md:text-base">
+          <p className="text-[#9aa0a6] text-sm md:text-base mb-5">
             Compare prices at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, Victoria.
             {cheapestU91 && (
               <> Cheapest Unleaded 91 is <span className="text-emerald-400 font-semibold">{cheapestU91.price.toFixed(1)}c/L</span> at {cheapestU91.name}.</>
             )}
           </p>
+
+          {/* CTA */}
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 bg-[#4285f4] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors shadow-lg shadow-[#4285f4]/20"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Find cheapest near you
+          </a>
         </div>
       </div>
 
-      {/* Fuel type cards */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        {/* Ad */}
+        <div className="mb-6">
+          <AdSlot slot="suburb-page" format="horizontal" />
+        </div>
+
+        {/* Fuel type cards */}
+        <div className="grid gap-3 md:grid-cols-2 mb-8">
           {fuelSummaries.map((fuel) => {
             const diff = fuel.stateAverage - fuel.average;
             const isCheaper = diff > 0;
             return (
-              <div
-                key={fuel.fuelType}
-                className="rounded-xl border border-white/10 bg-[#242424] p-4"
-              >
+              <div key={fuel.fuelType} className="rounded-xl border border-white/10 bg-[#242424] p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                    {fuel.label}
-                  </h2>
-                  <span className="text-xs text-[#9aa0a6]">
-                    {fuel.stationCount} station{fuel.stationCount !== 1 ? "s" : ""}
-                  </span>
+                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">{fuel.label}</h2>
+                  <span className="text-[10px] text-[#5f6368]">{fuel.stationCount} station{fuel.stationCount !== 1 ? "s" : ""}</span>
                 </div>
-
                 {fuel.cheapest && (
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <div className="text-xs text-[#9aa0a6] mb-0.5">Cheapest</div>
+                      <div className="text-[10px] text-[#5f6368] mb-0.5">Cheapest</div>
                       <div className="text-2xl font-bold font-mono text-emerald-400">
-                        {fuel.cheapest.price.toFixed(1)}<span className="text-sm text-[#9aa0a6]">c/L</span>
+                        {fuel.cheapest.price.toFixed(1)}<span className="text-sm text-[#5f6368]">c/L</span>
                       </div>
-                      <div className="text-xs text-[#9aa0a6] mt-0.5">
-                        {fuel.cheapest.name}
-                      </div>
+                      <div className="text-[11px] text-[#9aa0a6] mt-0.5">{fuel.cheapest.name}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-[#9aa0a6] mb-0.5">vs State Avg</div>
+                      <div className="text-[10px] text-[#5f6368] mb-0.5">vs State Avg</div>
                       <div className={`text-lg font-bold font-mono ${isCheaper ? "text-emerald-400" : "text-red-400"}`}>
                         {isCheaper ? "-" : "+"}{Math.abs(diff).toFixed(1)}c
                       </div>
                     </div>
                   </div>
                 )}
-
                 <div className="flex gap-2">
                   <div className="flex-1 rounded-lg bg-white/5 px-2.5 py-1.5 text-center">
-                    <div className="text-[10px] text-[#9aa0a6]">Suburb Avg</div>
+                    <div className="text-[9px] text-[#5f6368]">Suburb Avg</div>
                     <div className="text-xs font-bold text-white font-mono">{fuel.average.toFixed(1)}c</div>
                   </div>
                   <div className="flex-1 rounded-lg bg-white/5 px-2.5 py-1.5 text-center">
-                    <div className="text-[10px] text-[#9aa0a6]">State Avg</div>
+                    <div className="text-[9px] text-[#5f6368]">State Avg</div>
                     <div className="text-xs font-bold text-white font-mono">{fuel.stateAverage.toFixed(1)}c</div>
                   </div>
                 </div>
@@ -176,8 +189,8 @@ export default async function SuburbPage({ params }: Props) {
           })}
         </div>
 
-        {/* All stations table */}
-        <div className="mt-8">
+        {/* All stations */}
+        <div className="mb-8">
           <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-3">
             All Stations in {display}
           </h2>
@@ -185,10 +198,8 @@ export default async function SuburbPage({ params }: Props) {
         </div>
 
         {/* SEO content */}
-        <div className="mt-10 border-t border-white/5 pt-6">
-          <h2 className="text-base font-bold text-white mb-2">
-            About Fuel Prices in {display}
-          </h2>
+        <div className="border-t border-white/5 pt-6 mb-6">
+          <h2 className="text-base font-bold text-white mb-2">About Fuel Prices in {display}</h2>
           <p className="text-sm text-[#9aa0a6] leading-relaxed mb-3">
             PetrolSaver tracks fuel prices at {totalStations} petrol stations in {display}, Victoria.
             Prices are updated daily via the Victorian Government&apos;s Fair Fuel API and typically
@@ -201,13 +212,18 @@ export default async function SuburbPage({ params }: Props) {
           </p>
         </div>
 
+        {/* Bottom ad */}
+        <div className="mb-6">
+          <AdSlot slot="suburb-page-bottom" format="horizontal" />
+        </div>
+
         {/* Attribution */}
-        <div className="mt-8 pb-8 text-center text-xs text-[#5f6368]">
+        <div className="pb-8 text-center text-[10px] text-[#5f6368]">
           Data sourced from{" "}
-          <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8] hover:text-[#aecbfa]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>
-          {" "}&middot; Prices are delayed ~24 hours
+          {" "}&middot; Prices delayed ~24hrs
         </div>
       </div>
     </div>
