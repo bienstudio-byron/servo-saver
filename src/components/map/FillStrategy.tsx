@@ -324,7 +324,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       setHighlightedStationIds(new Set());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIndex, expandedIndex, showAllTrip, options.length]);
+  }, [selectedIndex, expandedIndex, showAllTrip, options.map(o => o.station.id).join(",")]);
 
   useEffect(() => {
     setActiveRouteStation(activeStation);
