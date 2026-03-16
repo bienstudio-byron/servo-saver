@@ -31,6 +31,7 @@ interface MapInnerProps {
   selectedFuelType: string;
   loading?: boolean;
   onChangeTrip?: () => void;
+  onOpenAlerts?: () => void;
 }
 
 const MAX_VISIBLE_MARKERS = 80;
@@ -210,7 +211,7 @@ function PinFader() {
   return null;
 }
 
-export default function MapInner({ stations, selectedFuelType, loading, onChangeTrip }: MapInnerProps) {
+export default function MapInner({ stations, selectedFuelType, loading, onChangeTrip, onOpenAlerts }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
@@ -378,7 +379,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
       </div>
 
 
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onChangeTrip={onChangeTrip} />
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onChangeTrip={onChangeTrip} onOpenAlerts={onOpenAlerts} />
     </>
   );
 }

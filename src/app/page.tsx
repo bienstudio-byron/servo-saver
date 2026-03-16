@@ -6,6 +6,7 @@ import FuelMap from "@/components/map/FuelMap";
 import StationModal from "@/components/shared/StationModal";
 import FuelPickerOverlay from "@/components/shared/FuelPickerOverlay";
 import AdSlot from "@/components/shared/AdSlot";
+import AlertSignup from "@/components/shared/AlertSignup";
 import { useFuelStore } from "@/stores/fuel-store";
 import { PriceThresholdsProvider } from "@/stores/price-context";
 import type { StationWithPrices } from "@/types/fuel";
@@ -20,6 +21,7 @@ export default function HomePage() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerStep, setPickerStep] = useState<1 | 2 | 3>(1);
   const [showInterstitial, setShowInterstitial] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
   const setTripMode = useFuelStore((s) => s.setTripMode);
@@ -111,6 +113,7 @@ export default function HomePage() {
             selectedFuelType={selectedFuelType}
             loading={loading || !mounted}
             onChangeTrip={() => { setPickerStep(2); setShowPicker(true); }}
+            onOpenAlerts={() => setShowAlerts(true)}
           />
         </div>
 
@@ -136,6 +139,16 @@ export default function HomePage() {
           initialStep={pickerStep}
         />
       )}
+
+      {/* Alert signup */}
+      <AnimatePresence>
+        {showAlerts && (
+          <AlertSignup
+            selectedFuelType={selectedFuelType}
+            onClose={() => setShowAlerts(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Interstitial ad */}
       {showInterstitial && (
