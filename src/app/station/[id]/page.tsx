@@ -113,7 +113,7 @@ export default async function StationPage({ params }: Props) {
 
           <div className="flex gap-2">
             <a
-              href="/"
+              href={`/?station=${encodeURIComponent(station.id)}`}
               className="inline-flex items-center gap-2 bg-[#4285f4] text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-[#5a9bf6] transition-colors cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

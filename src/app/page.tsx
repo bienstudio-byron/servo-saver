@@ -24,12 +24,23 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
   const setRangeKm = useFuelStore((s) => s.setRangeKm);
+  const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       setSelectedFuelType(stored);
     }
+
+    // If coming from a station page with ?station=ID, skip onboarding and fly to station
+    const params = new URLSearchParams(window.location.search);
+    const stationParam = params.get("station");
+    if (stationParam) {
+      // Don't show onboarding — go straight to map
+      setMounted(true);
+      return;
+    }
+
     // Always show onboarding on first load to confirm preferences
     setShowPicker(true);
     setMounted(true);
@@ -45,6 +56,19 @@ export default function HomePage() {
         setStations(data.stations);
         setAllStations(data.stations);
         setLoading(false);
+
+        // If ?station=ID in URL, fly to that station and open modal
+        const params = new URLSearchParams(window.location.search);
+        const stationParam = params.get("station");
+        if (stationParam) {
+          const target = data.stations.find((s: { id: string }) => s.id === stationParam);
+          if (target) {
+            setSelectedStation(target);
+            setFlyToTarget({ lat: target.latitude, lng: target.longitude, zoom: 15 });
+          }
+          // Clean up URL
+          window.history.replaceState({}, "", "/");
+        }
       })
       .catch((err) => {
         setError(err.message);
