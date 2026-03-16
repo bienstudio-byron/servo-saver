@@ -9,6 +9,7 @@ import { FUEL_TYPE_LABELS } from "@/lib/constants";
 import { usePriceThresholds } from "@/stores/price-context";
 import { getPriceTier } from "@/lib/price-utils";
 import BrandLogo from "@/components/shared/BrandLogo";
+import ShareButton from "@/components/shared/ShareButton";
 
 interface FillStrategyProps {
   stations: StationWithPrices[];
@@ -52,10 +53,13 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
   };
 
   const refreshLocation = () => {
-    if (!("geolocation" in navigator)) return;
+    if (!("geolocation" in navigator)) {
+      setUserLocation({ lat: -37.8136, lng: 144.9631 });
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
+      () => setUserLocation({ lat: -37.8136, lng: 144.9631 }),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
@@ -357,18 +361,21 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
                               </div>
                             )}
 
-                            {/* Get directions */}
-                            <a
-                              href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors cursor-pointer"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              </svg>
-                              Get Directions
-                            </a>
+                            {/* Actions */}
+                            <div className="flex gap-2">
+                              <a
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors cursor-pointer"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                </svg>
+                                Directions
+                              </a>
+                              <ShareButton station={opt.station} selectedFuelType={selectedFuelType} size="md" />
+                            </div>
                           </div>
                         </motion.div>
                       )}

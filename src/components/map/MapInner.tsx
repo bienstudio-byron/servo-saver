@@ -86,28 +86,41 @@ function UserLocationMarker() {
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
 
   useEffect(() => {
-    if (!("geolocation" in navigator)) return;
+    const fallbackToMelbourne = () => {
+      // Default to Melbourne CBD if location unavailable
+      const melb: [number, number] = [-37.8136, 144.9631];
+      setUserLocation({ lat: melb[0], lng: melb[1] });
+      map.flyTo(melb, 13, { duration: 1.2 });
+    };
+
+    if (!("geolocation" in navigator)) {
+      fallbackToMelbourne();
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setPosition(latlng);
         setUserLocation({ lat: latlng[0], lng: latlng[1] });
-        // Offset center upward on mobile so dot isn't behind the panel
         const isMobile = window.innerWidth < 768;
         const targetZoom = 13;
         if (isMobile) {
           const targetPoint = map.project(latlng, targetZoom);
-          targetPoint.y += 120; // shift down so map center is above the panel
+          targetPoint.y += 120;
           const offsetLatLng = map.unproject(targetPoint, targetZoom);
           map.flyTo(offsetLatLng, targetZoom, { duration: 1.2 });
         } else {
           map.flyTo(latlng, targetZoom, { duration: 1.2 });
         }
       },
-      () => {},
+      () => {
+        // Location denied or failed — fall back to Melbourne CBD
+        fallbackToMelbourne();
+      },
       { enableHighAccuracy: false, timeout: 5000 }
     );
-  }, [map]);
+  }, [map, setUserLocation]);
 
   if (!position) return null;
   return <Marker position={position} icon={userLocationIcon} interactive={false} zIndexOffset={2000} />;
