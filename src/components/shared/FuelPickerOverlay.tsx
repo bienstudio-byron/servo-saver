@@ -91,7 +91,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", damping: 28, stiffness: 300, delay: 0.1 }}
-        className="w-full max-w-sm mx-4 rounded-2xl bg-[#242424] border border-white/10 shadow-2xl overflow-hidden"
+        className="w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto rounded-2xl bg-[#242424] border border-white/10 shadow-2xl"
       >
         {/* Header */}
         <div className="px-5 pt-6 pb-3 text-center">
