@@ -218,15 +218,16 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
   }, [options.map(o => o.station.id).join(",")]);
 
   // Sync expanded option with route line
+  const activeStation = expandedIndex !== null && options[expandedIndex] && options[expandedIndex].tag !== "Avoid"
+    ? options[expandedIndex].station
+    : options.length > 0 && options[0].tag !== "Avoid"
+    ? options[0].station
+    : null;
+
   useEffect(() => {
-    if (expandedIndex !== null && options[expandedIndex] && options[expandedIndex].tag !== "Avoid") {
-      setActiveRouteStation(options[expandedIndex].station);
-    } else if (options.length > 0 && options[0].tag !== "Avoid") {
-      setActiveRouteStation(options[0].station);
-    } else {
-      setActiveRouteStation(null);
-    }
-  }, [expandedIndex, options, setActiveRouteStation]);
+    setActiveRouteStation(activeStation);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStation?.id]);
 
   const handleGoTo = (station: StationWithPrices) => {
     setSelectedStation(station);

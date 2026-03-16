@@ -90,9 +90,26 @@ function UserLocationMarker() {
   const userLocation = useFuelStore((s) => s.userLocation);
 
   const requestLocation = useCallback(() => {
+    const safelyFlyTo = (latlng: [number, number], zoom: number) => {
+      try {
+        if (!map || !map.getContainer()) return;
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          const targetPoint = map.project(latlng, zoom);
+          targetPoint.y += 120;
+          const offsetLatLng = map.unproject(targetPoint, zoom);
+          map.flyTo(offsetLatLng, zoom, { duration: 1.2 });
+        } else {
+          map.flyTo(latlng, zoom, { duration: 1.2 });
+        }
+      } catch {
+        // Map not ready yet
+      }
+    };
+
     if (!("geolocation" in navigator)) {
       setUserLocation({ lat: -37.8136, lng: 144.9631 });
-      map.flyTo([-37.8136, 144.9631], 13, { duration: 1.2 });
+      safelyFlyTo([-37.8136, 144.9631], 13);
       return;
     }
 
@@ -101,22 +118,12 @@ function UserLocationMarker() {
         const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setPosition(latlng);
         setUserLocation({ lat: latlng[0], lng: latlng[1] });
-        const isMobile = window.innerWidth < 768;
-        const targetZoom = 13;
-        if (isMobile) {
-          const targetPoint = map.project(latlng, targetZoom);
-          targetPoint.y += 120;
-          const offsetLatLng = map.unproject(targetPoint, targetZoom);
-          map.flyTo(offsetLatLng, targetZoom, { duration: 1.2 });
-        } else {
-          map.flyTo(latlng, targetZoom, { duration: 1.2 });
-        }
+        safelyFlyTo(latlng, 13);
       },
       () => {
-        // Only fallback to Melbourne if we don't already have a location
         if (!position) {
           setUserLocation({ lat: -37.8136, lng: 144.9631 });
-          map.flyTo([-37.8136, 144.9631], 13, { duration: 1.2 });
+          safelyFlyTo([-37.8136, 144.9631], 13);
         }
       },
       { enableHighAccuracy: false, timeout: 15000 }
