@@ -22,6 +22,7 @@ export default function HomePage() {
   const [pickerStep, setPickerStep] = useState<1 | 2 | 3>(1);
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [alertsDismissed, setAlertsDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
   const setTripMode = useFuelStore((s) => s.setTripMode);
@@ -57,6 +58,16 @@ export default function HomePage() {
         setLoading(false);
       });
   }, []);
+
+  // Auto-show alert signup after 45s if not already signed up
+  useEffect(() => {
+    const alreadySignedUp = localStorage.getItem("petrolsaver-alert-signed-up");
+    if (alreadySignedUp) return;
+    const timer = setTimeout(() => {
+      if (!alertsDismissed) setShowAlerts(true);
+    }, 45000);
+    return () => clearTimeout(timer);
+  }, [alertsDismissed]);
 
   const filteredStations = useMemo(
     () => stations.filter((s) => s.prices.some((p) => p.fuelType === selectedFuelType)),
@@ -145,7 +156,7 @@ export default function HomePage() {
         {showAlerts && (
           <AlertSignup
             selectedFuelType={selectedFuelType}
-            onClose={() => setShowAlerts(false)}
+            onClose={() => { setShowAlerts(false); setAlertsDismissed(true); }}
           />
         )}
       </AnimatePresence>

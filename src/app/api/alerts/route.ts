@@ -4,7 +4,7 @@ import { Resend } from "resend";
 export async function POST(req: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY);
   try {
-    const { email, fuelType } = await req.json();
+    const { email, fuelType, suburb } = await req.json();
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Valid email required" }, { status: 400 });
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       audienceId,
       email,
       firstName: fuelType || "U91",
+      lastName: suburb || "",
       unsubscribed: false,
     });
 
