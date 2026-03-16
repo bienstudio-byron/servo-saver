@@ -127,7 +127,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                   onClick={() => setSelectedFuel(id)}
                   className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold text-center transition-all cursor-pointer ${
                     selectedFuel === id
-                      ? "bg-[#4285f4] text-white"
+                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
                       : "bg-[var(--subtle)] text-[#5f6368] hover:text-[#9aa0a6]"
                   }`}
                 >
