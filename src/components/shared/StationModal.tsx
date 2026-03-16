@@ -100,6 +100,11 @@ export default function StationModal({
             onClick={() => {
               flagStation(station.id);
               setFlagged(true);
+              fetch("/api/flag", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ stationName: station.name, stationId: station.id, reason: "User flagged via modal" }),
+              }).catch(() => {});
             }}
             className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               flagged ? "text-red-400 bg-red-500/10" : "text-[#5f6368] hover:text-red-400 hover:bg-white/10"
