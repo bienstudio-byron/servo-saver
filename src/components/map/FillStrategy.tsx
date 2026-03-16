@@ -130,12 +130,27 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
     const closest = byDistance[0];
     const cheapest = byPrice[0];
 
+    // Calculate real detour for a station based on mode
+    const calcDetour = (station: { station: StationWithPrices; distance: number }) => {
+      if (tripMode === "trip" && tripDestination && userLocation) {
+        // Trip mode: how much does stopping here add to your trip?
+        const directRoute = haversineDistance(userLocation.lat, userLocation.lng, tripDestination.lat, tripDestination.lng) * ROAD_FACTOR;
+        const viaStation = (
+          haversineDistance(userLocation.lat, userLocation.lng, station.station.latitude, station.station.longitude) +
+          haversineDistance(station.station.latitude, station.station.longitude, tripDestination.lat, tripDestination.lng)
+        ) * ROAD_FACTOR;
+        return Math.max(0, viaStation - directRoute);
+      }
+      // Nearby mode: round trip difference vs closest
+      return Math.max(0, station.distance - closest.distance) * 2;
+    };
+
     // Best value: best net savings considering detour cost
     const withSavings = candidates.map((c) => {
-      const extraKm = Math.max(0, c.distance - closest.distance) * 2;
-      const fuelCost = ((extraKm / 100) * DEFAULT_CONSUMPTION * c.price) / 100;
+      const detourKm = calcDetour(c);
+      const fuelCost = ((detourKm / 100) * DEFAULT_CONSUMPTION * c.price) / 100;
       const savings = ((closest.price - c.price) * litresFillingUp) / 100;
-      return { ...c, netSavings: savings - fuelCost, detourKm: extraKm };
+      return { ...c, netSavings: savings - fuelCost, detourKm };
     }).sort((a, b) => b.netSavings - a.netSavings);
 
     const bestValue = withSavings[0];
@@ -147,13 +162,13 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
     const addOption = (item: typeof closest, tag: string) => {
       if (seen.has(item.station.id)) return;
       seen.add(item.station.id);
-      const extraKm = Math.max(0, item.distance - closest.distance) * 2;
-      const detourMins = Math.round((extraKm / AVG_CITY_SPEED) * 60);
-      const fuelCost = ((extraKm / 100) * DEFAULT_CONSUMPTION * item.price) / 100;
+      const detourKm = calcDetour(item);
+      const detourMins = Math.round((detourKm / AVG_CITY_SPEED) * 60);
+      const fuelCost = ((detourKm / 100) * DEFAULT_CONSUMPTION * item.price) / 100;
       const savings = ((closest.price - item.price) * litresFillingUp) / 100 - fuelCost;
       options.push({
         station: item.station, price: item.price, distance: item.distance,
-        detourKm: extraKm, detourMins, netSavings: savings, tag,
+        detourKm, detourMins, netSavings: savings, tag,
       });
     };
 
