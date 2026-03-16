@@ -114,10 +114,12 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Bottom ad bar — desktop only */}
-        <div className="hidden md:block shrink-0 bg-[#242424] border-t border-white/5 px-2 py-1.5">
-          <AdSlot slot="bottom-banner" format="horizontal" />
-        </div>
+        {/* Bottom ad bar — desktop only, hidden until AdSense active */}
+        {process.env.NEXT_PUBLIC_ADSENSE_PUB_ID && (
+          <div className="hidden md:block shrink-0 bg-[#242424] border-t border-white/5 px-2 py-1.5">
+            <AdSlot slot="bottom-banner" format="horizontal" />
+          </div>
+        )}
       </div>
 
       {/* Station modal */}
