@@ -29,10 +29,9 @@ export default function HomePage() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       setSelectedFuelType(stored);
-      // Returning user — skip onboarding, go straight to map
-    } else {
-      setShowPicker(true);
     }
+    // Always show onboarding on first load to confirm preferences
+    setShowPicker(true);
     setMounted(true);
   }, [setSelectedFuelType]);
 
