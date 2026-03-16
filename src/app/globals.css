@@ -51,9 +51,8 @@ body {
 }
 .pins-faded .fuel-pill-active {
   opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1.15);
+  transform: translate(-50%, -50%);
   z-index: 1001 !important;
-  box-shadow: 0 0 0 3px currentColor, 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
 @keyframes pulse-ring {
