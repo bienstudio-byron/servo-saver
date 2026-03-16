@@ -179,30 +179,51 @@ function ViewportTracker({ onChange }: { onChange: (state: ViewportState) => voi
   return null;
 }
 
-function FlyToStation() {
+/** Fly to a point, offset upward on mobile so pin isn't behind the bottom card */
+function useSafelyFlyTo() {
   const map = useMap();
+  return useCallback((lat: number, lng: number, zoom: number, duration = 1) => {
+    try {
+      if (!map || !map.getContainer()) return;
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        const targetPoint = map.project([lat, lng], zoom);
+        targetPoint.y += 100; // offset so pin sits above the bottom card
+        const offsetLatLng = map.unproject(targetPoint, zoom);
+        map.flyTo(offsetLatLng, zoom, { duration });
+      } else {
+        map.flyTo([lat, lng], zoom, { duration });
+      }
+    } catch {
+      // Map not ready
+    }
+  }, [map]);
+}
+
+function FlyToStation() {
   const station = useFuelStore((s) => s.selectedStation);
+  const flyTo = useSafelyFlyTo();
 
   useEffect(() => {
     if (station) {
-      map.flyTo([station.latitude, station.longitude], 15, { duration: 0.8 });
+      flyTo(station.latitude, station.longitude, 15, 0.8);
     }
-  }, [station, map]);
+  }, [station, flyTo]);
 
   return null;
 }
 
 function FlyToTarget() {
-  const map = useMap();
   const target = useFuelStore((s) => s.flyToTarget);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
+  const flyTo = useSafelyFlyTo();
 
   useEffect(() => {
     if (target) {
-      map.flyTo([target.lat, target.lng], target.zoom, { duration: 1 });
+      flyTo(target.lat, target.lng, target.zoom, 1);
       setFlyToTarget(null);
     }
-  }, [target, map, setFlyToTarget]);
+  }, [target, flyTo, setFlyToTarget]);
 
   return null;
 }
