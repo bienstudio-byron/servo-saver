@@ -10,6 +10,7 @@ import { usePriceThresholds } from "@/stores/price-context";
 import { getPriceTier } from "@/lib/price-utils";
 import BrandLogo from "@/components/shared/BrandLogo";
 import ShareButton from "@/components/shared/ShareButton";
+import { getFlaggedStations } from "@/lib/flagged-stations";
 
 interface FillStrategyProps {
   stations: StationWithPrices[];
@@ -91,11 +92,16 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
   const { options, isUrgent } = useMemo(() => {
     if (!userLocation || stations.length === 0) return { options: [] as RankedOption[], isUrgent: false };
 
-    const withDistance = stations.map((s) => {
-      const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
-      if (!p) return null;
-      return { station: s, price: p.price, distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude) * ROAD_FACTOR };
-    }).filter((x): x is { station: StationWithPrices; price: number; distance: number } => x !== null);
+    // Filter out user-flagged stations
+    const flagged = getFlaggedStations();
+
+    const withDistance = stations
+      .filter((s) => !flagged.has(s.id))
+      .map((s) => {
+        const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
+        if (!p) return null;
+        return { station: s, price: p.price, distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude) * ROAD_FACTOR };
+      }).filter((x): x is { station: StationWithPrices; price: number; distance: number } => x !== null);
 
     if (withDistance.length === 0) return { options: [], isUrgent: false };
 

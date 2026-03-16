@@ -9,6 +9,7 @@ import PriceBadge from "./PriceBadge";
 import AdSlot from "./AdSlot";
 import ShareButton from "./ShareButton";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
+import { flagStation, isStationFlagged } from "@/lib/flagged-stations";
 
 interface StationModalProps {
   station: StationWithPrices;
@@ -26,6 +27,11 @@ export default function StationModal({
   onSelectStation,
 }: StationModalProps) {
   const [showAllPrices, setShowAllPrices] = useState(false);
+  const [flagged, setFlagged] = useState(false);
+
+  useEffect(() => {
+    setFlagged(isStationFlagged(station.id));
+  }, [station.id]);
 
   const nearby = nearestStations(
     allStations.filter((s) => s.id !== station.id),
@@ -88,8 +94,22 @@ export default function StationModal({
           <div className="h-1 w-10 rounded-full bg-white/20" />
         </div>
 
-        {/* Actions: share + close */}
+        {/* Actions: flag + share + close */}
         <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
+          <button
+            onClick={() => {
+              flagStation(station.id);
+              setFlagged(true);
+            }}
+            className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+              flagged ? "text-red-400 bg-red-500/10" : "text-[#5f6368] hover:text-red-400 hover:bg-white/10"
+            }`}
+            title={flagged ? "Station flagged" : "Report incorrect data"}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill={flagged ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" />
+            </svg>
+          </button>
           <ShareButton station={station} selectedFuelType={selectedFuelType} size="sm" />
           <button
             onClick={onClose}
@@ -102,6 +122,18 @@ export default function StationModal({
         </div>
 
         <div className="p-4">
+          {/* Flagged banner */}
+          {flagged && (
+            <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2z" />
+              </svg>
+              <span className="text-xs text-red-400">
+                Flagged as potentially incorrect. This station will be hidden from your recommendations.
+              </span>
+            </div>
+          )}
+
           {/* Header */}
           <div className="flex items-center gap-3 mb-3 pr-8">
             {station.brand && <BrandLogo brandName={station.brand.name} size="lg" />}
