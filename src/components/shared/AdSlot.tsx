@@ -30,7 +30,6 @@ export default function AdSlot({ slot, format = "horizontal", className = "" }: 
   // Hide entirely if no AdSense ID configured — no placeholder
   if (!ADSENSE_PUB_ID) {
     return null;
-    );
   }
 
   const styles: Record<string, { width: string; height: string }> = {
