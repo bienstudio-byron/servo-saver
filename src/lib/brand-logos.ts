@@ -1,9 +1,11 @@
 // Brand name → local logo path mapping
-// Logos are stored in /public/logos/ as scraped favicons
+// Logos are stored in /public/logos/
 const BRAND_LOGOS: Record<string, string> = {
+  // Major brands
   "7-Eleven": "/logos/7-eleven.png",
   "BP": "/logos/bp.png",
   "BP Bowser Bean": "/logos/bp.png",
+  "Bowser Bean": "/logos/bp.png",
   "Shell": "/logos/shell.png",
   "Shell Bowser Bean": "/logos/shell.png",
   "Ampol": "/logos/ampol.png",
@@ -14,6 +16,9 @@ const BRAND_LOGOS: Record<string, string> = {
   "Costco": "/logos/costco.png",
   "Mobil": "/logos/mobil.png",
   "Viva Energy": "/logos/viva-energy.png",
+  "Coles Express": "/logos/coles-express.png",
+
+  // Mid-size brands
   "Metro Petroleum": "/logos/metro-petroleum.png",
   "Metro Fuel": "/logos/metro-petroleum.png",
   "Puma": "/logos/puma.png",
@@ -23,7 +28,14 @@ const BRAND_LOGOS: Record<string, string> = {
   "Riordan Fuels": "/logos/riordan.png",
   "Pearl Energy": "/logos/pearl-energy.png",
   "Speedway": "/logos/speedway.png",
-  "Coles Express": "/logos/coles-express.png",
+  "Budget": "/logos/budget.png",
+
+  // Aliases — map variations to existing logos
+  "U-Go": "/logos/united.png",       // United subsidiary
+  "Enhance": "/logos/ampol.png",     // Ampol network
+  "NRMA": "/logos/ampol.png",        // Ampol network
+  "Liberty": "/logos/viva-energy.png", // Viva Energy network
+  "Vibe": "/logos/viva-energy.png",  // Viva Energy network
 };
 
 export function getBrandLogoUrl(brandName: string): string | null {

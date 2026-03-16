@@ -20,6 +20,7 @@ import { usePriceThresholds } from "@/stores/price-context";
 import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
+import { Zap, Moon, Sun } from "lucide-react";
 import LocationButton from "./LocationButton";
 import ModeToggle from "./ModeToggle";
 import AreaPriceList from "./AreaPriceList";
@@ -32,8 +33,6 @@ interface MapInnerProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
-  onOpenAlerts?: () => void;
-  onOpenSettings?: () => void;
 }
 
 const MAX_VISIBLE_MARKERS = 80;
@@ -218,6 +217,30 @@ function FlyToStation() {
   return null;
 }
 
+function FitBoundsTarget() {
+  const target = useFuelStore((s) => s.fitBoundsTarget);
+  const setFitBoundsTarget = useFuelStore((s) => s.setFitBoundsTarget);
+  const map = useMap();
+
+  useEffect(() => {
+    if (target && target.points.length >= 2) {
+      try {
+        const bounds = L.latLngBounds(target.points.map(([lat, lng]) => L.latLng(lat, lng)));
+        map.fitBounds(bounds, {
+          paddingTopLeft: [40, 80],     // top: search bar + chips
+          paddingBottomRight: [40, 280], // bottom: bottom sheet
+          maxZoom: 16,
+          animate: true,
+          duration: 0.8,
+        });
+      } catch {}
+      setFitBoundsTarget(null);
+    }
+  }, [target, map, setFitBoundsTarget]);
+
+  return null;
+}
+
 function FlyToTarget() {
   const target = useFuelStore((s) => s.flyToTarget);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
@@ -249,31 +272,32 @@ function MapResizeFix() {
 function PinFader() {
   const map = useMap();
   const selected = useFuelStore((s) => s.selectedStation);
-  const recommended = useFuelStore((s) => s.recommendedStations);
+  const highlighted = useFuelStore((s) => s.highlightedStationIds);
 
   useEffect(() => {
     const container = map.getContainer();
-    if (selected || recommended.length > 0) {
+    if (selected || highlighted.size > 0) {
       container.classList.add("pins-faded");
     } else {
       container.classList.remove("pins-faded");
     }
     return () => container.classList.remove("pins-faded");
-  }, [selected, recommended, map]);
+  }, [selected, highlighted, map]);
 
   return null;
 }
 
-export default function MapInner({ stations, selectedFuelType, loading, onOpenAlerts, onOpenSettings }: MapInnerProps) {
+export default function MapInner({ stations, selectedFuelType, loading }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
   const { theme, toggle: toggleTheme, currentTime } = useTheme();
   const tileUrl = theme === "light"
     ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-  const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
   const selectedStation = useFuelStore((s) => s.selectedStation);
   const tripMode = useFuelStore((s) => s.tripMode);
+  const userLocation = useFuelStore((s) => s.userLocation);
+  const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
 
   const handleViewport = useCallback((state: ViewportState) => {
     setViewport(state);
@@ -290,8 +314,8 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
   }, [stations, selectedFuelType]);
 
   const tripDestination = useFuelStore((s) => s.tripDestination);
-  const userLocation = useFuelStore((s) => s.userLocation);
   const recommendedStations = useFuelStore((s) => s.recommendedStations);
+  const highlightedStationIds = useFuelStore((s) => s.highlightedStationIds);
   const activeRouteStation = useFuelStore((s) => s.activeRouteStation);
 
   // Nearby mode: show all pins when zoomed in. Trip mode: only show recommended + destination
@@ -330,11 +354,12 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
         <UserLocationMarker />
         <FlyToStation />
         <FlyToTarget />
+        <FitBoundsTarget />
         <ViewportTracker onChange={handleViewport} />
 
         {/* Nearby mode: show all visible pins */}
         {visibleMarkers.map(({ station, price }) => {
-          const isActive = selectedStation?.id === station.id || recommendedStations.some((r) => r.id === station.id);
+          const isActive = selectedStation?.id === station.id || highlightedStationIds.has(station.id);
           return (
             <Marker
               key={station.id}
@@ -347,7 +372,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
                 theme
               )}
               zIndexOffset={isActive ? 1000 : 0}
-              eventHandlers={{ click: () => setSelectedStation(station) }}
+              eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
             />
           );
         })}
@@ -357,9 +382,9 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
           <Marker
             position={[tripDestination.lat, tripDestination.lng]}
             icon={L.divIcon({
-              html: `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;border-radius:4px;background:rgba(251,188,4,0.2);border:1.5px solid rgba(251,188,4,0.5);backdrop-filter:blur(8px);box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:default;white-space:nowrap;transform:translate(-50%,-50%);width:fit-content;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#fbbc04;flex-shrink:0"></div>
-                <span style="font-size:11px;font-weight:700;color:#fbbc04;line-height:1">${tripDestination.name}</span>
+              html: `<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 5px;border-radius:4px;background:var(--foreground);border:1.5px solid var(--foreground);box-shadow:0 2px 8px var(--shadow);cursor:default;white-space:nowrap;transform:translate(-50%,-50%);width:fit-content;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--card)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span style="font-size:11px;font-weight:700;color:var(--card);line-height:1">${tripDestination.name}</span>
               </div>`,
               className: "",
               iconSize: [0, 0],
@@ -380,7 +405,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
                 position={[rs.latitude, rs.longitude]}
                 icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true, theme)}
                 zIndexOffset={1000}
-                eventHandlers={{ click: () => setSelectedStation(rs) }}
+                eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(rs.id) }}
               />
             );
           })
@@ -432,9 +457,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
       <div className="hidden md:flex absolute top-3 left-3 z-[1000] items-center gap-2">
         <div className="flex items-center gap-1.5 bg-[var(--card)] rounded-full p-1 border border-[var(--subtle-border)] shadow-xl">
           <div className="h-6 w-6 rounded-full bg-[#4285f4] flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <Zap className="h-3 w-3 text-white" strokeWidth={2.5} />
           </div>
           <span className="text-xs font-bold text-[var(--foreground)] pr-2">PetrolSaver</span>
         </div>
@@ -447,19 +470,17 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
         title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       >
         {theme === "dark" ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
+          <Moon className="h-3.5 w-3.5" strokeWidth={2} />
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
+          <Sun className="h-3.5 w-3.5" strokeWidth={2} />
         )}
         {currentTime && <span className="hidden md:inline text-[11px] font-semibold font-mono">{currentTime}</span>}
       </button>
 
 
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenSettings={onOpenSettings} loading={loading} />
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} onRecentre={() => {
+        if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
+      }} />
     </>
   );
 }

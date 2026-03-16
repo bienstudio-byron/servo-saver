@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed } from "lucide-react";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -16,8 +17,7 @@ interface FillStrategyProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
-
-  onOpenSettings?: () => void;
+  onRecentre?: () => void;
 }
 
 const DEFAULT_CONSUMPTION = 8.5; // L/100km — average passenger car
@@ -33,10 +33,10 @@ interface RankedOption {
   detourKm: number;
   detourMins: number;
   netSavings: number; // vs nearest station
-  tag: string; // "Closest" | "Best value" | "Cheapest"
+  tag: string; // "Best value" | "Cheapest" | "Good deal" | "Nearby"
 }
 
-export default function FillStrategy({ stations, selectedFuelType, onOpenSettings, loading }: FillStrategyProps) {
+export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -45,12 +45,40 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
   const setRecommendedStations = useFuelStore((s) => s.setRecommendedStations);
   const setActiveRouteStation = useFuelStore((s) => s.setActiveRouteStation);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
+  const setFitBoundsTarget = useFuelStore((s) => s.setFitBoundsTarget);
+  const selectedBrands = useFuelStore((s) => s.selectedBrands);
+  const pinClickedStationId = useFuelStore((s) => s.pinClickedStationId);
+  const setPinClickedStationId = useFuelStore((s) => s.setPinClickedStationId);
   const rawSetFuelType = useFuelStore((s) => s.setSelectedFuelType);
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
   const [showFuelPicker, setShowFuelPicker] = useState(false);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
-  const [minimised, setMinimised] = useState(false);
+  const [locationName, setLocationName] = useState<string | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
+  const [showAllTrip, setShowAllTrip] = useState(false);
+  const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const listRef = useRef<HTMLDivElement>(null);
+  const setRowRef = useCallback((i: number, el: HTMLDivElement | null) => {
+    if (el) rowRefs.current.set(i, el);
+    else rowRefs.current.delete(i);
+  }, []);
+  const [minimised, setMinimised] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : true);
   const thresholds = usePriceThresholds();
+
+  // Reverse geocode user location to get suburb name
+  useEffect(() => {
+    if (!userLocation) return;
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`,
+      { headers: { "User-Agent": "PetrolSaver/1.0" } }
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        const name = data.address?.suburb || data.address?.town || data.address?.city || null;
+        if (name) setLocationName(name);
+      })
+      .catch(() => {});
+  }, [userLocation?.lat, userLocation?.lng]);
 
   const setSelectedFuelType = (id: string) => {
     rawSetFuelType(id);
@@ -92,21 +120,22 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
   };
 
   // Build ranked options
-  const { options, isUrgent } = useMemo(() => {
-    if (!userLocation || stations.length === 0) return { options: [] as RankedOption[], isUrgent: false };
+  const { options } = useMemo(() => {
+    if (!userLocation || stations.length === 0) return { options: [] as RankedOption[] };
 
     // Filter out user-flagged stations
     const flagged = getFlaggedStations();
 
     const withDistance = stations
       .filter((s) => !flagged.has(s.id))
+      .filter((s) => selectedBrands.length === 0 || (s.brand?.name && selectedBrands.includes(s.brand.name)))
       .map((s) => {
         const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
         if (!p) return null;
         return { station: s, price: p.price, distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude) * ROAD_FACTOR };
       }).filter((x): x is { station: StationWithPrices; price: number; distance: number } => x !== null);
 
-    if (withDistance.length === 0) return { options: [], isUrgent: false };
+    if (withDistance.length === 0) return { options: [] };
 
     const safeRange = rangeKm * 0.7;
     const maxRadius = Math.min(15, safeRange);
@@ -128,9 +157,6 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
     }
 
     if (candidates.length === 0) candidates = [withDistance.sort((a, b) => a.distance - b.distance)[0]];
-
-    const nearest = [...withDistance].sort((a, b) => a.distance - b.distance)[0];
-    const isUrgent = nearest.distance > rangeKm * 0.8;
 
     // Build unique options: closest, cheapest, and best value (if different)
     const byDistance = [...candidates].sort((a, b) => a.distance - b.distance);
@@ -169,61 +195,102 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
 
     let options: RankedOption[];
 
-    if (tripMode === "trip" && tripDestination) {
-      // Trip mode: curated list (best value, cheapest, closest)
-      const sorted = [...withTrueCost].sort((a, b) => b.netSavings - a.netSavings);
-      const bestValue = sorted[0];
-      const seen = new Set<string>();
-      options = [];
-
-      const addOption = (item: typeof bestValue, tag: string) => {
-        if (seen.has(item.station.id)) return;
-        seen.add(item.station.id);
-        options.push({
-          station: item.station, price: item.price, distance: item.distance,
-          detourKm: item.detourKm, detourMins: item.detourMins, netSavings: item.netSavings, tag,
-        });
+    // Show ALL candidates sorted by true cost, with contextual labels
+    const sorted = [...withTrueCost].sort((a, b) => a.trueCostPerLitre - b.trueCostPerLitre);
+    const cheapestId = byPrice[0].station.id;
+    options = sorted.map((item, i) => {
+      const tier = getPriceTier(item.price, thresholds);
+      let tag = "";
+      if (i === 0 && tier !== "expensive") tag = "Best value";
+      else if (item.station.id === cheapestId && tier !== "expensive") tag = "Cheapest";
+      else if (item.price < closest.price && item.netSavings > 0 && tier !== "expensive") tag = "Good deal";
+      else if (item.distance <= 2) tag = "Nearby";
+      return {
+        station: item.station,
+        price: item.price,
+        distance: item.distance,
+        detourKm: item.detourKm,
+        detourMins: item.detourMins,
+        netSavings: item.netSavings,
+        tag,
       };
+    });
 
-      if (bestValue && bestValue.netSavings > 1 && bestValue.station.id !== closest.station.id) {
-        addOption(bestValue, "Best value");
-      }
-      if (cheapest.station.id !== closest.station.id && cheapest.price < closest.price) {
-        const c = withTrueCost.find((x) => x.station.id === cheapest.station.id)!;
-        addOption(c, "Cheapest");
-      }
-      const c = withTrueCost.find((x) => x.station.id === closest.station.id)!;
-      addOption(c, "Closest");
-    } else {
-      // Nearby mode: show ALL stations within radius, sorted by true cost
-      options = [...withTrueCost]
-        .sort((a, b) => a.trueCostPerLitre - b.trueCostPerLitre)
-        .map((item, i) => ({
-          station: item.station,
-          price: item.price,
-          distance: item.distance,
-          detourKm: item.detourKm,
-          detourMins: item.detourMins,
-          netSavings: item.netSavings,
-          tag: i === 0 ? "Best value" : item.station.id === closest.station.id ? "Closest" : "",
-        }));
+    return { options };
+  }, [userLocation, stations, selectedFuelType, tripMode, tripDestination, rangeKm, thresholds, selectedBrands]);
+
+  const closestOpt = useMemo(() => {
+    if (options.length === 0) return null;
+    return [...options].sort((a, b) => a.distance - b.distance)[0];
+  }, [options]);
+
+  // Area insights: short ticker stats
+  const insightStats = useMemo(() => {
+    if (options.length === 0 || stations.length === 0) return [];
+
+    const allPrices = stations
+      .map((s) => s.prices.find((p) => p.fuelType === selectedFuelType)?.price)
+      .filter((p): p is number => p != null && p < 500);
+    if (allPrices.length === 0) return [];
+
+    const stateAvg = allPrices.reduce((a, b) => a + b, 0) / allPrices.length;
+    const localPrices = options.map((o) => o.price);
+    const localBest = Math.min(...localPrices);
+    const localWorst = Math.max(...localPrices);
+    const spread = localWorst - localBest;
+    const diff = localPrices.reduce((a, b) => a + b, 0) / localPrices.length - stateAvg;
+    const tankSavings = spread > 1 ? (spread * 55) / 100 : 0;
+
+    const stats: string[] = [];
+
+    const r = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
+
+    // Short, punchy stats
+    stats.push(`Vic avg **${r(stateAvg)}c** · Best nearby **${r(localBest)}c**`);
+
+    if (Math.abs(diff) > 0.5) {
+      stats.push(diff > 0 ? `Your area is **${r(diff)}c above** average` : `Your area is **${r(Math.abs(diff))}c below** average`);
     }
 
-    return { options, isUrgent };
-  }, [userLocation, stations, selectedFuelType, tripMode, tripDestination, rangeKm, thresholds]);
+    if (tankSavings > 0.5) {
+      stats.push(`Save up to **$${tankSavings.toFixed(0)}** per fill nearby`);
+    }
 
-  // Store all recommended stations
+    stats.push(`**${options.length} stations** compared`);
+
+    return stats;
+  }, [options, stations, selectedFuelType]);
+
+  const [insightIndex, setInsightIndex] = useState(0);
   useEffect(() => {
-    if (options.length > 0) {
-      setRecommendedStations(options.filter((o) => o.tag !== "Avoid").map((o) => o.station));
+    if (insightStats.length <= 1) return;
+    const interval = setInterval(() => {
+      setInsightIndex((prev) => (prev + 1) % insightStats.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [insightStats.length]);
 
-      if (tripMode === "trip" && tripDestination && userLocation) {
-        const allPoints = options.filter((o) => o.tag !== "Avoid").map((o) => o.station);
-        const lats = [userLocation.lat, ...allPoints.map((s) => s.latitude), tripDestination.lat];
-        const lngs = [userLocation.lng, ...allPoints.map((s) => s.longitude), tripDestination.lng];
-        const latSpan = Math.max(...lats) - Math.min(...lats) + 0.04;
-        const zoom = latSpan > 2 ? 9 : latSpan > 1 ? 10 : latSpan > 0.5 ? 11 : latSpan > 0.2 ? 12 : 13;
-        setFlyToTarget({ lat: (Math.min(...lats) + Math.max(...lats)) / 2, lng: (Math.min(...lngs) + Math.max(...lngs)) / 2, zoom });
+  // Store recommended stations and fit map to show them
+  useEffect(() => {
+    setShowAllTrip(false);
+    setExpandedIndex(null);
+    setSelectedIndex(null);
+    listRef.current?.scrollTo({ top: 0 });
+    if (options.length > 0) {
+      // Always show ALL option pins (faded ones still render)
+      setRecommendedStations(options.map((o) => o.station));
+
+      // Fit map to show user + top stations (+ destination in trip mode)
+      if (userLocation) {
+        const fitOptions = tripMode === "trip" ? options.slice(0, 5) : options;
+        const points: [number, number][] = [
+          [userLocation.lat, userLocation.lng],
+          ...fitOptions.map((o) => [o.station.latitude, o.station.longitude] as [number, number]),
+        ];
+        if (tripMode === "trip" && tripDestination) {
+          points.push([tripDestination.lat, tripDestination.lng]);
+        }
+        setFitBoundsTarget({ points });
       }
     } else {
       setRecommendedStations([]);
@@ -231,233 +298,437 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.map(o => o.station.id).join(",")]);
 
-  // Sync expanded option with route line
-  const activeStation = expandedIndex !== null && options[expandedIndex] && options[expandedIndex].tag !== "Avoid"
+  // Sync expanded/selected option with route line
+  // In trip mode, default to #1 station. In nearby mode, only show when user selects.
+  const activeStation = selectedIndex !== null && options[selectedIndex]
+    ? options[selectedIndex].station
+    : expandedIndex !== null && options[expandedIndex]
     ? options[expandedIndex].station
-    : options.length > 0 && options[0].tag !== "Avoid"
+    : tripMode === "trip" && tripDestination && options.length > 0
     ? options[0].station
     : null;
+
+  const setHighlightedStationIds = useFuelStore((s) => s.setHighlightedStationIds);
+
+  // Control which pins are highlighted (bright) vs faded
+  useEffect(() => {
+    const focusedIndex = selectedIndex ?? expandedIndex;
+    if (focusedIndex !== null && options[focusedIndex]) {
+      setHighlightedStationIds(new Set([options[focusedIndex].station.id]));
+    } else if (options.length > 0) {
+      const visibleOptions = tripMode === "trip" && !showAllTrip
+        ? options.slice(0, 5)
+        : options;
+      setHighlightedStationIds(new Set(visibleOptions.map((o) => o.station.id)));
+    } else {
+      setHighlightedStationIds(new Set());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIndex, expandedIndex, showAllTrip, options.length]);
 
   useEffect(() => {
     setActiveRouteStation(activeStation);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStation?.id]);
 
+  // Handle pin clicks — find station in list and select it
+  useEffect(() => {
+    if (!pinClickedStationId) return;
+    const idx = options.findIndex((o) => o.station.id === pinClickedStationId);
+    if (idx !== -1) {
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+      if (isMobile) {
+        setSelectedIndex(idx);
+        setMinimised(false);
+      } else {
+        setExpandedIndex(idx);
+        setMinimised(false);
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const row = rowRefs.current.get(idx);
+            if (row) {
+              row.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 50);
+        });
+      }
+    }
+    setPinClickedStationId(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinClickedStationId]);
+
   const handleGoTo = (station: StationWithPrices) => {
     setSelectedStation(station);
     setFlyToTarget({ lat: station.latitude, lng: station.longitude, zoom: 15 });
   };
 
+  // Mobile card view helper
+  const selectedOpt = selectedIndex !== null ? options[selectedIndex] : null;
+
+  // Render station card (used for mobile selected view and desktop expanded)
+  const renderStationCard = (opt: RankedOption, showHeader = true) => {
+    const tierColor = getTierColor(opt.price);
+    const fillLitres = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
+    const detourFuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * DEFAULT_CONSUMPTION * opt.price) / 100 : 0;
+    const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
+
+    return (
+      <div className="px-3 pb-3 space-y-2">
+        {/* Station header — mobile card only */}
+        {showHeader && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="flex items-center gap-3 pt-1"
+          >
+            <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="md" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-[var(--foreground)] truncate">{opt.station.name}</span>
+                {opt.tag && <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded-full border ${tierColor} border-current opacity-80`}>{opt.tag}</span>}
+              </div>
+              <div className="text-[11px] text-[var(--muted)]">
+                {opt.distance.toFixed(1)}km away
+                {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
+              </div>
+            </div>
+            <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
+              {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c/L</span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Breakdown */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-0.5 text-[10px]"
+        >
+          {opt.detourKm > 0 ? (
+            <>
+              <div className="flex justify-between">
+                <span className="text-[var(--muted)]">Detour</span>
+                <span className="text-[var(--foreground)] font-mono">+{opt.detourKm.toFixed(1)}km · ~{Math.round((opt.detourKm / AVG_CITY_SPEED) * 60)}min</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--muted)]">Fuel for detour</span>
+                <span className="text-[var(--tier-exp)] font-mono">-${detourFuelCost.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--muted)]">Price savings</span>
+                <span className={`font-mono ${rawSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{rawSavings >= 0 ? "+" : "-"}${Math.abs(rawSavings).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between pt-0.5 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--foreground)] font-medium">{opt.netSavings >= 0 ? "Net saving" : "Extra cost"}</span>
+                <span className={`font-bold font-mono ${opt.netSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{opt.netSavings >= 0 ? "" : "+"}${Math.abs(opt.netSavings).toFixed(2)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between">
+                <span className="text-[var(--muted)]">Distance</span>
+                <span className="text-[var(--foreground)] font-mono">{opt.distance.toFixed(1)}km · ~{Math.round((opt.distance / AVG_CITY_SPEED) * 60)}min</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--muted)]">No detour needed</span>
+                <span className="text-[var(--tier-cheap)] font-mono">$0.00</span>
+              </div>
+            </>
+          )}
+        </motion.div>
+
+        {/* Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="flex gap-2"
+        >
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+          >
+            <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
+            Directions
+          </a>
+          <button
+            onClick={() => setSelectedStation(opt.station)}
+            className="inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+          >
+            <Info className="h-3.5 w-3.5" strokeWidth={2} />
+            Details
+          </button>
+        </motion.div>
+      </div>
+    );
+  };
+
+  const handleRowClick = (i: number, opt: RankedOption) => {
+    // Mobile: show card view. Desktop: inline expand
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobile) {
+      setSelectedIndex(selectedIndex === i ? null : i);
+    } else {
+      setExpandedIndex(expandedIndex === i ? null : i);
+    }
+    if (userLocation) {
+      setFitBoundsTarget({
+        points: [
+          [userLocation.lat, userLocation.lng],
+          [opt.station.latitude, opt.station.longitude],
+        ],
+      });
+    }
+  };
+
   return (
+    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-end">
+    {/* Recentre button — anchored above the sheet */}
+    {onRecentre && (
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.5 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={onRecentre}
+        className="md:hidden mb-2 mr-3 h-10 w-10 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+        title="Centre on my location"
+      >
+        <LocateFixed className="h-5 w-5" strokeWidth={2} />
+      </motion.button>
+    )}
+
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-      className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+      className="w-full max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
     >
-      {/* Headline */}
-      <div className="flex items-center justify-between px-3 py-2.5 shrink-0 border-b border-[var(--subtle-border)]">
-        <span className="text-sm font-bold text-[var(--foreground)]">
-          {tripMode === "trip" && tripDestination
-            ? `Trip to ${tripDestination.name}`
-            : "Best deals near you"
-          }
-        </span>
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Edit preferences */}
-          {onOpenSettings && (
-            <button
-              onClick={onOpenSettings}
-              className="text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer flex items-center gap-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-              Edit
-            </button>
-          )}
-          {/* Minimise — mobile only */}
-          <button
-            onClick={() => setMinimised(!minimised)}
-            className="md:hidden p-1 text-[#5f6368] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${minimised ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
+      {selectedOpt === null && (
+        <button
+          onClick={() => { setMinimised(!minimised); setSelectedIndex(null); }}
+          className="shrink-0 w-full cursor-pointer"
+        >
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-sm font-bold text-[var(--foreground)]">
+              {tripMode === "trip" && tripDestination
+                ? `Trip to ${tripDestination.name}`
+                : locationName
+                ? `Best deals in ${locationName}`
+                : "Best deals near you"
+              }
+            </span>
+            <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
+            </motion.div>
+          </div>
+        </button>
+      )}
 
-      {/* Options list — hidden when minimised on mobile */}
-      <div className={`overflow-y-auto overflow-x-hidden flex-1 min-h-0 ${minimised ? "hidden md:block" : ""}`}>
+      {/* Area insight ticker */}
+      {selectedOpt === null && insightStats.length > 0 && (
+        <div className="px-3 py-2 border-b border-[var(--subtle-border)]">
+          <div className="flex items-center gap-2 text-[11px] text-[var(--foreground)]">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--foreground)] opacity-50" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--foreground)]" />
+            </span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={insightIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.25 }}
+                dangerouslySetInnerHTML={{
+                  __html: insightStats[insightIndex]
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+                }}
+              />
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
+
+      {/* === MOBILE: Station card view === */}
+      <AnimatePresence mode="wait">
+        {selectedOpt !== null && (
+          <motion.div
+            key={`card-${selectedOpt.station.id}`}
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 30 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="md:hidden flex flex-col"
+          >
+            {/* Back button */}
+            <button
+              onClick={() => setSelectedIndex(null)}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[var(--accent-text)] cursor-pointer shrink-0"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
+              All stations
+            </button>
+            {renderStationCard(selectedOpt)}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Collapsed preview — show #1 station on mobile when minimised */}
+      <AnimatePresence>
+        {minimised && selectedOpt === null && options.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            onClick={() => setMinimised(false)}
+            className="md:hidden px-3 py-3 cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5 mb-1">
+              <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="lg" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-[var(--foreground)] text-sm truncate">{options[0].station.name}</span>
+                  {options[0].tag && (
+                    <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${getTierColor(options[0].price)}`}>{options[0].tag}</span>
+                  )}
+                </div>
+                <div className="text-[10px] text-[var(--muted)]">{options[0].distance.toFixed(1)}km{options[0].detourKm > 0.5 && <> · +{options[0].detourKm.toFixed(1)}km detour</>}</div>
+              </div>
+              <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(options[0].price)}`}>
+                {options[0].price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
+              </div>
+            </div>
+            {closestOpt && options[0].netSavings > 0 && (
+              <div className="text-[11px] text-[var(--tier-cheap)] font-medium">
+                Saves ${options[0].netSavings.toFixed(2)} per fill vs closest station
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Options list */}
+      <div ref={listRef} className={`overflow-y-auto overflow-x-hidden flex-1 min-h-0 ${minimised || selectedOpt !== null ? "hidden" : ""}`}>
         <AnimatePresence mode="wait">
-          {!userLocation || loading ? (
+          {(!userLocation || loading) && options.length === 0 ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 flex items-center gap-2.5">
-              <div className="h-4 w-4 rounded-full border-2 border-[#4285f4] border-t-transparent animate-spin shrink-0" />
-              <span className="text-xs text-[#9aa0a6]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>
+              <div className="h-4 w-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
+              <span className="text-xs text-[var(--muted)]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>
             </motion.div>
           ) : options.length === 0 ? (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 text-xs text-[#9aa0a6] text-center">
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 text-xs text-[var(--muted)] text-center">
               No stations found for {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} nearby
-            </motion.div>
-          ) : isUrgent ? (
-            <motion.div key="urgent" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <button onClick={() => handleGoTo(options[0].station)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] transition-colors text-left">
-                <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="md" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[var(--tier-exp)]">Go now — fuel is low</span>
-                    <span className="text-[9px] bg-red-500/10 text-[var(--tier-exp)] px-1.5 py-0.5 rounded font-bold">URGENT</span>
-                  </div>
-                  <div className="text-sm font-medium text-[var(--foreground)] truncate">{options[0].station.name}</div>
-                  <div className="text-[10px] text-[#9aa0a6]">{options[0].distance.toFixed(1)}km — closest station</div>
-                </div>
-                <div className="text-lg font-bold font-mono text-[var(--foreground)] shrink-0">{options[0].price.toFixed(1)}c</div>
-              </button>
-              <div className="px-3 pb-3">
-                <a href={`https://www.google.com/maps/dir/?api=1&destination=${options[0].station.latitude},${options[0].station.longitude}`} target="_blank" rel="noopener noreferrer" className="w-full inline-flex items-center justify-center gap-1.5 bg-red-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-red-400 transition-colors">
-                  Get Directions Now
-                </a>
-              </div>
             </motion.div>
           ) : (
             <motion.div key="options" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              {options.map((opt, i) => {
+              {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
                 const tierColor = getTierColor(opt.price);
                 const isFirst = i === 0;
-                const isAvoid = opt.tag === "Avoid";
                 const isExpanded = expandedIndex === i;
-                // Breakdown values — derived from pre-calculated option data
-                const detourFuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * DEFAULT_CONSUMPTION * opt.price) / 100 : 0;
-                const closestOpt = options.find((o) => o.tag === "Closest") || options[options.length - 1];
-                const fillLitres = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
-                const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
+                const isActive = activeStation?.id === opt.station.id;
 
                 return (
-                  <div key={opt.station.id} className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${isExpanded && !isAvoid ? "bg-[var(--subtle)]" : ""}`}>
-                    {/* Separator before Avoid */}
-                    {isAvoid && (
-                      <div className="px-3 py-1 text-center">
-                        <span className="text-[9px] text-[#5f6368]">· · ·</span>
-                      </div>
-                    )}
-
-                    {/* Row — click to expand */}
+                  <motion.div
+                    ref={(el: HTMLDivElement | null) => setRowRef(i, el)}
+                    key={opt.station.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.2 }}
+                    className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
+                  >
                     <button
-                      onClick={() => {
-                        if (isAvoid) return;
-                        setExpandedIndex(isExpanded ? null : i);
-                        if (!isExpanded) {
-                          setFlyToTarget({ lat: opt.station.latitude, lng: opt.station.longitude, zoom: 15 });
-                        }
-                      }}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                        isAvoid ? "opacity-40 cursor-default" : "hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer"
-                      }`}
+                      onClick={() => handleRowClick(i, opt)}
+                      className={`w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer ${isFirst ? "px-3 py-3" : "px-3 py-1.5 flex items-center gap-2"}`}
                     >
-                      <BrandLogo brandName={opt.station.brand?.name ?? "?"} size={isFirst ? "md" : "sm"} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          {opt.tag && <span className={`text-[10px] font-bold uppercase ${isAvoid ? "text-[var(--tier-exp)]" : isFirst ? tierColor : "text-[#5f6368]"}`}>{opt.tag}</span>}
-                          {isAvoid && opt.netSavings < -0.5 && (
-                            <span className="text-[9px] bg-red-500/10 text-[var(--tier-exp)] px-1 py-0.5 rounded font-bold">
-                              +${Math.abs(opt.netSavings).toFixed(2)} more
-                            </span>
+                      {isFirst ? (
+                        <>
+                          <div className="flex items-center gap-2.5 mb-1.5">
+                            <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="lg" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-[var(--foreground)] text-sm truncate">{opt.station.name}</span>
+                                {opt.tag && (
+                                  <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${tierColor}`}>{opt.tag}</span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-[var(--muted)]">{opt.distance.toFixed(1)}km{opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}</div>
+                            </div>
+                            <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
+                              {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
+                            </div>
+                          </div>
+                          {closestOpt && opt.netSavings > 0 && (
+                            <div className="text-[11px] text-[var(--tier-cheap)] font-medium">
+                              Saves ${opt.netSavings.toFixed(2)} per fill vs closest station
+                            </div>
                           )}
-                          {!isAvoid && opt.netSavings > 0.5 && opt.tag !== "Closest" && (
-                            <span className="text-[9px] bg-emerald-500/10 text-[var(--tier-cheap)] px-1 py-0.5 rounded font-bold">
-                              Saves ${opt.netSavings.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                        <div className={`font-medium truncate ${isAvoid ? "text-[#5f6368] line-through text-xs" : isFirst ? "text-[var(--foreground)] text-sm" : "text-[var(--foreground)] text-xs"}`}>{opt.station.name}</div>
-                        <div className="text-[10px] text-[#5f6368]">
-                          {opt.distance.toFixed(1)}km
-                          {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <div className={`font-bold font-mono ${isAvoid ? "text-[var(--tier-exp)] text-sm" : `${tierColor} ${isFirst ? "text-lg" : "text-sm"}`}`}>
-                          {opt.price.toFixed(1)}c
-                        </div>
-                        {!isAvoid && (
-                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 text-[#5f6368] transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        )}
-                      </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[10px] font-mono text-[var(--muted)] w-3 text-right shrink-0">{i + 1}</span>
+                          <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium truncate text-[var(--foreground)] text-xs">{opt.station.name}</span>
+                              {opt.tag && (
+                                <span className="text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 text-[var(--muted)]">{opt.tag}</span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-[var(--muted)]">
+                              {opt.distance.toFixed(1)}km
+                              {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
+                              {closestOpt && opt.price < closestOpt.price && opt.netSavings >= 0 && (
+                                <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
+                              )}
+                              {closestOpt && opt.price < closestOpt.price && opt.netSavings < 0 && (
+                                <> · <span className="text-[var(--tier-exp)]">${Math.abs(opt.netSavings).toFixed(2)} extra</span></>
+                              )}
+                            </div>
+                          </div>
+                          <div className={`font-bold font-mono shrink-0 ${tierColor} text-xs`}>
+                            {opt.price.toFixed(1)}c
+                          </div>
+                        </>
+                      )}
                     </button>
 
-                    {/* Expanded: breakdown + directions */}
+                    {/* Desktop only: inline expand */}
                     <AnimatePresence>
-                      {isExpanded && !isAvoid && (
+                      {isExpanded && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.15 }}
-                          className="overflow-hidden"
+                          className="overflow-hidden hidden md:block pl-[36px]"
                         >
-                          <div className="px-3 pb-3 space-y-2">
-                            {/* Breakdown — only for non-closest */}
-                            {opt.tag !== "Closest" && opt.detourKm > 0 && (
-                              <div className="rounded-lg p-2 space-y-1 text-[11px]">
-                                <div className="flex justify-between">
-                                  <span className="text-[#5f6368]">Detour</span>
-                                  <span className="text-[var(--foreground)] font-mono">+{opt.detourKm.toFixed(1)}km · ~{opt.detourMins}min</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-[#5f6368]">Fuel for detour</span>
-                                  <span className="text-[var(--tier-exp)] font-mono">-${detourFuelCost.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-[#5f6368]">Price savings</span>
-                                  <span className="text-[var(--tier-cheap)] font-mono">+${rawSavings.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between pt-1 border-t border-[var(--subtle-border)]">
-                                  <span className="text-[var(--foreground)] font-semibold">Net saving</span>
-                                  <span className="text-[var(--tier-cheap)] font-bold font-mono">${opt.netSavings.toFixed(2)}</span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex gap-2">
-                              <a
-                                href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2 rounded-xl text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                </svg>
-                                Directions
-                              </a>
-                              <button
-                                onClick={() => setSelectedStation(opt.station)}
-                                className="inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-xl text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Details
-                              </button>
-                            </div>
-                          </div>
+                          {renderStationCard(opt, false)}
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
+                  </motion.div>
                 );
               })}
 
-              {/* Location refresh */}
+              {tripMode === "trip" && !showAllTrip && options.length > 5 && (
+                <button
+                  onClick={() => setShowAllTrip(true)}
+                  className="w-full py-2 text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors border-t border-[var(--subtle-border)]"
+                >
+                  Show all {options.length} stations
+                </button>
+              )}
+
               {options[0]?.distance > 5 && tripMode === "nearby" && (
-                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-3 text-[10px] text-[#5f6368] hover:text-[#9aa0a6] transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-3 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
+                  <RefreshCw className="h-3 w-3" strokeWidth={2} />
                   Doesn&apos;t look right? Refresh location
                 </button>
               )}
@@ -466,12 +737,15 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
         </AnimatePresence>
       </div>
 
-      {/* Footer: attribution + edit */}
-      <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-[var(--subtle-border)] ${minimised ? "hidden md:block" : ""}`}>
-        <a href="/prices" className="text-[var(--accent-text)] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
+      {/* Footer */}
+      <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[var(--muted)] border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden" : ""}`}>
+        Data from <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">Service Victoria</a>
         {" "}&middot;{" "}
-        <a href="/terms" className="hover:text-[var(--accent-text)] cursor-pointer">Terms</a>
+        <a href="/how-it-works" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">How it works</a>
+        {" "}&middot;{" "}
+        <a href="/terms" className="hover:text-[var(--foreground)] cursor-pointer">Terms</a>
       </div>
     </motion.div>
+    </div>
   );
 }

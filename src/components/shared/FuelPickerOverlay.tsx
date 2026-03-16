@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import { Fuel, MapPin, Check } from "lucide-react";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 
 interface FuelPickerOverlayProps {
@@ -32,9 +33,6 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
   const fuelLabel = FUEL_TYPE_LABELS[selectedFuel] ?? selectedFuel;
 
   const handleGo = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(() => {}, () => {}, { timeout: 1 });
-    }
     onComplete({ fuelType: selectedFuel, rangeKm });
   };
 
@@ -56,9 +54,11 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", damping: 15, stiffness: 400, delay: 0.2 }}
-            className="text-3xl mb-2"
+            className="mb-2 flex justify-center"
           >
-            ⛽
+            <div className="h-12 w-12 rounded-full bg-[var(--subtle)] flex items-center justify-center">
+              <Fuel className="h-6 w-6 text-[var(--foreground)]" strokeWidth={1.5} />
+            </div>
           </motion.div>
           <h2 className="text-lg font-bold text-[var(--foreground)]">Find cheap fuel</h2>
         </div>
@@ -88,7 +88,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-[10px] font-bold text-white">
-                  {rangeKm <= 50 ? "⚠ Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
+                  {rangeKm <= 50 ? "Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
                 </span>
               </div>
             </div>
@@ -151,18 +151,13 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
             }`}
           >
             <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${locationStatus === "granted" ? "text-emerald-400" : locationStatus === "denied" ? "text-red-400" : "text-[var(--muted)]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <MapPin className={`h-4 w-4 ${locationStatus === "granted" ? "text-emerald-400" : locationStatus === "denied" ? "text-red-400" : "text-[var(--muted)]"}`} strokeWidth={2} />
               <span className="text-xs font-semibold text-[var(--foreground)]">
                 {locationStatus === "granted" ? "Location enabled" : locationStatus === "denied" ? "Location denied" : "Enable location"}
               </span>
             </div>
             {locationStatus === "granted" ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <Check className="h-4 w-4 text-emerald-400" strokeWidth={2.5} />
             ) : (
               <span className="text-[10px] text-[var(--muted)]">Tap to enable</span>
             )}

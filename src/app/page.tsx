@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { AnimatePresence } from "framer-motion";
+import { AlertCircle } from "lucide-react";
 import FuelMap from "@/components/map/FuelMap";
 import StationModal from "@/components/shared/StationModal";
 import FuelPickerOverlay from "@/components/shared/FuelPickerOverlay";
@@ -117,9 +118,7 @@ export default function HomePage() {
       <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
         <div className="text-center">
           <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
+            <AlertCircle className="h-6 w-6 text-red-400" strokeWidth={2} />
           </div>
           <h2 className="text-lg font-semibold text-white mb-1">Failed to load fuel data</h2>
           <p className="text-[#9aa0a6] text-sm">{error}</p>
@@ -138,8 +137,6 @@ export default function HomePage() {
             stations={mounted ? filteredStations : []}
             selectedFuelType={selectedFuelType}
             loading={loading || !mounted}
-            onOpenAlerts={() => setShowAlerts(true)}
-            onOpenSettings={() => setShowPicker(true)}
           />
         </div>
 
@@ -176,12 +173,12 @@ export default function HomePage() {
       {/* Interstitial ad */}
       {showInterstitial && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/70 backdrop-blur-md">
-          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[#242424] border border-white/10 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <span className="text-[11px] text-[#5f6368] uppercase tracking-wider">Sponsored</span>
+          <div className="w-full max-w-lg mx-4 rounded-2xl bg-[var(--card)] border border-[var(--subtle-border)] shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--subtle-border)]">
+              <span className="text-[11px] text-[var(--muted)] uppercase tracking-wider">Sponsored</span>
               <button
                 onClick={() => setShowInterstitial(false)}
-                className="text-xs text-[#9aa0a6] hover:text-white transition-colors"
+                className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
               >
                 Skip
               </button>

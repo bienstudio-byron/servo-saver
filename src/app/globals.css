@@ -114,7 +114,7 @@ body {
 
 /* Fade other pins when one is selected — opaque, not invisible */
 .pins-faded .fuel-pill {
-  opacity: 0.35 !important;
+  opacity: 0.5 !important;
 }
 .pins-faded .fuel-pill-active {
   opacity: 1 !important;
