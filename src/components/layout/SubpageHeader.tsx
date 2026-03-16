@@ -12,7 +12,7 @@ export default function SubpageHeader() {
   const pathname = usePathname();
 
   return (
-    <div className="border-b border-white/5 bg-[#1a1a1a]">
+    <div className="sticky top-0 z-30 border-b border-white/5 bg-[#1a1a1a]/90 backdrop-blur-xl">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="h-7 w-7 rounded-md bg-[#4285f4] flex items-center justify-center">
@@ -20,16 +20,10 @@ export default function SubpageHeader() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="text-sm font-bold text-white group-hover:text-[#8ab4f8] transition-colors">PetrolSaver</span>
+          <span className="text-sm font-bold text-white group-hover:text-[#8ab4f8] transition-colors">PetrolSaver Victoria</span>
         </Link>
 
         <nav className="flex items-center gap-1">
-          <Link
-            href="/"
-            className="text-[11px] text-[#8ab4f8] hover:text-white font-semibold transition-colors px-2 py-1 rounded-lg hover:bg-white/5 cursor-pointer"
-          >
-            Map
-          </Link>
           {NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href || (href !== "/prices" && pathname.startsWith(href));
             return (
@@ -46,6 +40,12 @@ export default function SubpageHeader() {
               </Link>
             );
           })}
+          <Link
+            href="/"
+            className="text-[11px] text-white font-bold bg-[#4285f4] hover:bg-[#5a9bf6] transition-colors px-3 py-1.5 rounded-lg cursor-pointer ml-1"
+          >
+            Open Map
+          </Link>
         </nav>
       </div>
     </div>

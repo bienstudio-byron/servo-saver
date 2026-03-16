@@ -440,12 +440,11 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
 
       {/* Footer: attribution + edit */}
       <div className="shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-white/5">
-        Data from{" "}
-        <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">
-          Service Victoria
-        </a>
-        , updated every 24hrs &middot;{" "}
         <a href="/prices" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
+        {" "}&middot;{" "}
+        <a href="/terms" className="hover:text-[#8ab4f8] cursor-pointer">Terms</a>
+        {" "}&middot;{" "}
+        <a href="/privacy" className="hover:text-[#8ab4f8] cursor-pointer">Privacy</a>
       </div>
     </motion.div>
   );
