@@ -393,12 +393,13 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
       {onOpenSettings && (
         <button
           onClick={onOpenSettings}
-          className="absolute right-3 top-3 z-[1000] flex h-9 w-9 items-center justify-center rounded-full bg-[#242424] border border-white/10 shadow-xl text-white hover:bg-white/10 transition-colors cursor-pointer"
+          className="absolute right-3 top-3 z-[1000] flex items-center gap-1.5 rounded-full bg-[#242424] border border-white/10 shadow-xl text-white hover:bg-white/10 transition-colors cursor-pointer px-3 py-1.5"
           title="Fuel preferences"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
+          <span className="text-xs font-semibold">Edit</span>
         </button>
       )}
 
