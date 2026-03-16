@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+/* Dark theme (default) */
+:root, .dark {
   --background: #1a1a1a;
   --foreground: #e8e6e3;
   --card: #242424;
@@ -9,6 +10,62 @@
   --accent: #4285f4;
   --accent-hover: #5a9bf6;
   --muted: #9aa0a6;
+  --subtle: rgba(255,255,255,0.05);
+  --subtle-hover: rgba(255,255,255,0.08);
+  --subtle-border: rgba(255,255,255,0.1);
+  --shadow: rgba(0,0,0,0.4);
+  --pill-bg-cheap: rgba(16,185,129,0.18);
+  --pill-border-cheap: rgba(16,185,129,0.5);
+  --pill-text-cheap: #34d399;
+  --pill-bg-mid: rgba(245,158,11,0.18);
+  --pill-border-mid: rgba(245,158,11,0.5);
+  --pill-text-mid: #fbbf24;
+  --pill-bg-exp: rgba(239,68,68,0.18);
+  --pill-border-exp: rgba(239,68,68,0.5);
+  --pill-text-exp: #f87171;
+  --pill-bg-unk: rgba(100,116,139,0.18);
+  --pill-border-unk: rgba(100,116,139,0.5);
+  --pill-text-unk: #94a3b8;
+  --toggle-bg: #242424;
+  --toggle-slider: #ffffff;
+  --toggle-active: #1a1a1a;
+  --toggle-inactive: #5f6368;
+  --scrollbar: #444;
+  --scrollbar-hover: #555;
+}
+
+/* Light theme */
+.light {
+  --background: #f8f9fa;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-hover: #f1f3f4;
+  --border: #dadce0;
+  --accent: #4285f4;
+  --accent-hover: #3367d6;
+  --muted: #5f6368;
+  --subtle: rgba(0,0,0,0.04);
+  --subtle-hover: rgba(0,0,0,0.06);
+  --subtle-border: rgba(0,0,0,0.1);
+  --shadow: rgba(0,0,0,0.12);
+  --pill-bg-cheap: #ffffff;
+  --pill-border-cheap: rgba(16,185,129,0.6);
+  --pill-text-cheap: #059669;
+  --pill-bg-mid: #ffffff;
+  --pill-border-mid: rgba(245,158,11,0.6);
+  --pill-text-mid: #d97706;
+  --pill-bg-exp: #ffffff;
+  --pill-border-exp: rgba(239,68,68,0.6);
+  --pill-text-exp: #dc2626;
+  --pill-bg-unk: #ffffff;
+  --pill-border-unk: rgba(100,116,139,0.6);
+  --pill-text-unk: #64748b;
+  --toggle-bg: #ffffff;
+  --toggle-slider: #1a1a1a;
+  --toggle-active: #ffffff;
+  --toggle-inactive: #5f6368;
+  --scrollbar: #c1c1c1;
+  --scrollbar-hover: #a0a0a0;
 }
 
 @theme inline {
@@ -41,7 +98,7 @@ body {
 }
 .fuel-pill:hover {
   transform: translate(-50%, -50%) scale(1.12);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+  box-shadow: 0 4px 16px var(--shadow) !important;
   z-index: 1000 !important;
 }
 
@@ -78,9 +135,9 @@ a, button, [role="button"], select, summary {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #444;
+  background: var(--scrollbar);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--scrollbar-hover);
 }

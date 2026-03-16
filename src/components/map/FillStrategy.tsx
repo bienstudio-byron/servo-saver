@@ -248,11 +248,11 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-      className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-white/10 bg-[#1a1a1a]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+      className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
     >
       {/* Headline */}
-      <div className="flex items-center justify-between px-3 py-2.5 shrink-0 border-b border-white/5">
-        <span className="text-sm font-bold text-white">
+      <div className="flex items-center justify-between px-3 py-2.5 shrink-0 border-b border-[var(--subtle-border)]">
+        <span className="text-sm font-bold text-[var(--foreground)]">
           {tripMode === "trip" && tripDestination
             ? `Trip to ${tripDestination.name}`
             : "Best deals near you"
@@ -263,7 +263,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
           {onOpenSettings && (
             <button
               onClick={onOpenSettings}
-              className="text-[11px] text-[#8ab4f8] hover:text-white font-semibold transition-colors cursor-pointer flex items-center gap-1"
+              className="text-[11px] text-[#8ab4f8] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer flex items-center gap-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -274,7 +274,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
           {/* Minimise — mobile only */}
           <button
             onClick={() => setMinimised(!minimised)}
-            className="md:hidden p-1 text-[#5f6368] hover:text-white transition-colors cursor-pointer"
+            className="md:hidden p-1 text-[#5f6368] hover:text-[var(--foreground)] transition-colors cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${minimised ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -297,17 +297,17 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
             </motion.div>
           ) : isUrgent ? (
             <motion.div key="urgent" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <button onClick={() => handleGoTo(options[0].station)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-white/5 active:bg-white/10 transition-colors text-left">
+              <button onClick={() => handleGoTo(options[0].station)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] transition-colors text-left">
                 <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-red-400">Go now — fuel is low</span>
                     <span className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded font-bold">URGENT</span>
                   </div>
-                  <div className="text-sm font-medium text-white truncate">{options[0].station.name}</div>
+                  <div className="text-sm font-medium text-[var(--foreground)] truncate">{options[0].station.name}</div>
                   <div className="text-[10px] text-[#9aa0a6]">{options[0].distance.toFixed(1)}km — closest station</div>
                 </div>
-                <div className="text-lg font-bold font-mono text-white shrink-0">{options[0].price.toFixed(1)}c</div>
+                <div className="text-lg font-bold font-mono text-[var(--foreground)] shrink-0">{options[0].price.toFixed(1)}c</div>
               </button>
               <div className="px-3 pb-3">
                 <a href={`https://www.google.com/maps/dir/?api=1&destination=${options[0].station.latitude},${options[0].station.longitude}`} target="_blank" rel="noopener noreferrer" className="w-full inline-flex items-center justify-center gap-1.5 bg-red-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-red-400 transition-colors">
@@ -329,7 +329,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                 const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
 
                 return (
-                  <div key={opt.station.id} className={`${i > 0 ? "border-t border-white/5" : ""} ${isExpanded && !isAvoid ? "bg-white/5" : ""}`}>
+                  <div key={opt.station.id} className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${isExpanded && !isAvoid ? "bg-[var(--subtle)]" : ""}`}>
                     {/* Separator before Avoid */}
                     {isAvoid && (
                       <div className="px-3 py-1 text-center">
@@ -347,7 +347,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                         }
                       }}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
-                        isAvoid ? "opacity-40 cursor-default" : "hover:bg-white/5 active:bg-white/10 cursor-pointer"
+                        isAvoid ? "opacity-40 cursor-default" : "hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer"
                       }`}
                     >
                       <BrandLogo brandName={opt.station.brand?.name ?? "?"} size={isFirst ? "md" : "sm"} />
@@ -365,7 +365,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                             </span>
                           )}
                         </div>
-                        <div className={`font-medium truncate ${isAvoid ? "text-[#5f6368] line-through text-xs" : isFirst ? "text-white text-sm" : "text-white text-xs"}`}>{opt.station.name}</div>
+                        <div className={`font-medium truncate ${isAvoid ? "text-[#5f6368] line-through text-xs" : isFirst ? "text-[var(--foreground)] text-sm" : "text-[var(--foreground)] text-xs"}`}>{opt.station.name}</div>
                         <div className="text-[10px] text-[#5f6368]">
                           {opt.distance.toFixed(1)}km
                           {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
@@ -399,7 +399,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                               <div className="rounded-lg p-2 space-y-1 text-[11px]">
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Detour</span>
-                                  <span className="text-white font-mono">+{opt.detourKm.toFixed(1)}km · ~{opt.detourMins}min</span>
+                                  <span className="text-[var(--foreground)] font-mono">+{opt.detourKm.toFixed(1)}km · ~{opt.detourMins}min</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Fuel for detour</span>
@@ -409,8 +409,8 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                                   <span className="text-[#5f6368]">Price savings</span>
                                   <span className="text-emerald-400 font-mono">+${rawSavings.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between pt-1 border-t border-white/5">
-                                  <span className="text-white font-semibold">Net saving</span>
+                                <div className="flex justify-between pt-1 border-t border-[var(--subtle-border)]">
+                                  <span className="text-[var(--foreground)] font-semibold">Net saving</span>
                                   <span className="text-emerald-400 font-bold font-mono">${opt.netSavings.toFixed(2)}</span>
                                 </div>
                               </div>
@@ -431,7 +431,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                               </a>
                               <button
                                 onClick={() => setSelectedStation(opt.station)}
-                                className="inline-flex items-center justify-center gap-1.5 bg-white/5 border border-white/10 text-[#dadce0] px-3 py-2 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors cursor-pointer"
+                                className="inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[#dadce0] px-3 py-2 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors cursor-pointer"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -462,7 +462,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
       </div>
 
       {/* Footer: attribution + edit */}
-      <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-white/5 ${minimised ? "hidden md:block" : ""}`}>
+      <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-[var(--subtle-border)] ${minimised ? "hidden md:block" : ""}`}>
         <a href="/prices" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
         {" "}&middot;{" "}
         <a href="/terms" className="hover:text-[#8ab4f8] cursor-pointer">Terms</a>

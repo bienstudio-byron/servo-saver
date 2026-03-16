@@ -48,7 +48,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", damping: 28, stiffness: 300, delay: 0.1 }}
-        className="w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto rounded-2xl bg-[#242424] border border-white/10 shadow-2xl"
+        className="w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--card)] border border-[var(--subtle-border)] shadow-2xl"
       >
         {/* Header */}
         <div className="px-5 pt-6 pb-3 text-center">
@@ -60,20 +60,20 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
           >
             ⛽
           </motion.div>
-          <h2 className="text-lg font-bold text-white">Find cheap fuel</h2>
+          <h2 className="text-lg font-bold text-[var(--foreground)]">Find cheap fuel</h2>
         </div>
 
         {/* Fuel gauge */}
         <div className="px-5 pb-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-[#9aa0a6] uppercase tracking-wider">How much fuel have you got?</span>
-            <span className="text-sm font-bold font-mono text-white">
+            <span className="text-sm font-bold font-mono text-[var(--foreground)]">
               ~{rangeKm}km
             </span>
           </div>
 
           <div className="relative mb-2">
-            <div className="h-8 rounded-lg bg-[#1a1a1a] border border-white/10 overflow-hidden relative">
+            <div className="h-8 rounded-lg bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden relative">
               <motion.div
                 className="absolute inset-y-0 left-0 rounded-lg"
                 animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
@@ -128,7 +128,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                   className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold text-center transition-all cursor-pointer ${
                     selectedFuel === id
                       ? "bg-[#4285f4] text-white"
-                      : "bg-white/[0.04] text-[#5f6368] hover:text-[#9aa0a6]"
+                      : "bg-[var(--subtle)] text-[#5f6368] hover:text-[#9aa0a6]"
                   }`}
                 >
                   {short}
@@ -147,7 +147,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                 ? "border-emerald-500/30 bg-emerald-500/5"
                 : locationStatus === "denied"
                 ? "border-red-500/30 bg-red-500/5"
-                : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+                : "border-[var(--subtle-border)] bg-[var(--subtle)] hover:bg-[var(--subtle-hover)]"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="text-xs font-semibold text-white">
+              <span className="text-xs font-semibold text-[var(--foreground)]">
                 {locationStatus === "granted" ? "Location enabled" : locationStatus === "denied" ? "Location denied" : "Enable location"}
               </span>
             </div>

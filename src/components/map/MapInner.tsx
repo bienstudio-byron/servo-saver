@@ -24,6 +24,7 @@ import LocationButton from "./LocationButton";
 import ModeToggle from "./ModeToggle";
 import AreaPriceList from "./AreaPriceList";
 import FillStrategy from "./FillStrategy";
+import { useTheme } from "@/lib/theme";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 
@@ -38,22 +39,26 @@ interface MapInnerProps {
 const MAX_VISIBLE_MARKERS = 80;
 const MIN_ZOOM_FOR_PILLS = 11;
 
-const TIER_STYLES: Record<PriceTier, { bg: string; border: string; text: string }> = {
-  cheap:     { bg: "rgba(16,185,129,0.18)", border: "rgba(16,185,129,0.5)", text: "#34d399" },
-  mid:       { bg: "rgba(245,158,11,0.18)", border: "rgba(245,158,11,0.5)",  text: "#fbbf24" },
-  expensive: { bg: "rgba(239,68,68,0.18)",  border: "rgba(239,68,68,0.5)",   text: "#f87171" },
-  unknown:   { bg: "rgba(100,116,139,0.18)", border: "rgba(100,116,139,0.5)", text: "#94a3b8" },
-};
+function getTierStyles(): Record<PriceTier, { bg: string; border: string; text: string }> {
+  const root = typeof document !== "undefined" ? getComputedStyle(document.documentElement) : null;
+  const v = (name: string, fallback: string) => root?.getPropertyValue(name).trim() || fallback;
+  return {
+    cheap:     { bg: v("--pill-bg-cheap", "rgba(16,185,129,0.18)"), border: v("--pill-border-cheap", "rgba(16,185,129,0.5)"), text: v("--pill-text-cheap", "#34d399") },
+    mid:       { bg: v("--pill-bg-mid", "rgba(245,158,11,0.18)"), border: v("--pill-border-mid", "rgba(245,158,11,0.5)"),  text: v("--pill-text-mid", "#fbbf24") },
+    expensive: { bg: v("--pill-bg-exp", "rgba(239,68,68,0.18)"),  border: v("--pill-border-exp", "rgba(239,68,68,0.5)"),   text: v("--pill-text-exp", "#f87171") },
+    unknown:   { bg: v("--pill-bg-unk", "rgba(100,116,139,0.18)"), border: v("--pill-border-unk", "rgba(100,116,139,0.5)"), text: v("--pill-text-unk", "#94a3b8") },
+  };
+}
 
 // Icon cache to avoid rebuilding identical icons
 const iconCache = new Map<string, L.DivIcon>();
 
-function getPillIcon(brandName: string, price: number, tier: PriceTier, active = false): L.DivIcon {
-  const key = `${brandName}|${price.toFixed(1)}|${tier}|${active}`;
+function getPillIcon(brandName: string, price: number, tier: PriceTier, active = false, themeKey = "dark"): L.DivIcon {
+  const key = `${themeKey}|${brandName}|${price.toFixed(1)}|${tier}|${active}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
-  const s = TIER_STYLES[tier];
+  const s = getTierStyles()[tier];
   const logoUrl = getBrandLogoUrl(brandName);
   const pillClass = active ? "fuel-pill fuel-pill-active" : "fuel-pill";
 
@@ -62,7 +67,7 @@ function getPillIcon(brandName: string, price: number, tier: PriceTier, active =
     : `<div style="width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`;
 
   const icon = L.divIcon({
-    html: `<div class="${pillClass}" style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
+    html: `<div class="${pillClass}" style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,0.4));cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
     className: "",
     iconSize: [0, 0],
     iconAnchor: [0, 0],
@@ -262,6 +267,10 @@ function PinFader() {
 export default function MapInner({ stations, selectedFuelType, loading, onOpenAlerts, onOpenSettings }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
+  const { theme, toggle: toggleTheme } = useTheme();
+  const tileUrl = theme === "light"
+    ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
   const selectedStation = useFuelStore((s) => s.selectedStation);
   const tripMode = useFuelStore((s) => s.tripMode);
@@ -312,8 +321,9 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
         maxZoom={18}
       >
         <TileLayer
+          key={theme}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url={tileUrl}
         />
         <MapResizeFix />
         <PinFader />
@@ -333,7 +343,8 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
                 station.brand?.name ?? "?",
                 price,
                 getPriceTier(price, thresholds),
-                isActive
+                isActive,
+                theme
               )}
               zIndexOffset={isActive ? 1000 : 0}
               eventHandlers={{ click: () => setSelectedStation(station) }}
@@ -367,7 +378,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
               <Marker
                 key={`rec-${rs.id}`}
                 position={[rs.latitude, rs.longitude]}
-                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true)}
+                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true, theme)}
                 zIndexOffset={1000}
                 eventHandlers={{ click: () => setSelectedStation(rs) }}
               />
@@ -418,16 +429,33 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
       <ModeToggle />
 
       {/* Logo — desktop only */}
-      <div className="hidden md:block absolute top-3 left-3 z-[1000]">
-        <div className="flex items-center gap-1.5 bg-[#242424] rounded-full p-1 border border-white/10 shadow-xl">
+      <div className="hidden md:flex absolute top-3 left-3 z-[1000] items-center gap-2">
+        <div className="flex items-center gap-1.5 bg-[var(--card)] rounded-full p-1 border border-[var(--subtle-border)] shadow-xl">
           <div className="h-6 w-6 rounded-full bg-[#4285f4] flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="text-xs font-bold text-white pr-2">PetrolSaver</span>
+          <span className="text-xs font-bold text-[var(--foreground)] pr-2">PetrolSaver</span>
         </div>
       </div>
+
+      {/* Theme toggle — top right */}
+      <button
+        onClick={toggleTheme}
+        className="absolute top-3 right-3 z-[1000] h-8 w-8 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {theme === "dark" ? (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        )}
+      </button>
 
 
       <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenSettings={onOpenSettings} loading={loading} />

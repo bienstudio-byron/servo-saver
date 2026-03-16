@@ -88,11 +88,11 @@ export default function StationModal({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-x-0 bottom-0 z-[2001] max-h-[75vh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-[#1a1a1a] shadow-2xl md:inset-x-auto md:bottom-4 md:right-4 md:left-auto md:w-[380px] md:rounded-2xl md:border"
+        className="fixed inset-x-0 bottom-0 z-[2001] max-h-[75vh] overflow-y-auto rounded-t-2xl border-t border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl md:inset-x-auto md:bottom-4 md:right-4 md:left-auto md:w-[380px] md:rounded-2xl md:border"
       >
         {/* Handle bar */}
         <div className="flex justify-center pt-2 pb-0 md:hidden">
-          <div className="h-1 w-10 rounded-full bg-white/20" />
+          <div className="h-1 w-10 rounded-full bg-[var(--muted)]" />
         </div>
 
         {/* Actions: flag + share + close */}
@@ -108,7 +108,7 @@ export default function StationModal({
               }).catch(() => {});
             }}
             className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              flagged ? "text-red-400 bg-red-500/10" : "text-[#5f6368] hover:text-red-400 hover:bg-white/10"
+              flagged ? "text-red-400 bg-red-500/10" : "text-[#5f6368] hover:text-red-400 hover:bg-[var(--subtle-hover)]"
             }`}
             title={flagged ? "Station flagged" : "Report incorrect data"}
           >
@@ -119,7 +119,7 @@ export default function StationModal({
           <ShareButton station={station} selectedFuelType={selectedFuelType} size="sm" />
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#5f6368] hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[#5f6368] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -144,7 +144,7 @@ export default function StationModal({
           <div className="flex items-center gap-3 mb-3 pr-8">
             {station.brand && <BrandLogo brandName={station.brand.name} size="lg" />}
             <div className="min-w-0">
-              <a href={`/station/${encodeURIComponent(station.id)}`} className="text-base font-bold text-white truncate block hover:text-[#8ab4f8] transition-colors">{station.name}</a>
+              <a href={`/station/${encodeURIComponent(station.id)}`} className="text-base font-bold text-[var(--foreground)] truncate block hover:text-[#8ab4f8] transition-colors">{station.name}</a>
               {station.brand && (
                 <p className="text-[11px] text-[#9aa0a6]">
                   {station.brand.name} &middot; <span className="capitalize">{station.brand.type}</span>
@@ -157,11 +157,11 @@ export default function StationModal({
 
           {/* Featured price + insight */}
           {currentPrice && priceInsight && (
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3.5 mb-3">
+            <div className="rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] p-3.5 mb-3">
               <div className="flex items-center justify-between mb-2.5">
                 <div>
                   <div className="text-[10px] text-[#9aa0a6] uppercase tracking-wider mb-0.5">{fuelLabel}</div>
-                  <div className="text-2xl font-bold font-mono text-white">
+                  <div className="text-2xl font-bold font-mono text-[var(--foreground)]">
                     {currentPrice.price.toFixed(1)}<span className="text-sm text-[#5f6368]">c/L</span>
                   </div>
                 </div>
@@ -190,19 +190,19 @@ export default function StationModal({
 
               {/* Stats */}
               <div className="flex gap-1.5">
-                <div className="flex-1 rounded-lg bg-white/5 px-2 py-1 text-center">
+                <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">Rank</div>
-                  <div className="text-[11px] font-bold text-white font-mono">#{priceInsight.rank}<span className="text-[#5f6368]">/{priceInsight.total}</span></div>
+                  <div className="text-[11px] font-bold text-[var(--foreground)] font-mono">#{priceInsight.rank}<span className="text-[#5f6368]">/{priceInsight.total}</span></div>
                 </div>
-                <div className="flex-1 rounded-lg bg-white/5 px-2 py-1 text-center">
+                <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">Cheapest</div>
                   <div className="text-[11px] font-bold text-emerald-400 font-mono">{priceInsight.cheapest.toFixed(1)}c</div>
                 </div>
-                <div className="flex-1 rounded-lg bg-white/5 px-2 py-1 text-center">
+                <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">Average</div>
-                  <div className="text-[11px] font-bold text-white font-mono">{priceInsight.average.toFixed(1)}c</div>
+                  <div className="text-[11px] font-bold text-[var(--foreground)] font-mono">{priceInsight.average.toFixed(1)}c</div>
                 </div>
-                <div className="flex-1 rounded-lg bg-white/5 px-2 py-1 text-center">
+                <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2 py-1 text-center">
                   <div className="text-[9px] text-[#5f6368]">vs Avg</div>
                   <div className={`text-[11px] font-bold font-mono ${priceInsight.average > currentPrice.price ? "text-emerald-400" : "text-red-400"}`}>
                     {priceInsight.average > currentPrice.price ? "-" : "+"}{Math.abs(currentPrice.price - priceInsight.average).toFixed(1)}c
@@ -214,7 +214,7 @@ export default function StationModal({
 
           {/* Price history */}
           {currentPrice && (
-            <div className="mb-3 rounded-xl bg-white/5 border border-white/10 p-3">
+            <div className="mb-3 rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] p-3">
               <PriceHistory stationId={station.id} fuelType={selectedFuelType} />
             </div>
           )}
@@ -246,9 +246,9 @@ export default function StationModal({
               {showAllPrices && (
                 <div className="space-y-1 mb-3">
                   {station.prices.map((p) => (
-                    <div key={p.fuelType} className={`flex items-center justify-between rounded-lg px-3 py-1.5 ${p.fuelType === selectedFuelType ? "bg-[#4285f4]/10" : "bg-white/[0.03]"}`}>
+                    <div key={p.fuelType} className={`flex items-center justify-between rounded-lg px-3 py-1.5 ${p.fuelType === selectedFuelType ? "bg-[#4285f4]/10" : "bg-[var(--subtle)]"}`}>
                       <span className="text-xs text-[#9aa0a6]">{FUEL_TYPE_LABELS[p.fuelType] ?? p.fuelType}</span>
-                      <span className="text-xs font-mono font-bold text-white">{p.price.toFixed(1)}c</span>
+                      <span className="text-xs font-mono font-bold text-[var(--foreground)]">{p.price.toFixed(1)}c</span>
                     </div>
                   ))}
                 </div>
@@ -272,7 +272,7 @@ export default function StationModal({
                     <button
                       key={s.id}
                       onClick={() => onSelectStation(s)}
-                      className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-white/5 text-left"
+                      className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-[var(--subtle)] text-left"
                     >
                       <BrandLogo brandName={s.brand?.name ?? "?"} size="sm" />
                       <div className="min-w-0 flex-1">

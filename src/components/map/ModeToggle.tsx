@@ -56,10 +56,10 @@ export default function ModeToggle() {
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 w-[calc(100%-6rem)] md:w-auto max-w-sm">
       {/* Pill toggle + settings */}
       <div className="flex items-center gap-2">
-      <div className="relative flex w-[240px] bg-[#242424] rounded-full p-1 border border-white/10 shadow-xl">
+      <div className="relative flex w-[240px] bg-[var(--toggle-bg)] rounded-full p-1 border border-[var(--subtle-border)] shadow-xl">
         {/* Sliding background */}
         <motion.div
-          className="absolute top-1 bottom-1 rounded-full bg-white"
+          className="absolute top-1 bottom-1 rounded-full bg-[var(--toggle-slider)]"
           initial={false}
           animate={{
             left: tripMode === "nearby" ? "4px" : "50%",
@@ -71,7 +71,7 @@ export default function ModeToggle() {
         <button
           onClick={() => { setTripMode("nearby"); setTripDestination(null); setDestQuery(""); setDestResults([]); }}
           className={`relative z-10 flex-1 py-2 text-[13px] font-semibold rounded-full transition-colors cursor-pointer flex items-center justify-center gap-2 ${
-            tripMode === "nearby" ? "text-[#1a1a1a]" : "text-[#5f6368]"
+            tripMode === "nearby" ? "text-[var(--toggle-active)]" : "text-[var(--toggle-inactive)]"
           }`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -83,7 +83,7 @@ export default function ModeToggle() {
         <button
           onClick={() => { setTripMode("trip"); setDestQuery(""); }}
           className={`relative z-10 flex-1 py-2 text-[13px] font-semibold rounded-full transition-colors cursor-pointer flex items-center justify-center gap-2 ${
-            tripMode === "trip" ? "text-[#1a1a1a]" : "text-[#5f6368]"
+            tripMode === "trip" ? "text-[var(--toggle-active)]" : "text-[var(--toggle-inactive)]"
           }`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -105,7 +105,7 @@ export default function ModeToggle() {
             transition={{ duration: 0.15 }}
             className="w-full max-w-xs"
           >
-            <div className="bg-[#1a1a1a]/90 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl">
+            <div className="bg-[var(--card)]/90 backdrop-blur-xl rounded-xl border border-[var(--subtle-border)] shadow-xl">
               {/* Destination search */}
               <div className="px-2 pt-2 pb-1.5 relative">
                 <div className="relative">
@@ -119,7 +119,7 @@ export default function ModeToggle() {
                     placeholder="Where are you going?"
                     autoFocus
                     style={{ fontSize: "16px" }}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-[#5f6368] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
+                    className="w-full rounded-lg border border-[var(--subtle-border)] bg-[var(--subtle)] pl-8 pr-3 py-1.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
                   />
                   {destLoading && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full border-2 border-[#4285f4] border-t-transparent animate-spin" />
@@ -130,7 +130,7 @@ export default function ModeToggle() {
               {/* Compact fuel gauge */}
               <div className="px-2 pb-2 flex items-center gap-2">
                 <span className="text-[9px] text-[#5f6368] shrink-0">⛽</span>
-                <div className="flex-1 h-2 rounded-full bg-[#1a1a1a] border border-white/10 overflow-hidden relative">
+                <div className="flex-1 h-2 rounded-full bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden relative">
                   <motion.div
                     className="absolute inset-y-0 left-0 rounded-full"
                     animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
@@ -155,12 +155,12 @@ export default function ModeToggle() {
 
             {/* Results dropdown */}
             {destResults.length > 0 && (
-              <div className="mt-1 rounded-xl border border-white/10 bg-[#242424] shadow-2xl overflow-hidden">
+              <div className="mt-1 rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden">
                 {destResults.map((r, i) => (
                   <button
                     key={i}
                     onClick={() => handleSelectDest(r)}
-                    className="w-full text-left px-3 py-2.5 text-sm text-[#dadce0] hover:bg-white/5 active:bg-white/10 transition-colors border-b border-white/5 last:border-0 truncate cursor-pointer"
+                    className="w-full text-left px-3 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer"
                   >
                     {r.display_name}
                   </button>
