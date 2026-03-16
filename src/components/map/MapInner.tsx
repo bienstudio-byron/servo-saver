@@ -417,32 +417,20 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
       {/* Mode toggle */}
       <ModeToggle />
 
-      {/* Settings button — top right, replaces old location button */}
-      {onOpenSettings && (
-        <button
-          onClick={onOpenSettings}
-          className="absolute right-3 top-3 z-[1000] flex items-center gap-1.5 rounded-full bg-[#242424] border border-white/10 shadow-xl text-white hover:bg-white/10 transition-colors cursor-pointer px-3 py-1.5"
-          title="Fuel preferences"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
-          <span className="text-xs font-semibold">Edit</span>
-        </button>
-      )}
-
-      {/* Logo watermark */}
-      <div className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 bg-[#242424] border border-white/10 rounded-full px-2.5 py-1.5 shadow-xl">
-        <div className="h-5 w-5 rounded-full bg-[#4285f4] flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+      {/* Logo — desktop only */}
+      <div className="hidden md:block absolute top-3 left-3 z-[1000]">
+        <div className="flex items-center gap-1.5 bg-[#242424] rounded-full p-1 border border-white/10 shadow-xl">
+          <div className="h-6 w-6 rounded-full bg-[#4285f4] flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <span className="text-xs font-bold text-white pr-2">PetrolSaver</span>
         </div>
-        <span className="text-xs font-bold text-white hidden sm:inline">PetrolSaver</span>
       </div>
 
 
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenAlerts={onOpenAlerts} />
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenSettings={onOpenSettings} />
     </>
   );
 }

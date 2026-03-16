@@ -15,7 +15,8 @@ import { getFlaggedStations } from "@/lib/flagged-stations";
 interface FillStrategyProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
-  onOpenAlerts?: () => void;
+
+  onOpenSettings?: () => void;
 }
 
 const DEFAULT_CONSUMPTION = 8.5; // L/100km — average passenger car
@@ -34,7 +35,7 @@ interface RankedOption {
   tag: string; // "Closest" | "Best value" | "Cheapest"
 }
 
-export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts }: FillStrategyProps) {
+export default function FillStrategy({ stations, selectedFuelType, onOpenSettings }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -47,6 +48,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
   const [showFuelPicker, setShowFuelPicker] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
+  const [minimised, setMinimised] = useState(false);
   const thresholds = usePriceThresholds();
 
   const setSelectedFuelType = (id: string) => {
@@ -255,21 +257,33 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
             : "Best deals near you"
           }
         </span>
-        {onOpenAlerts && (
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Edit preferences */}
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              className="text-[11px] text-[#8ab4f8] hover:text-white font-semibold transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              Edit
+            </button>
+          )}
+          {/* Minimise — mobile only */}
           <button
-            onClick={onOpenAlerts}
-            className="text-[11px] text-[#fbbc04] hover:text-[#fdd835] font-semibold transition-colors cursor-pointer flex items-center gap-1 shrink-0"
+            onClick={() => setMinimised(!minimised)}
+            className="md:hidden p-1 text-[#5f6368] hover:text-white transition-colors cursor-pointer"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${minimised ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
-            Notify
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Options list */}
-      <div className="overflow-y-auto overflow-x-hidden flex-1 min-h-0">
+      {/* Options list — hidden when minimised on mobile */}
+      <div className={`overflow-y-auto overflow-x-hidden flex-1 min-h-0 ${minimised ? "hidden md:block" : ""}`}>
         <AnimatePresence mode="wait">
           {!userLocation ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 flex items-center gap-2.5">
@@ -439,12 +453,10 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
       </div>
 
       {/* Footer: attribution + edit */}
-      <div className="shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-white/5">
+      <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-white/5 ${minimised ? "hidden md:block" : ""}`}>
         <a href="/prices" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">Learn more</a>
         {" "}&middot;{" "}
         <a href="/terms" className="hover:text-[#8ab4f8] cursor-pointer">Terms</a>
-        {" "}&middot;{" "}
-        <a href="/privacy" className="hover:text-[#8ab4f8] cursor-pointer">Privacy</a>
       </div>
     </motion.div>
   );

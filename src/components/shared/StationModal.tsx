@@ -144,7 +144,7 @@ export default function StationModal({
           <div className="flex items-center gap-3 mb-3 pr-8">
             {station.brand && <BrandLogo brandName={station.brand.name} size="lg" />}
             <div className="min-w-0">
-              <h2 className="text-base font-bold text-white truncate">{station.name}</h2>
+              <a href={`/station/${encodeURIComponent(station.id)}`} className="text-base font-bold text-white truncate block hover:text-[#8ab4f8] transition-colors">{station.name}</a>
               {station.brand && (
                 <p className="text-[11px] text-[#9aa0a6]">
                   {station.brand.name} &middot; <span className="capitalize">{station.brand.type}</span>

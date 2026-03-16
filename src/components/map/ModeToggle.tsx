@@ -56,7 +56,7 @@ export default function ModeToggle() {
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 w-[calc(100%-6rem)] md:w-auto max-w-sm">
       {/* Pill toggle + settings */}
       <div className="flex items-center gap-2">
-      <div className="relative flex bg-[#242424] rounded-full p-1 border border-white/10 shadow-xl">
+      <div className="relative flex w-[240px] bg-[#242424] rounded-full p-1 border border-white/10 shadow-xl">
         {/* Sliding background */}
         <motion.div
           className="absolute top-1 bottom-1 rounded-full bg-white"
@@ -70,18 +70,25 @@ export default function ModeToggle() {
 
         <button
           onClick={() => { setTripMode("nearby"); setTripDestination(null); setDestQuery(""); setDestResults([]); }}
-          className={`relative z-10 px-5 md:px-8 py-1.5 text-xs font-bold rounded-full transition-colors cursor-pointer ${
+          className={`relative z-10 flex-1 py-2 text-[13px] font-semibold rounded-full transition-colors cursor-pointer flex items-center justify-center gap-2 ${
             tripMode === "nearby" ? "text-[#1a1a1a]" : "text-[#5f6368]"
           }`}
         >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
           Nearby
         </button>
         <button
           onClick={() => { setTripMode("trip"); setDestQuery(""); }}
-          className={`relative z-10 px-5 md:px-8 py-1.5 text-xs font-bold rounded-full transition-colors cursor-pointer ${
+          className={`relative z-10 flex-1 py-2 text-[13px] font-semibold rounded-full transition-colors cursor-pointer flex items-center justify-center gap-2 ${
             tripMode === "trip" ? "text-[#1a1a1a]" : "text-[#5f6368]"
           }`}
         >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
           Trip
         </button>
       </div>
