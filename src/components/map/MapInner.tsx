@@ -21,6 +21,7 @@ import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import LocationButton from "./LocationButton";
+import ModeToggle from "./ModeToggle";
 import AreaPriceList from "./AreaPriceList";
 import FillStrategy from "./FillStrategy";
 
@@ -30,7 +31,6 @@ interface MapInnerProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
-  onChangeTrip?: () => void;
   onOpenAlerts?: () => void;
 }
 
@@ -234,7 +234,7 @@ function PinFader() {
   return null;
 }
 
-export default function MapInner({ stations, selectedFuelType, loading, onChangeTrip, onOpenAlerts }: MapInnerProps) {
+export default function MapInner({ stations, selectedFuelType, loading, onOpenAlerts }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
@@ -393,6 +393,9 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
         })()}
       </MapContainer>
 
+      {/* Mode toggle */}
+      <ModeToggle />
+
       {/* Logo watermark */}
       <div className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 bg-white rounded-lg px-2 py-1.5 shadow-lg">
         <div className="h-5 w-5 rounded-md bg-[#4285f4] flex items-center justify-center">
@@ -404,7 +407,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
       </div>
 
 
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onChangeTrip={onChangeTrip} onOpenAlerts={onOpenAlerts} />
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenAlerts={onOpenAlerts} />
     </>
   );
 }

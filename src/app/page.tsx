@@ -19,23 +19,18 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
-  const [pickerStep, setPickerStep] = useState<1 | 2 | 3>(1);
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
-  const setTripMode = useFuelStore((s) => s.setTripMode);
-  const setTripDestination = useFuelStore((s) => s.setTripDestination);
   const setRangeKm = useFuelStore((s) => s.setRangeKm);
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       setSelectedFuelType(stored);
-      setPickerStep(3);
-      setShowPicker(true);
+      // Returning user — skip onboarding, go straight to map
     } else {
-      setPickerStep(1);
       setShowPicker(true);
     }
     setMounted(true);
@@ -76,17 +71,11 @@ export default function HomePage() {
 
   function handleOnboardingComplete(result: {
     fuelType: string;
-    mode: "nearby" | "trip";
     rangeKm: number;
-    destination?: { lat: number; lng: number; name: string };
   }) {
     setSelectedFuelType(result.fuelType);
     localStorage.setItem(STORAGE_KEY, result.fuelType);
-    setTripMode(result.mode);
     setRangeKm(result.rangeKm);
-    if (result.destination) {
-      setTripDestination(result.destination);
-    }
     setShowPicker(false);
 
     const seen = sessionStorage.getItem(INTERSTITIAL_KEY);
@@ -123,7 +112,6 @@ export default function HomePage() {
             stations={mounted ? filteredStations : []}
             selectedFuelType={selectedFuelType}
             loading={loading || !mounted}
-            onChangeTrip={() => { setPickerStep(2); setShowPicker(true); }}
             onOpenAlerts={() => setShowAlerts(true)}
           />
         </div>
@@ -145,10 +133,7 @@ export default function HomePage() {
 
       {/* Onboarding */}
       {showPicker && (
-        <FuelPickerOverlay
-          onComplete={handleOnboardingComplete}
-          initialStep={pickerStep}
-        />
+        <FuelPickerOverlay onComplete={handleOnboardingComplete} />
       )}
 
       {/* Alert signup */}

@@ -19,17 +19,15 @@ interface FuelMapProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
-  onChangeTrip?: () => void;
   onOpenAlerts?: () => void;
 }
 
-export default function FuelMap({ stations, selectedFuelType, loading, onChangeTrip, onOpenAlerts }: FuelMapProps) {
+export default function FuelMap({ stations, selectedFuelType, loading, onOpenAlerts }: FuelMapProps) {
   return (
     <MapInner
       stations={loading ? [] : stations}
       selectedFuelType={selectedFuelType}
       loading={loading}
-      onChangeTrip={onChangeTrip}
       onOpenAlerts={onOpenAlerts}
     />
   );
