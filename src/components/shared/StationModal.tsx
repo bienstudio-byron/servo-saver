@@ -10,6 +10,7 @@ import AdSlot from "./AdSlot";
 import ShareButton from "./ShareButton";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 import { flagStation, isStationFlagged } from "@/lib/flagged-stations";
+import PriceHistory from "./PriceHistory";
 
 interface StationModalProps {
   station: StationWithPrices;
@@ -208,6 +209,13 @@ export default function StationModal({
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Price history */}
+          {currentPrice && (
+            <div className="mb-3 rounded-xl bg-white/5 border border-white/10 p-3">
+              <PriceHistory stationId={station.id} fuelType={selectedFuelType} />
             </div>
           )}
 
