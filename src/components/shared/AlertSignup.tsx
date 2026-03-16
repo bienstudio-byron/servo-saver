@@ -74,7 +74,7 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm mx-4 rounded-2xl bg-[#242424] border border-white/10 shadow-2xl overflow-hidden"
+        className="w-full max-w-sm mx-4 rounded-2xl bg-[var(--card)] border border-[var(--subtle-border)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <AnimatePresence mode="wait">
@@ -86,8 +86,8 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
               className="p-8 text-center"
             >
               <div className="text-4xl mb-3">🎉</div>
-              <h3 className="text-lg font-bold text-white mb-1">You&apos;re in!</h3>
-              <p className="text-sm text-[#9aa0a6]">
+              <h3 className="text-lg font-bold text-[var(--foreground)] mb-1">You&apos;re in!</h3>
+              <p className="text-sm text-[var(--muted)]">
                 We&apos;ll email you when {FUEL_TYPE_LABELS[fuelType] ?? fuelType} prices drop{suburb ? ` in ${suburb}` : ""}.
               </p>
             </motion.div>
@@ -96,21 +96,21 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
               {/* Header */}
               <div className="px-5 pt-5 pb-3">
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-base font-bold text-white">Never miss a price drop</h3>
-                  <button onClick={onClose} className="p-1 text-[#5f6368] hover:text-white transition-colors cursor-pointer">
+                  <h3 className="text-base font-bold text-[var(--foreground)]">Never miss a price drop</h3>
+                  <button onClick={onClose} className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
-                <p className="text-xs text-[#9aa0a6]">Get notified when fuel prices change in your area</p>
+                <p className="text-xs text-[var(--muted)]">Get notified when fuel prices change in your area</p>
               </div>
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="px-5 pb-5">
                 {/* Email */}
                 <div className="mb-3">
-                  <label className="block text-[10px] font-semibold text-[#9aa0a6] uppercase tracking-wider mb-1">Email</label>
+                  <label className="block text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-1">Email</label>
                   <input
                     type="email"
                     value={email}
@@ -118,26 +118,26 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
                     placeholder="your@email.com"
                     required
                     style={{ fontSize: "16px" }}
-                    className="w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-2.5 text-white placeholder:text-[#5f6368] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
+                    className="w-full rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] px-4 py-2.5 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
                   />
                 </div>
 
                 {/* Suburb */}
                 <div className="mb-3">
-                  <label className="block text-[10px] font-semibold text-[#9aa0a6] uppercase tracking-wider mb-1">Suburb (optional)</label>
+                  <label className="block text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-1">Suburb (optional)</label>
                   <input
                     type="text"
                     value={suburb}
                     onChange={(e) => setSuburb(e.target.value)}
                     placeholder="e.g. Richmond"
                     style={{ fontSize: "16px" }}
-                    className="w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-4 py-2.5 text-white placeholder:text-[#5f6368] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
+                    className="w-full rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] px-4 py-2.5 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
                   />
                 </div>
 
                 {/* Fuel type */}
                 <div className="mb-4">
-                  <label className="block text-[10px] font-semibold text-[#9aa0a6] uppercase tracking-wider mb-1.5">Fuel type</label>
+                  <label className="block text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Fuel type</label>
                   <div className="flex gap-1.5">
                     {MAIN_FUELS.map((id) => {
                       const short = id === "DSL" ? "Diesel" : id;
@@ -148,8 +148,8 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
                           onClick={() => setFuelType(id)}
                           className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold text-center transition-all cursor-pointer ${
                             fuelType === id
-                              ? "bg-[#4285f4] text-white"
-                              : "bg-white/[0.04] text-[#5f6368] hover:text-[#9aa0a6]"
+                              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                              : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
                           }`}
                         >
                           {short}
@@ -163,10 +163,10 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
                 <button
                   type="submit"
                   disabled={status === "loading"}
-                  className="w-full py-3 rounded-xl bg-[#fbbc04] text-[#1a1a1a] font-bold text-sm hover:bg-[#fdd835] active:bg-[#f9a825] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-[var(--accent)] text-[var(--accent-contrast)] font-bold text-sm hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
                 >
                   {status === "loading" ? (
-                    <div className="h-4 w-4 rounded-full border-2 border-[#1a1a1a] border-t-transparent animate-spin" />
+                    <div className="h-4 w-4 rounded-full border-2 border-[var(--accent-contrast)] border-t-transparent animate-spin" />
                   ) : (
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -178,10 +178,10 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
                 </button>
 
                 {status === "error" && (
-                  <p className="text-xs text-red-400 text-center mt-2">Something went wrong. Try again.</p>
+                  <p className="text-xs text-[var(--tier-exp)] text-center mt-2">Something went wrong. Try again.</p>
                 )}
 
-                <p className="text-[9px] text-[#5f6368] text-center mt-3">
+                <p className="text-[9px] text-[var(--muted)] text-center mt-3">
                   No spam, ever. Unsubscribe anytime.
                 </p>
               </form>

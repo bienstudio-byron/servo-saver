@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useDragControls } from "framer-motion";
 import type { StationWithPrices } from "@/types/fuel";
 import { nearestStations } from "@/lib/geo";
 import BrandLogo from "./BrandLogo";
@@ -29,6 +29,7 @@ export default function StationModal({
 }: StationModalProps) {
   const [showAllPrices, setShowAllPrices] = useState(false);
   const [flagged, setFlagged] = useState(false);
+  const dragControls = useDragControls();
 
   useEffect(() => {
     setFlagged(isStationFlagged(station.id));
@@ -88,10 +89,23 @@ export default function StationModal({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-x-0 bottom-0 z-[2001] max-h-[75vh] overflow-y-auto rounded-t-2xl border-t border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl md:inset-x-auto md:bottom-4 md:right-4 md:left-auto md:w-[380px] md:rounded-2xl md:border"
+        drag="y"
+        dragConstraints={{ top: 0 }}
+        dragElastic={0.2}
+        dragListener={false}
+        dragControls={dragControls}
+        onDragEnd={(_e, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 500) {
+            onClose();
+          }
+        }}
+        className="fixed inset-x-0 bottom-0 z-[2001] max-h-[75vh] rounded-t-2xl border-t border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl md:inset-x-auto md:bottom-4 md:right-4 md:left-auto md:w-[380px] md:rounded-2xl md:border flex flex-col"
       >
-        {/* Handle bar */}
-        <div className="flex justify-center pt-2 pb-0 md:hidden">
+        {/* Handle bar — drag to dismiss */}
+        <div
+          className="flex justify-center pt-2 pb-0 md:hidden cursor-grab active:cursor-grabbing shrink-0"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
           <div className="h-1 w-10 rounded-full bg-[var(--muted)]" />
         </div>
 
@@ -127,7 +141,7 @@ export default function StationModal({
         </button>
         </div>
 
-        <div className="p-4">
+        <div className="p-4 overflow-y-auto flex-1 min-h-0">
           {/* Flagged banner */}
           {flagged && (
             <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 flex items-center gap-2">

@@ -440,10 +440,10 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
         </div>
       </div>
 
-      {/* Theme toggle with clock — top right */}
+      {/* Theme toggle with clock — desktop only */}
       <button
         onClick={toggleTheme}
-        className="absolute top-3 right-3 z-[1000] rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+        className="hidden md:flex absolute top-3 right-3 z-[1000] rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
         title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       >
         {theme === "dark" ? (
