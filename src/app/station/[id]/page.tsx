@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const u91 = station.prices.find((p) => p.fuelType === "U91");
 
   return {
-    title: `${station.name} Fuel Prices — PetrolSaver`,
-    description: `Current fuel prices at ${station.name}, ${suburb}. ${u91 ? `Unleaded 91 at ${u91.price.toFixed(1)}c/L.` : ""} Compare with nearby stations.`,
+    title: `${station.name} Fuel Prices Today | ${suburb} — PetrolSaver`,
+    description: `Check today's petrol prices at ${station.name}, ${suburb}. ${u91 ? `Unleaded 91 is ${u91.price.toFixed(1)}c/L. ` : ""}Compare with nearby servos and find the cheapest fuel in ${suburb}.`,
     alternates: { canonical: `/station/${encodeURIComponent(station.id)}` },
     openGraph: {
       title: `${station.name} — Fuel Prices`,
@@ -213,20 +213,73 @@ export default async function StationPage({ params }: Props) {
         </div>
 
         {/* SEO content */}
-        <div className="border-t border-white/5 pt-6 mb-6">
-          <h2 className="text-base font-bold text-white mb-2">About {station.name}</h2>
-          <p className="text-sm text-[#9aa0a6] leading-relaxed mb-3">
-            {station.name} is a {station.brand?.name ?? ""} {station.brand?.type ?? ""} fuel station located at {station.address}.
-            Prices are updated daily via the Victorian Government&apos;s Fair Fuel API.
-          </p>
-          <p className="text-sm text-[#9aa0a6] leading-relaxed">
-            Compare prices with other stations in{" "}
-            <a href={`/prices/${suburbSlug}`} className="text-[#8ab4f8] hover:text-[#aecbfa]">
-              {suburb}
-            </a>
-            , or find the cheapest fuel near you on the{" "}
-            <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">PetrolSaver map</a>.
-          </p>
+        <div className="border-t border-white/5 pt-6 mb-6 space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-white mb-2">
+              {station.name} Petrol Prices Today
+            </h2>
+            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+              Looking for cheap fuel at {station.name}? This {station.brand?.name ?? ""} servo is located
+              at {station.address} and currently sells{" "}
+              {ranks.map((r, i) => (
+                <span key={r.fuelType}>
+                  {i > 0 && i < ranks.length - 1 && ", "}
+                  {i === ranks.length - 1 && ranks.length > 1 && " and "}
+                  {r.label} at <strong className="text-white">{r.price.toFixed(1)}c/L</strong>
+                </span>
+              ))}.
+              {ranks[0] && ranks[0].rank <= Math.ceil(ranks[0].total * 0.1) && (
+                <> This is one of the <strong className="text-emerald-400">cheapest fuel prices in Victoria</strong> right now.</>
+              )}
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-white mb-1">
+              Is {station.name} Cheap Compared to {suburb}?
+            </h3>
+            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+              {ranks[0] && ranks[0].average > ranks[0].price ? (
+                <>
+                  Yes — {station.name} is currently <strong className="text-emerald-400">
+                  {(ranks[0].average - ranks[0].price).toFixed(1)}c/L cheaper</strong> than
+                  the Victorian average for {ranks[0].label}. It ranks #{ranks[0].rank} out
+                  of {ranks[0].total} stations across Victoria.
+                </>
+              ) : ranks[0] ? (
+                <>
+                  {station.name} is currently {(ranks[0].price - ranks[0].average).toFixed(1)}c/L
+                  above the Victorian average for {ranks[0].label}. Check{" "}
+                  <a href={`/prices/${suburbSlug}`} className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                    other stations in {suburb}
+                  </a>{" "}
+                  for a better deal.
+                </>
+              ) : null}
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-white mb-1">
+              Cheapest Fuel Near {suburb}
+            </h3>
+            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+              Compare petrol, diesel, and LPG prices at {nearby.length} nearby stations
+              in {suburb} and surrounding suburbs. Use the{" "}
+              <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">PetrolSaver map</a> to
+              find the cheapest servo near you — our smart recommendation engine factors in
+              the cost of driving to each station, so you know exactly how much you&apos;ll
+              actually save. Browse all{" "}
+              <a href={`/prices/${suburbSlug}`} className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                fuel prices in {suburb}
+              </a>{" "}
+              or explore{" "}
+              <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                fuel prices by suburb
+              </a>{" "}
+              across Victoria.
+            </p>
+          </div>
         </div>
 
         {/* Bottom ad */}

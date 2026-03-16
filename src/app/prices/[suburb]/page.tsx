@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { suburb } = await params;
   const display = slugToDisplay(suburb);
   return {
-    title: `Cheapest Fuel Prices in ${display} — PetrolSaver`,
-    description: `Compare petrol, diesel, and LPG prices at fuel stations in ${display}, Victoria. Find the cheapest servo near you today.`,
+    title: `Cheapest Petrol Prices in ${display} Today — PetrolSaver`,
+    description: `Compare petrol, diesel, and LPG prices at ${display}'s fuel stations. Find the cheapest servo in ${display}, Victoria. Updated daily.`,
     alternates: { canonical: `/prices/${suburb}` },
     openGraph: {
       title: `Fuel Prices in ${display} — PetrolSaver`,
@@ -198,18 +198,53 @@ export default async function SuburbPage({ params }: Props) {
         </div>
 
         {/* SEO content */}
-        <div className="border-t border-white/5 pt-6 mb-6">
-          <h2 className="text-base font-bold text-white mb-2">About Fuel Prices in {display}</h2>
-          <p className="text-sm text-[#9aa0a6] leading-relaxed mb-3">
-            PetrolSaver tracks fuel prices at {totalStations} petrol stations in {display}, Victoria.
-            Prices are updated daily via the Victorian Government&apos;s Fair Fuel API and typically
-            reflect prices from the last 24 hours.
-          </p>
-          <p className="text-sm text-[#9aa0a6] leading-relaxed">
-            To find the cheapest fuel near you, visit the <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">PetrolSaver map</a> and
-            zoom into {display}. You can filter by fuel type including Unleaded 91, Premium 95,
-            Premium 98, Diesel, E10, and LPG.
-          </p>
+        <div className="border-t border-white/5 pt-6 mb-6 space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-white mb-2">
+              Cheapest Petrol in {display} Today
+            </h2>
+            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+              Looking for cheap fuel in {display}? PetrolSaver compares petrol prices
+              at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, Victoria —
+              updated every 24 hours from the Victorian Government.
+              {cheapestU91 && (
+                <> The cheapest Unleaded 91 in {display} right now is{" "}
+                <strong className="text-emerald-400">{cheapestU91.price.toFixed(1)}c/L</strong> at{" "}
+                {cheapestU91.name}.</>
+              )}
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-white mb-1">
+              How to Find the Best Fuel Prices Near {display}
+            </h3>
+            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+              Use the <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">PetrolSaver map</a> to
+              find the cheapest servo near you. Unlike other fuel comparison apps, PetrolSaver calculates
+              the <strong className="text-white">true cost</strong> of filling up — factoring in the fuel
+              you&apos;d burn driving to a cheaper station, so you know if the trip is actually worth it.
+              Filter by Unleaded 91, Premium 95, Premium 98, Diesel, E10, or LPG.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-white mb-1">
+              {display} Fuel Price Comparison
+            </h3>
+            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+              The table above shows all {totalStations} petrol stations in {display} ranked by price,
+              cheapest first. Click any station to see its price history, all fuel types, and how it
+              compares to the Victorian average. You can also{" "}
+              <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                browse fuel prices by suburb
+              </a>{" "}
+              across all of Victoria, or check the latest prices on our{" "}
+              <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                interactive fuel price map
+              </a>.
+            </p>
+          </div>
         </div>
 
         {/* Bottom ad */}
