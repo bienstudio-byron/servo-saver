@@ -4,9 +4,18 @@ import { useEffect, useState, useCallback } from "react";
 
 export type Theme = "dark" | "light";
 
-function getStoredTheme(): Theme {
+function getTimeBasedTheme(): Theme {
+  const hour = new Date().getHours();
+  // Light mode: 6am - 7pm, Dark mode: 7pm - 6am
+  return hour >= 6 && hour < 19 ? "light" : "dark";
+}
+
+function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
-  return (localStorage.getItem("petrolsaver-theme") as Theme) || "dark";
+  const stored = localStorage.getItem("petrolsaver-theme-manual");
+  // If user manually toggled, respect that for this session
+  if (stored) return stored as Theme;
+  return getTimeBasedTheme();
 }
 
 function applyTheme(theme: Theme) {
@@ -17,22 +26,37 @@ function applyTheme(theme: Theme) {
 
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>("dark");
+  const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
-    const stored = getStoredTheme();
-    setThemeState(stored);
-    applyTheme(stored);
+    const initial = getInitialTheme();
+    setThemeState(initial);
+    applyTheme(initial);
+
+    // Update clock every minute
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60_000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
     applyTheme(t);
-    localStorage.setItem("petrolsaver-theme", t);
+    // Mark as manually set so it persists until page reload
+    localStorage.setItem("petrolsaver-theme-manual", t);
   }, []);
 
   const toggle = useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
   }, [theme, setTheme]);
 
-  return { theme, setTheme, toggle };
+  return { theme, setTheme, toggle, currentTime };
 }
