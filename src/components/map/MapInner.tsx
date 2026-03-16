@@ -32,6 +32,7 @@ interface MapInnerProps {
   selectedFuelType: string;
   loading?: boolean;
   onOpenAlerts?: () => void;
+  onOpenSettings?: () => void;
 }
 
 const MAX_VISIBLE_MARKERS = 80;
@@ -230,7 +231,7 @@ function PinFader() {
   return null;
 }
 
-export default function MapInner({ stations, selectedFuelType, loading, onOpenAlerts }: MapInnerProps) {
+export default function MapInner({ stations, selectedFuelType, loading, onOpenAlerts, onOpenSettings }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
@@ -387,7 +388,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
       </MapContainer>
 
       {/* Mode toggle */}
-      <ModeToggle />
+      <ModeToggle onOpenSettings={onOpenSettings} />
 
       {/* Logo watermark */}
       <div className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 bg-white rounded-lg px-2 py-1.5 shadow-lg">

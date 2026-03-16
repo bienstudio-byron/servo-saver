@@ -113,6 +113,7 @@ export default function HomePage() {
             selectedFuelType={selectedFuelType}
             loading={loading || !mounted}
             onOpenAlerts={() => setShowAlerts(true)}
+            onOpenSettings={() => setShowPicker(true)}
           />
         </div>
 

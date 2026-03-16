@@ -10,7 +10,11 @@ interface SearchResult {
   lon: string;
 }
 
-export default function ModeToggle() {
+interface ModeToggleProps {
+  onOpenSettings?: () => void;
+}
+
+export default function ModeToggle({ onOpenSettings }: ModeToggleProps) {
   const tripMode = useFuelStore((s) => s.tripMode);
   const setTripMode = useFuelStore((s) => s.setTripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -52,7 +56,8 @@ export default function ModeToggle() {
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-2 w-[calc(100%-6rem)] md:w-auto max-w-sm">
-      {/* Pill toggle */}
+      {/* Pill toggle + settings */}
+      <div className="flex items-center gap-2">
       <div className="relative flex bg-[#242424] rounded-full p-1 border border-white/10 shadow-xl">
         {/* Sliding background */}
         <motion.div
@@ -81,6 +86,20 @@ export default function ModeToggle() {
         >
           Trip
         </button>
+      </div>
+
+      {/* Settings */}
+      {onOpenSettings && (
+        <button
+          onClick={onOpenSettings}
+          className="h-8 w-8 rounded-full bg-[#242424] border border-white/10 shadow-xl flex items-center justify-center text-white hover:bg-white/10 transition-colors cursor-pointer"
+          title="Fuel preferences"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+        </button>
+      )}
       </div>
 
       {/* Trip destination search */}
