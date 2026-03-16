@@ -27,19 +27,9 @@ export default function AdSlot({ slot, format = "horizontal", className = "" }: 
     }
   }, []);
 
-  // Show placeholder if no AdSense ID configured
+  // Hide entirely if no AdSense ID configured — no placeholder
   if (!ADSENSE_PUB_ID) {
-    const heights: Record<string, string> = {
-      horizontal: "h-[90px]",
-      rectangle: "h-[250px]",
-      vertical: "h-[600px]",
-      fluid: "h-[100px]",
-    };
-
-    return (
-      <div className={`${heights[format]} rounded-xl bg-white/[0.03] border border-dashed border-white/10 flex items-center justify-center ${className}`}>
-        <span className="text-[11px] text-[#5f6368]">Ad</span>
-      </div>
+    return null;
     );
   }
 
