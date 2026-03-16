@@ -371,7 +371,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
                           transition={{ duration: 0.15 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-3 pb-3 pl-10 space-y-2">
+                          <div className="px-3 pb-3 space-y-2">
                             {/* Breakdown — only for non-closest */}
                             {opt.tag !== "Closest" && opt.detourKm > 0 && (
                               <div className="rounded-lg p-2 space-y-1 text-[11px]">
