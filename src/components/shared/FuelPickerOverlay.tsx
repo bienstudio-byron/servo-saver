@@ -66,7 +66,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
         {/* Fuel gauge */}
         <div className="px-5 pb-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-[#9aa0a6] uppercase tracking-wider">How much fuel have you got?</span>
+            <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider">How much fuel have you got?</span>
             <span className="text-sm font-bold font-mono text-[var(--foreground)]">
               ~{rangeKm}km
             </span>
@@ -87,7 +87,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                 }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white/80">
+                <span className="text-[10px] font-bold text-white">
                   {rangeKm <= 50 ? "⚠ Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
                 </span>
               </div>
@@ -103,7 +103,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
             />
           </div>
 
-          <div className="flex justify-between px-1 text-[9px] text-[#5f6368]">
+          <div className="flex justify-between px-1 text-[9px] text-[var(--muted)]">
             <span>E</span>
             <span>¼</span>
             <span>½</span>
@@ -115,8 +115,8 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
         {/* Fuel type */}
         <div className="px-5 pb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-[#9aa0a6] uppercase tracking-wider">Fuel type</span>
-            <span className="text-[11px] text-[#5f6368]">{fuelLabel}</span>
+            <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider">Fuel type</span>
+            <span className="text-[11px] text-[var(--muted)]">{fuelLabel}</span>
           </div>
           <div className="flex gap-1.5">
             {MAIN_FUELS.map((id) => {
@@ -128,7 +128,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                   className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold text-center transition-all cursor-pointer ${
                     selectedFuel === id
                       ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                      : "bg-[var(--subtle)] text-[#5f6368] hover:text-[#9aa0a6]"
+                      : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
                   }`}
                 >
                   {short}
@@ -151,7 +151,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
             }`}
           >
             <div className="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${locationStatus === "granted" ? "text-emerald-400" : locationStatus === "denied" ? "text-red-400" : "text-[#9aa0a6]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${locationStatus === "granted" ? "text-emerald-400" : locationStatus === "denied" ? "text-red-400" : "text-[var(--muted)]"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
@@ -164,7 +164,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <span className="text-[10px] text-[#5f6368]">Tap to enable</span>
+              <span className="text-[10px] text-[var(--muted)]">Tap to enable</span>
             )}
           </button>
         </div>
@@ -179,7 +179,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
           >
             Let&apos;s go
           </motion.button>
-          <p className="text-[9px] text-[#5f6368] text-center mt-2">
+          <p className="text-[9px] text-[var(--muted)] text-center mt-2">
             Location is never stored or shared.
           </p>
         </div>
