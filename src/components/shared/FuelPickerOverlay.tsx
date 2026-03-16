@@ -30,7 +30,7 @@ const RANGE_OPTIONS = [
 const MAIN_FUELS = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
 
 export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps) {
-  const [rangeKm, setRangeKm] = useState(30);
+  const [rangeKm, setRangeKm] = useState(200);
   const [selectedFuel, setSelectedFuel] = useState(
     typeof window !== "undefined" ? localStorage.getItem("petrolsaver-fuel-chosen") || "U91" : "U91"
   );
@@ -111,7 +111,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-[#9aa0a6] uppercase tracking-wider">How much fuel have you got?</span>
             <span className="text-sm font-bold font-mono text-white">
-              {rangeKm >= 150 ? "100+" : `~${rangeKm}`}km
+              ~{rangeKm}km
             </span>
           </div>
 
@@ -121,12 +121,12 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
               {/* Fill level */}
               <motion.div
                 className="absolute inset-y-0 left-0 rounded-lg"
-                animate={{ width: `${Math.min(100, (rangeKm / 150) * 100)}%` }}
+                animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
                 transition={{ type: "spring", damping: 20, stiffness: 200 }}
                 style={{
-                  background: rangeKm <= 10
+                  background: rangeKm <= 50
                     ? "linear-gradient(90deg, #ef4444, #f87171)"
-                    : rangeKm <= 30
+                    : rangeKm <= 200
                     ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
                     : "linear-gradient(90deg, #4285f4, #8ab4f8)",
                 }}
@@ -134,7 +134,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
               {/* Gauge label inside */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-[10px] font-bold text-white/80">
-                  {rangeKm <= 10 ? "⚠ Almost empty" : rangeKm <= 30 ? "Getting low" : rangeKm <= 75 ? "Some fuel left" : "Plenty of fuel"}
+                  {rangeKm <= 50 ? "⚠ Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
                 </span>
               </div>
             </div>
@@ -142,9 +142,9 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
             {/* Slider input overlaid on gauge */}
             <input
               type="range"
-              min={5}
-              max={150}
-              step={5}
+              min={10}
+              max={800}
+              step={10}
               value={rangeKm}
               onChange={(e) => setRangeKm(Number(e.target.value))}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"

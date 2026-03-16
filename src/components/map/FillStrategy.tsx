@@ -17,8 +17,9 @@ interface FillStrategyProps {
   onChangeTrip?: () => void;
 }
 
-const DEFAULT_CONSUMPTION = 8.5;
-const DEFAULT_TANK_SIZE = 50;
+const DEFAULT_CONSUMPTION = 8.5; // L/100km — average passenger car
+const DEFAULT_TANK_SIZE = 55; // litres — average Australian car tank
+const MAX_RANGE_KM = 800; // slider max — represents a full tank
 const ROAD_FACTOR = 1.35;
 const AVG_CITY_SPEED = 35;
 
@@ -99,7 +100,10 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
 
     const safeRange = rangeKm * 0.7;
     const maxRadius = Math.min(15, safeRange);
-    const fuelInTank = (rangeKm / 100) * DEFAULT_CONSUMPTION;
+    // Estimate fuel in tank as a proportion of full tank based on range slider
+    // Range slider: 10km (empty) to 800km (full) → maps to 0% to 100% of tank
+    const tankPercent = Math.min(1, rangeKm / MAX_RANGE_KM);
+    const fuelInTank = DEFAULT_TANK_SIZE * tankPercent;
     const litresFillingUp = Math.max(0, DEFAULT_TANK_SIZE - fuelInTank);
 
     // Get candidates
@@ -274,7 +278,8 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
                 // Calculate breakdown values for non-closest options
                 const fuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * 8.5 * opt.price) / 100 : 0;
                 const closestOpt = options.find((o) => o.tag === "Closest") || options[options.length - 1];
-                const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * Math.max(0, 50 - (rangeKm / 100) * 8.5)) / 100 : 0;
+                const fillLitres = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
+                const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
 
                 return (
                   <div key={opt.station.id} className={i > 0 ? "border-t border-white/5" : ""}>
@@ -400,11 +405,12 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
 
       {/* Footer: attribution + edit */}
       <div className="shrink-0 px-3 py-1.5 text-center text-[9px] text-[#5f6368] border-t border-white/5">
-        <a href="/how-it-works" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">How it works</a>
-        {" "}&middot;{" "}
+        Data from{" "}
         <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">
           Service Victoria
         </a>
+        , updated every 24hrs &middot;{" "}
+        <a href="/how-it-works" className="text-[#8ab4f8] cursor-pointer hover:text-[#aecbfa]">How it works</a>
       </div>
     </motion.div>
   );

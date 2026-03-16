@@ -46,15 +46,18 @@ For each station within the user's safe range (70% of reported remaining fuel):
    - Trip mode: `(you → station → dest) - (you → nearest → dest)`
    - Road distance = straight-line × 1.35
 
-2. **Net savings:** `(nearest_price - station_price) × litres_filling - fuel_cost_of_detour`
+2. **Litres to fill:** Range slider (10–800km) maps to tank percentage. `tank_percent = range_km / 800`. `litres_filling = 55 × (1 - tank_percent)`. At 200km range (quarter tank), filling ~41L. At 600km (three quarter), filling ~14L.
 
-3. **Ranking:** Best Value (highest net savings) → Cheapest (lowest raw price) → Closest (nearest) → Avoid (most expensive, shown as contrast)
+3. **Net savings:** `(nearest_price - station_price) × litres_filling - fuel_cost_of_detour`
+
+4. **Ranking:** Best Value (highest net savings) → Cheapest (lowest raw price) → Closest (nearest) → Avoid (most expensive, shown as contrast)
 
 ### Assumptions
 
 | Parameter | Value |
 |---|---|
-| Tank size | 50 litres |
+| Tank size | 55 litres |
+| Full tank range | 800 km (slider max) |
 | Fuel consumption | 8.5 L/100km |
 | Road factor | 1.35× straight line |
 | City speed | 35 km/h |
@@ -62,6 +65,7 @@ For each station within the user's safe range (70% of reported remaining fuel):
 | Max search radius | 15 km |
 | Min meaningful savings | $1 |
 | Bad data filter | Prices > 500c/L excluded |
+| Default range | 200 km (quarter tank) |
 
 ### Traffic Light System
 

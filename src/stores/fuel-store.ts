@@ -46,7 +46,7 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setTripMode: (mode) => set({ tripMode: mode }),
   tripDestination: null,
   setTripDestination: (dest) => set({ tripDestination: dest }),
-  rangeKm: 30,
+  rangeKm: 200,
   setRangeKm: (km) => set({ rangeKm: km }),
   recommendedStations: [],
   setRecommendedStations: (stations) => set({ recommendedStations: stations }),

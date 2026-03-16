@@ -125,8 +125,10 @@ export default function HowItWorksPage() {
               <div><span className="text-[#4285f4]">detour_km</span> = (distance_to_station - distance_to_nearest) × 2</div>
               <div className="text-[#9aa0a6] mt-3">// Fuel burned on the detour</div>
               <div><span className="text-amber-400">fuel_cost</span> = (detour_km ÷ 100) × 8.5 × station_price</div>
+              <div className="text-[#9aa0a6] mt-3">// How full is your tank (based on range slider)</div>
+              <div><span className="text-[#4285f4]">tank_percent</span> = your_range_km ÷ 800</div>
               <div className="text-[#9aa0a6] mt-3">// How many litres you&apos;re filling</div>
-              <div><span className="text-[#4285f4]">litres_filling</span> = tank_size - (your_range_km ÷ 100 × 8.5)</div>
+              <div><span className="text-[#4285f4]">litres_filling</span> = tank_size × (1 - tank_percent)</div>
               <div className="text-[#9aa0a6] mt-3">// Raw savings vs nearest station</div>
               <div><span className="text-emerald-400">price_savings</span> = (nearest_price - station_price) × litres_filling</div>
               <div className="text-[#9aa0a6] mt-3">// What you actually save</div>
@@ -229,7 +231,7 @@ export default function HowItWorksPage() {
             <div className="space-y-2">
               <div className="flex justify-between py-1.5 border-b border-white/5">
                 <span className="text-[#9aa0a6]">Tank size</span>
-                <span className="text-white font-mono">50 litres</span>
+                <span className="text-white font-mono">55 litres</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-white/5">
                 <span className="text-[#9aa0a6]">Fuel consumption</span>
@@ -247,9 +249,17 @@ export default function HowItWorksPage() {
                 <span className="text-[#9aa0a6]">Safe detour range</span>
                 <span className="text-white font-mono">70% of remaining fuel</span>
               </div>
-              <div className="flex justify-between py-1.5">
+              <div className="flex justify-between py-1.5 border-b border-white/5">
                 <span className="text-[#9aa0a6]">Max search radius</span>
                 <span className="text-white font-mono">15 km</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-white/5">
+                <span className="text-[#9aa0a6]">Full tank range</span>
+                <span className="text-white font-mono">800 km</span>
+              </div>
+              <div className="flex justify-between py-1.5">
+                <span className="text-[#9aa0a6]">Litres to fill</span>
+                <span className="text-white font-mono">tank × (1 - range/800)</span>
               </div>
             </div>
             <p className="text-[#5f6368] text-xs mt-4">
@@ -297,7 +307,7 @@ export default function HowItWorksPage() {
 
         {/* Attribution */}
         <div className="pb-8 text-center text-[10px] text-[#5f6368]">
-          Data sourced from{" "}
+          Data from{" "}
           <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>

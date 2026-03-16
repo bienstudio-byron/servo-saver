@@ -131,9 +131,9 @@ export default async function PricesIndexPage() {
 
         {/* Attribution */}
         <div className="mt-8 pb-8 text-center text-[10px] text-[#5f6368]">
-          Data sourced from{" "}
+          Data from{" "}
           <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
-            Service Victoria
+            the Victorian Government
           </a>
           {" "}&middot; Prices delayed ~24hrs
         </div>
