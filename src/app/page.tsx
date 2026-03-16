@@ -41,8 +41,10 @@ export default function HomePage() {
       return;
     }
 
-    // Always show onboarding on first load to confirm preferences
-    setShowPicker(true);
+    // Only show onboarding once per session
+    if (!sessionStorage.getItem("petrolsaver-onboarded")) {
+      setShowPicker(true);
+    }
     setMounted(true);
   }, [setSelectedFuelType]);
 
@@ -100,6 +102,7 @@ export default function HomePage() {
     localStorage.setItem(STORAGE_KEY, result.fuelType);
     setRangeKm(result.rangeKm);
     setShowPicker(false);
+    sessionStorage.setItem("petrolsaver-onboarded", "1");
 
     const seen = sessionStorage.getItem(INTERSTITIAL_KEY);
     if (!seen) {

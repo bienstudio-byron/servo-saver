@@ -154,54 +154,59 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
       return Math.max(0, station.distance - closest.distance) * 2;
     };
 
-    // Best value: best net savings considering detour cost
-    const withSavings = candidates.map((c) => {
+    // Calculate true cost for each candidate: price + detour fuel cost
+    const withTrueCost = candidates.map((c) => {
       const detourKm = calcDetour(c);
-      const fuelCost = ((detourKm / 100) * DEFAULT_CONSUMPTION * c.price) / 100;
-      const savings = ((closest.price - c.price) * litresFillingUp) / 100;
-      return { ...c, netSavings: savings - fuelCost, detourKm };
-    }).sort((a, b) => b.netSavings - a.netSavings);
-
-    const bestValue = withSavings[0];
-
-    // Deduplicate and build options list
-    const seen = new Set<string>();
-    const options: RankedOption[] = [];
-
-    const addOption = (item: typeof closest, tag: string) => {
-      if (seen.has(item.station.id)) return;
-      seen.add(item.station.id);
-      const detourKm = calcDetour(item);
       const detourMins = Math.round((detourKm / AVG_CITY_SPEED) * 60);
-      const fuelCost = ((detourKm / 100) * DEFAULT_CONSUMPTION * item.price) / 100;
-      const savings = ((closest.price - item.price) * litresFillingUp) / 100 - fuelCost;
-      options.push({
-        station: item.station, price: item.price, distance: item.distance,
-        detourKm, detourMins, netSavings: savings, tag,
-      });
-    };
+      const fuelCost = ((detourKm / 100) * DEFAULT_CONSUMPTION * c.price) / 100;
+      const savings = ((closest.price - c.price) * litresFillingUp) / 100 - fuelCost;
+      // True cost per litre: price + detour fuel cost spread across litres filling
+      const trueCostPerLitre = litresFillingUp > 0
+        ? c.price + (fuelCost / litresFillingUp) * 100
+        : c.price;
+      return { ...c, detourKm, detourMins, netSavings: savings, trueCostPerLitre };
+    });
 
-    // Lead with the best deal, not the closest
-    // 1. Best value — best net savings after detour cost
-    if (bestValue && bestValue.netSavings > 1 && bestValue.station.id !== closest.station.id) {
-      addOption(bestValue, "Best value");
-    }
-    // 2. Cheapest — lowest raw price
-    if (cheapest.station.id !== closest.station.id && cheapest.price < closest.price) {
-      addOption(cheapest, "Cheapest");
-    }
-    // 3. Closest — nearest, convenience fallback
-    addOption(closest, "Closest");
+    let options: RankedOption[];
 
-    // Show most expensive nearby as contrast — "this is what you'd pay"
-    const mostExpensive = [...candidates].filter((c) => c.price < 500).sort((a, b) => b.price - a.price)[0];
-    if (mostExpensive && !seen.has(mostExpensive.station.id) && mostExpensive.price > closest.price && mostExpensive.price - closest.price > 2) {
-      const avoidDetour = calcDetour(mostExpensive);
-      const priceDiff = ((mostExpensive.price - (cheapest?.price ?? closest.price)) * litresFillingUp) / 100;
-      options.push({
-        station: mostExpensive.station, price: mostExpensive.price, distance: mostExpensive.distance,
-        detourKm: avoidDetour, detourMins: Math.round((avoidDetour / AVG_CITY_SPEED) * 60), netSavings: -priceDiff, tag: "Avoid",
-      });
+    if (tripMode === "trip" && tripDestination) {
+      // Trip mode: curated list (best value, cheapest, closest)
+      const sorted = [...withTrueCost].sort((a, b) => b.netSavings - a.netSavings);
+      const bestValue = sorted[0];
+      const seen = new Set<string>();
+      options = [];
+
+      const addOption = (item: typeof bestValue, tag: string) => {
+        if (seen.has(item.station.id)) return;
+        seen.add(item.station.id);
+        options.push({
+          station: item.station, price: item.price, distance: item.distance,
+          detourKm: item.detourKm, detourMins: item.detourMins, netSavings: item.netSavings, tag,
+        });
+      };
+
+      if (bestValue && bestValue.netSavings > 1 && bestValue.station.id !== closest.station.id) {
+        addOption(bestValue, "Best value");
+      }
+      if (cheapest.station.id !== closest.station.id && cheapest.price < closest.price) {
+        const c = withTrueCost.find((x) => x.station.id === cheapest.station.id)!;
+        addOption(c, "Cheapest");
+      }
+      const c = withTrueCost.find((x) => x.station.id === closest.station.id)!;
+      addOption(c, "Closest");
+    } else {
+      // Nearby mode: show ALL stations within radius, sorted by true cost
+      options = [...withTrueCost]
+        .sort((a, b) => a.trueCostPerLitre - b.trueCostPerLitre)
+        .map((item, i) => ({
+          station: item.station,
+          price: item.price,
+          distance: item.distance,
+          detourKm: item.detourKm,
+          detourMins: item.detourMins,
+          netSavings: item.netSavings,
+          tag: i === 0 ? "Best value" : item.station.id === closest.station.id ? "Closest" : "",
+        }));
     }
 
     return { options, isUrgent };
@@ -353,7 +358,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                       <BrandLogo brandName={opt.station.brand?.name ?? "?"} size={isFirst ? "md" : "sm"} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className={`text-[10px] font-bold uppercase ${isAvoid ? "text-[var(--tier-exp)]" : isFirst ? tierColor : "text-[#5f6368]"}`}>{opt.tag}</span>
+                          {opt.tag && <span className={`text-[10px] font-bold uppercase ${isAvoid ? "text-[var(--tier-exp)]" : isFirst ? tierColor : "text-[#5f6368]"}`}>{opt.tag}</span>}
                           {isAvoid && opt.netSavings < -0.5 && (
                             <span className="text-[9px] bg-red-500/10 text-[var(--tier-exp)] px-1 py-0.5 rounded font-bold">
                               +${Math.abs(opt.netSavings).toFixed(2)} more
