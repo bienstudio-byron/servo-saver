@@ -328,9 +328,6 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
                         isAvoid ? "opacity-40 cursor-default" : "hover:bg-white/5 active:bg-white/10 cursor-pointer"
                       }`}
                     >
-                      <span className={`text-[11px] font-bold w-4 text-center shrink-0 ${isAvoid ? "text-red-400" : isFirst ? tierColor : "text-[#5f6368]"}`}>
-                        {isAvoid ? "✕" : i + 1}
-                      </span>
                       <BrandLogo brandName={opt.station.brand?.name ?? "?"} size={isFirst ? "md" : "sm"} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">

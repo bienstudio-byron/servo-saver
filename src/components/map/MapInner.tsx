@@ -47,8 +47,8 @@ const TIER_STYLES: Record<PriceTier, { bg: string; border: string; text: string 
 // Icon cache to avoid rebuilding identical icons
 const iconCache = new Map<string, L.DivIcon>();
 
-function getPillIcon(brandName: string, price: number, tier: PriceTier, active = false, rank?: number): L.DivIcon {
-  const key = `${brandName}|${price.toFixed(1)}|${tier}|${active}|${rank ?? ""}`;
+function getPillIcon(brandName: string, price: number, tier: PriceTier, active = false): L.DivIcon {
+  const key = `${brandName}|${price.toFixed(1)}|${tier}|${active}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
@@ -60,12 +60,8 @@ function getPillIcon(brandName: string, price: number, tier: PriceTier, active =
     ? `<img src="${logoUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:contain;background:#fff;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'" /><div style="display:none;width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`
     : `<div style="width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`;
 
-  const rankBadge = rank != null
-    ? `<div style="position:absolute;top:-6px;left:-6px;width:16px;height:16px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#1a1a1a;border:2px solid #1a1a1a;z-index:1">${rank}</div>`
-    : "";
-
   const icon = L.divIcon({
-    html: `<div class="${pillClass}" style="position:relative;display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${rankBadge}${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
+    html: `<div class="${pillClass}" style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
     className: "",
     iconSize: [0, 0],
     iconAnchor: [0, 0],
@@ -301,8 +297,6 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
         {/* Nearby mode: show all visible pins */}
         {visibleMarkers.map(({ station, price }) => {
           const isActive = selectedStation?.id === station.id || recommendedStations.some((r) => r.id === station.id);
-          const recIndex = recommendedStations.findIndex((r) => r.id === station.id);
-          const rank = recIndex >= 0 ? recIndex + 1 : undefined;
           return (
             <Marker
               key={station.id}
@@ -311,8 +305,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
                 station.brand?.name ?? "?",
                 price,
                 getPriceTier(price, thresholds),
-                isActive,
-                rank
+                isActive
               )}
               zIndexOffset={isActive ? 1000 : 0}
               eventHandlers={{ click: () => setSelectedStation(station) }}
@@ -346,7 +339,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
               <Marker
                 key={`rec-${rs.id}`}
                 position={[rs.latitude, rs.longitude]}
-                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true, i + 1)}
+                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true)}
                 zIndexOffset={1000}
                 eventHandlers={{ click: () => setSelectedStation(rs) }}
               />
