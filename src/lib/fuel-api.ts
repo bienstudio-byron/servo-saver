@@ -107,7 +107,14 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
       longitude: detail.fuelStation.location.longitude,
       brand: brandMap.get(detail.fuelStation.brandId) || null,
       prices: detail.fuelPrices
-        .filter((p) => p.isAvailable && p.price != null && p.price > 0 && p.price < 500)
+        .filter((p) => {
+          if (!p.isAvailable || p.price == null || p.price <= 0 || p.price >= 500) return false;
+          // Filter stale prices — exclude anything older than 48 hours
+          const ageMs = Date.now() - new Date(p.updatedAt).getTime();
+          const maxAgeMs = 48 * 60 * 60 * 1000;
+          if (ageMs > maxAgeMs) return false;
+          return true;
+        })
         .map((p) => ({
           fuelType: p.fuelType,
           price: p.price as number,
@@ -116,8 +123,11 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
         })),
     }));
 
-    cache.merged = { data: merged, timestamp: Date.now() };
-    return merged;
+    // Remove stations with no valid prices after filtering
+    const filtered = merged.filter((s) => s.prices.length > 0);
+
+    cache.merged = { data: filtered, timestamp: Date.now() };
+    return filtered;
   } catch (error) {
     // Stale-while-revalidate: serve last cache if API fails
     if (isStale(cache.merged)) {

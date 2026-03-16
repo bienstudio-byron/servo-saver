@@ -65,6 +65,7 @@ For each station within the user's safe range (70% of reported remaining fuel):
 | Max search radius | 15 km |
 | Min meaningful savings | $1 |
 | Bad data filter | Prices > 500c/L excluded |
+| Stale data filter | Prices > 48hrs old excluded |
 | Default range | 200 km (quarter tank) |
 
 ### Traffic Light System
