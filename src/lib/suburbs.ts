@@ -23,17 +23,18 @@ export function slugToDisplay(slug: string): string {
     .join(" ");
 }
 
-/** Group stations by suburb */
+/** Group stations by suburb — normalised to uppercase to prevent duplicates */
 export function groupBySuburb(
   stations: StationWithPrices[]
 ): Map<string, StationWithPrices[]> {
   const map = new Map<string, StationWithPrices[]>();
   for (const station of stations) {
-    const suburb = extractSuburb(station.address);
-    if (!suburb) continue;
-    const existing = map.get(suburb) || [];
+    const raw = extractSuburb(station.address);
+    if (!raw) continue;
+    const normalised = raw.toUpperCase();
+    const existing = map.get(normalised) || [];
     existing.push(station);
-    map.set(suburb, existing);
+    map.set(normalised, existing);
   }
   return map;
 }
