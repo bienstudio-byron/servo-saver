@@ -67,7 +67,13 @@ export default function SuburbPageClient({ stations }: Props) {
                   </span>
                   <BrandLogo brandName={station.brand?.name ?? "?"} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-white truncate">{station.name}</div>
+                    <a
+                      href={`/station/${encodeURIComponent(station.id)}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-medium text-white truncate block hover:text-[#8ab4f8] transition-colors"
+                    >
+                      {station.name}
+                    </a>
                     <div className="text-[11px] text-[#9aa0a6] truncate">
                       {station.brand?.name ?? "Unknown"} &middot; {station.address}
                     </div>
