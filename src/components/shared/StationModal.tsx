@@ -223,7 +223,7 @@ export default function StationModal({
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`}
             target="_blank" rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors mb-3"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors mb-3"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

@@ -422,7 +422,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
                                 href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2 rounded-xl text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

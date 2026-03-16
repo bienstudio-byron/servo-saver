@@ -7,9 +7,10 @@
   --card: #242424;
   --card-hover: #2e2e2e;
   --border: #333333;
-  --accent: #4285f4;
-  --accent-hover: #5a9bf6;
-  --accent-text: #8ab4f8;
+  --accent: #ffffff;
+  --accent-hover: #e8e6e3;
+  --accent-text: #e8e6e3;
+  --accent-contrast: #1a1a1a;
   --muted: #9aa0a6;
   --subtle: rgba(255,255,255,0.05);
   --subtle-hover: rgba(255,255,255,0.08);
@@ -48,6 +49,7 @@
   --accent: #1a1a1a;
   --accent-hover: #3c4043;
   --accent-text: #1a1a1a;
+  --accent-contrast: #ffffff;
   --muted: #5f6368;
   --subtle: rgba(0,0,0,0.06);
   --subtle-hover: rgba(0,0,0,0.08);
