@@ -90,17 +90,12 @@ function UserLocationMarker() {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const map = useMap();
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
+  const userLocation = useFuelStore((s) => s.userLocation);
 
-  useEffect(() => {
-    const fallbackToMelbourne = () => {
-      // Default to Melbourne CBD if location unavailable
-      const melb: [number, number] = [-37.8136, 144.9631];
-      setUserLocation({ lat: melb[0], lng: melb[1] });
-      map.flyTo(melb, 13, { duration: 1.2 });
-    };
-
+  const requestLocation = useCallback(() => {
     if (!("geolocation" in navigator)) {
-      fallbackToMelbourne();
+      setUserLocation({ lat: -37.8136, lng: 144.9631 });
+      map.flyTo([-37.8136, 144.9631], 13, { duration: 1.2 });
       return;
     }
 
@@ -121,12 +116,38 @@ function UserLocationMarker() {
         }
       },
       () => {
-        // Location denied or failed — fall back to Melbourne CBD
-        fallbackToMelbourne();
+        // Only fallback to Melbourne if we don't already have a location
+        if (!position) {
+          setUserLocation({ lat: -37.8136, lng: 144.9631 });
+          map.flyTo([-37.8136, 144.9631], 13, { duration: 1.2 });
+        }
       },
-      { enableHighAccuracy: false, timeout: 5000 }
+      { enableHighAccuracy: false, timeout: 15000 }
     );
-  }, [map, setUserLocation]);
+  }, [map, setUserLocation, position]);
+
+  // Initial request
+  useEffect(() => {
+    requestLocation();
+  }, []);
+
+  // Retry after 3s if we still don't have a real position (permission prompt may have delayed)
+  useEffect(() => {
+    if (position) return;
+    const retry = setTimeout(() => {
+      if (!position) requestLocation();
+    }, 3000);
+    return () => clearTimeout(retry);
+  }, [position]);
+
+  // Retry again after 8s as final attempt
+  useEffect(() => {
+    if (position) return;
+    const retry = setTimeout(() => {
+      if (!position) requestLocation();
+    }, 8000);
+    return () => clearTimeout(retry);
+  }, [position]);
 
   if (!position) return null;
   return <Marker position={position} icon={userLocationIcon} interactive={false} zIndexOffset={2000} />;
