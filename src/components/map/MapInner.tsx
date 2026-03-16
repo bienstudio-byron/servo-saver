@@ -21,6 +21,7 @@ import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import LocationButton from "./LocationButton";
 import AreaPriceList from "./AreaPriceList";
+import FillStrategy from "./FillStrategy";
 
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 
@@ -28,6 +29,7 @@ interface MapInnerProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
+  onChangeTrip?: () => void;
 }
 
 const MAX_VISIBLE_MARKERS = 80;
@@ -80,6 +82,7 @@ const userLocationIcon = L.divIcon({
 function UserLocationMarker() {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const map = useMap();
+  const setUserLocation = useFuelStore((s) => s.setUserLocation);
 
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
@@ -87,6 +90,7 @@ function UserLocationMarker() {
       (pos) => {
         const latlng: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setPosition(latlng);
+        setUserLocation({ lat: latlng[0], lng: latlng[1] });
         // Offset center upward on mobile so dot isn't behind the panel
         const isMobile = window.innerWidth < 768;
         const targetZoom = 13;
@@ -158,7 +162,7 @@ function FlyToTarget() {
   return null;
 }
 
-export default function MapInner({ stations, selectedFuelType, loading }: MapInnerProps) {
+export default function MapInner({ stations, selectedFuelType, loading, onChangeTrip }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
@@ -242,7 +246,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         </div>
       )}
 
-      <AreaPriceList stations={visibleStations} selectedFuelType={selectedFuelType} loading={loading} />
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onChangeTrip={onChangeTrip} />
     </>
   );
 }

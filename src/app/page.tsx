@@ -18,16 +18,21 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [pickerStep, setPickerStep] = useState<1 | 2 | 3>(1);
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
+  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations, setTripMode, setTripDestination } = useFuelStore();
 
   // Hydration-safe: wait for mount before reading localStorage
+  // Returning users skip to step 3, new users see full onboarding
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       setSelectedFuelType(stored);
+      setPickerStep(3);
+      setShowPicker(true);
     } else {
+      setPickerStep(1);
       setShowPicker(true);
     }
     setMounted(true);
@@ -55,12 +60,19 @@ export default function HomePage() {
     [stations, selectedFuelType]
   );
 
-  function handleFuelPick(fuelType: string) {
-    setSelectedFuelType(fuelType);
-    localStorage.setItem(STORAGE_KEY, fuelType);
+  function handleOnboardingComplete(result: {
+    fuelType: string;
+    mode: "nearby" | "trip";
+    destination?: { lat: number; lng: number; name: string };
+  }) {
+    setSelectedFuelType(result.fuelType);
+    localStorage.setItem(STORAGE_KEY, result.fuelType);
+    setTripMode(result.mode);
+    if (result.destination) {
+      setTripDestination(result.destination);
+    }
     setShowPicker(false);
 
-    // Show interstitial ad once per session after first fuel pick
     const seen = sessionStorage.getItem(INTERSTITIAL_KEY);
     if (!seen) {
       setShowInterstitial(true);
@@ -92,6 +104,7 @@ export default function HomePage() {
           stations={mounted ? filteredStations : []}
           selectedFuelType={selectedFuelType}
           loading={loading || !mounted}
+          onChangeTrip={() => { setPickerStep(2); setShowPicker(true); }}
         />
       </div>
 
@@ -114,7 +127,12 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {showPicker && <FuelPickerOverlay onSelect={handleFuelPick} />}
+      {showPicker && (
+        <FuelPickerOverlay
+          onComplete={handleOnboardingComplete}
+          initialStep={pickerStep}
+        />
+      )}
 
       {showInterstitial && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/70 backdrop-blur-md">

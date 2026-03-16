@@ -17,6 +17,10 @@ interface FuelStore {
   setFlyToTarget: (target: { lat: number; lng: number; zoom: number } | null) => void;
   allStations: StationWithPrices[];
   setAllStations: (stations: StationWithPrices[]) => void;
+  tripMode: "nearby" | "trip";
+  setTripMode: (mode: "nearby" | "trip") => void;
+  tripDestination: { lat: number; lng: number; name: string } | null;
+  setTripDestination: (dest: { lat: number; lng: number; name: string } | null) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -34,4 +38,8 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setFlyToTarget: (target) => set({ flyToTarget: target }),
   allStations: [],
   setAllStations: (stations) => set({ allStations: stations }),
+  tripMode: "nearby",
+  setTripMode: (mode) => set({ tripMode: mode }),
+  tripDestination: null,
+  setTripDestination: (dest) => set({ tripDestination: dest }),
 }));

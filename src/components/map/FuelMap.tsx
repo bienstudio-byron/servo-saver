@@ -19,15 +19,16 @@ interface FuelMapProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
+  onChangeTrip?: () => void;
 }
 
-export default function FuelMap({ stations, selectedFuelType, loading }: FuelMapProps) {
-  // Always render the map — pass empty stations while loading so map tiles appear immediately
+export default function FuelMap({ stations, selectedFuelType, loading, onChangeTrip }: FuelMapProps) {
   return (
     <MapInner
       stations={loading ? [] : stations}
       selectedFuelType={selectedFuelType}
       loading={loading}
+      onChangeTrip={onChangeTrip}
     />
   );
 }
