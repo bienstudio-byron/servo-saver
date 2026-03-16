@@ -21,10 +21,11 @@ export default function HomePage() {
   const [pickerStep, setPickerStep] = useState<1 | 2 | 3>(1);
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations, setTripMode, setTripDestination } = useFuelStore();
+  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
+  const setTripMode = useFuelStore((s) => s.setTripMode);
+  const setTripDestination = useFuelStore((s) => s.setTripDestination);
+  const setRangeKm = useFuelStore((s) => s.setRangeKm);
 
-  // Hydration-safe: wait for mount before reading localStorage
-  // Returning users skip to step 3, new users see full onboarding
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -63,11 +64,13 @@ export default function HomePage() {
   function handleOnboardingComplete(result: {
     fuelType: string;
     mode: "nearby" | "trip";
+    rangeKm: number;
     destination?: { lat: number; lng: number; name: string };
   }) {
     setSelectedFuelType(result.fuelType);
     localStorage.setItem(STORAGE_KEY, result.fuelType);
     setTripMode(result.mode);
+    setRangeKm(result.rangeKm);
     if (result.destination) {
       setTripDestination(result.destination);
     }
@@ -83,7 +86,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+      <div className="flex items-center justify-center h-screen bg-[#1a1a1a]">
         <div className="text-center">
           <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -99,22 +102,34 @@ export default function HomePage() {
 
   return (
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
-      <div className="relative h-[calc(100vh-3rem)] overflow-hidden">
-        <FuelMap
-          stations={mounted ? filteredStations : []}
-          selectedFuelType={selectedFuelType}
-          loading={loading || !mounted}
-          onChangeTrip={() => { setPickerStep(2); setShowPicker(true); }}
-        />
-      </div>
+      {/* Fixed full-screen layout */}
+      <div className="fixed inset-0 flex flex-col">
+        {/* Map fills available space */}
+        <div className="relative flex-1 min-h-0">
+          <FuelMap
+            stations={mounted ? filteredStations : []}
+            selectedFuelType={selectedFuelType}
+            loading={loading || !mounted}
+            onChangeTrip={() => { setPickerStep(2); setShowPicker(true); }}
+          />
+        </div>
 
-      {/* Global ad banner below map — desktop only */}
-      <div className="hidden md:block bg-[#1a1a1a] border-t border-white/5 px-4 py-3">
-        <div className="max-w-5xl mx-auto">
-          <AdSlot slot="global-banner" format="horizontal" />
+        {/* Bottom bar: ad + attribution */}
+        <div className="shrink-0 bg-[#242424] border-t border-white/5">
+          <div className="px-2 py-1.5">
+            <AdSlot slot="bottom-banner" format="horizontal" />
+          </div>
+          <div className="px-3 py-1 text-center text-[9px] text-[#5f6368] border-t border-white/5">
+            Data sourced from{" "}
+            <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+              Service Victoria
+            </a>
+            {" "}&middot; Prices delayed ~24hrs
+          </div>
         </div>
       </div>
 
+      {/* Overlays — all fixed, completely outside layout flow */}
       <AnimatePresence>
         {selectedStation && (
           <StationModal

@@ -36,12 +36,23 @@ body {
 }
 
 .fuel-pill {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.3s ease;
 }
 .fuel-pill:hover {
   transform: translate(-50%, -50%) scale(1.12);
   box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
   z-index: 1000 !important;
+}
+
+/* Fade other pins when one is selected — opaque, not invisible */
+.pins-faded .fuel-pill {
+  opacity: 0.35 !important;
+}
+.pins-faded .fuel-pill-active {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1.15);
+  z-index: 1001 !important;
+  box-shadow: 0 0 12px rgba(66, 133, 244, 0.4) !important;
 }
 
 @keyframes pulse-ring {

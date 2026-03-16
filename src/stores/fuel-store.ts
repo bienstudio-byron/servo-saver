@@ -21,6 +21,10 @@ interface FuelStore {
   setTripMode: (mode: "nearby" | "trip") => void;
   tripDestination: { lat: number; lng: number; name: string } | null;
   setTripDestination: (dest: { lat: number; lng: number; name: string } | null) => void;
+  rangeKm: number;
+  setRangeKm: (km: number) => void;
+  recommendedStations: StationWithPrices[];
+  setRecommendedStations: (stations: StationWithPrices[]) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -42,4 +46,8 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setTripMode: (mode) => set({ tripMode: mode }),
   tripDestination: null,
   setTripDestination: (dest) => set({ tripDestination: dest }),
+  rangeKm: 30,
+  setRangeKm: (km) => set({ rangeKm: km }),
+  recommendedStations: [],
+  setRecommendedStations: (stations) => set({ recommendedStations: stations }),
 }));

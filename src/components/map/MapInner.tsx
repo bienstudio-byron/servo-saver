@@ -45,20 +45,21 @@ const TIER_STYLES: Record<PriceTier, { bg: string; border: string; text: string 
 // Icon cache to avoid rebuilding identical icons
 const iconCache = new Map<string, L.DivIcon>();
 
-function getPillIcon(brandName: string, price: number, tier: PriceTier): L.DivIcon {
-  const key = `${brandName}|${price.toFixed(1)}|${tier}`;
+function getPillIcon(brandName: string, price: number, tier: PriceTier, active = false): L.DivIcon {
+  const key = `${brandName}|${price.toFixed(1)}|${tier}|${active}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
   const s = TIER_STYLES[tier];
   const logoUrl = getBrandLogoUrl(brandName);
+  const pillClass = active ? "fuel-pill fuel-pill-active" : "fuel-pill";
 
   const logoHtml = logoUrl
     ? `<img src="${logoUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:contain;background:#fff;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'" /><div style="display:none;width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`
     : `<div style="width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`;
 
   const icon = L.divIcon({
-    html: `<div class="fuel-pill" style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
+    html: `<div class="${pillClass}" style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
     className: "",
     iconSize: [0, 0],
     iconAnchor: [0, 0],
@@ -162,10 +163,41 @@ function FlyToTarget() {
   return null;
 }
 
+function MapResizeFix() {
+  const map = useMap();
+  const selected = useFuelStore((s) => s.selectedStation);
+  useEffect(() => {
+    // When modal opens/closes, Leaflet may need to recalculate
+    const t = setTimeout(() => map.invalidateSize(), 100);
+    return () => clearTimeout(t);
+  }, [selected, map]);
+  return null;
+}
+
+function PinFader() {
+  const map = useMap();
+  const selected = useFuelStore((s) => s.selectedStation);
+  const recommended = useFuelStore((s) => s.recommendedStations);
+
+  useEffect(() => {
+    const container = map.getContainer();
+    if (selected || recommended.length > 0) {
+      container.classList.add("pins-faded");
+    } else {
+      container.classList.remove("pins-faded");
+    }
+    return () => container.classList.remove("pins-faded");
+  }, [selected, recommended, map]);
+
+  return null;
+}
+
 export default function MapInner({ stations, selectedFuelType, loading, onChangeTrip }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
   const thresholds = usePriceThresholds();
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
+  const selectedStation = useFuelStore((s) => s.selectedStation);
+  const tripMode = useFuelStore((s) => s.tripMode);
 
   const handleViewport = useCallback((state: ViewportState) => {
     setViewport(state);
@@ -181,25 +213,23 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
       .filter((x): x is { station: StationWithPrices; price: number } => x !== null);
   }, [stations, selectedFuelType]);
 
+  const tripDestination = useFuelStore((s) => s.tripDestination);
+  const recommendedStations = useFuelStore((s) => s.recommendedStations);
+
+  // Nearby mode: show all pins when zoomed in. Trip mode: only show recommended + destination
+  const showPins = tripMode === "nearby" && viewport.zoom >= MIN_ZOOM_FOR_PILLS;
+
   // Filter to viewport, cap count, sorted cheapest first
   const visibleMarkers = useMemo(() => {
-    const { bounds, zoom } = viewport;
-    if (!bounds || zoom < MIN_ZOOM_FOR_PILLS) return [];
+    if (!showPins) return [];
+    const { bounds } = viewport;
+    if (!bounds) return [];
 
     return stationsWithPrice
       .filter((x) => bounds.contains([x.station.latitude, x.station.longitude]))
       .sort((a, b) => a.price - b.price)
       .slice(0, MAX_VISIBLE_MARKERS);
-  }, [stationsWithPrice, viewport]);
-
-  // Visible stations for the area price list (all in viewport, not capped)
-  const visibleStations = useMemo(() => {
-    const { bounds } = viewport;
-    if (!bounds) return [];
-    return stations.filter((s) => bounds.contains([s.latitude, s.longitude]));
-  }, [stations, viewport]);
-
-  const showZoomPrompt = viewport.zoom < MIN_ZOOM_FOR_PILLS && !loading && stations.length > 0;
+  }, [stationsWithPrice, viewport, showPins]);
 
   return (
     <>
@@ -216,35 +246,78 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
+        <MapResizeFix />
+        <PinFader />
         <UserLocationMarker />
         <LocationButton />
         <FlyToStation />
         <FlyToTarget />
         <ViewportTracker onChange={handleViewport} />
 
-        {visibleMarkers.map(({ station, price }) => (
+        {/* Nearby mode: show all visible pins */}
+        {visibleMarkers.map(({ station, price }) => {
+          const isActive = selectedStation?.id === station.id || recommendedStations.some((r) => r.id === station.id);
+          return (
+            <Marker
+              key={station.id}
+              position={[station.latitude, station.longitude]}
+              icon={getPillIcon(
+                station.brand?.name ?? "?",
+                price,
+                getPriceTier(price, thresholds),
+                isActive
+              )}
+              zIndexOffset={isActive ? 1000 : 0}
+              eventHandlers={{ click: () => setSelectedStation(station) }}
+            />
+          );
+        })}
+
+        {/* Trip mode: show destination pin */}
+        {tripMode === "trip" && tripDestination && (
           <Marker
-            key={station.id}
-            position={[station.latitude, station.longitude]}
-            icon={getPillIcon(
-              station.brand?.name ?? "?",
-              price,
-              getPriceTier(price, thresholds)
-            )}
-            eventHandlers={{ click: () => setSelectedStation(station) }}
+            position={[tripDestination.lat, tripDestination.lng]}
+            icon={L.divIcon({
+              html: `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;border-radius:4px;background:rgba(251,188,4,0.2);border:1.5px solid rgba(251,188,4,0.5);backdrop-filter:blur(8px);box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:default;white-space:nowrap;transform:translate(-50%,-50%);width:fit-content;">
+                <div style="width:8px;height:8px;border-radius:50%;background:#fbbc04;flex-shrink:0"></div>
+                <span style="font-size:11px;font-weight:700;color:#fbbc04;line-height:1">${tripDestination.name}</span>
+              </div>`,
+              className: "",
+              iconSize: [0, 0],
+              iconAnchor: [0, 0],
+            })}
+            interactive={false}
           />
-        ))}
+        )}
+
+        {/* Show recommended station pins — always visible, highlighted */}
+        {recommendedStations
+          .filter((rs) => !visibleMarkers.some((m) => m.station.id === rs.id))
+          .map((rs) => {
+            const price = rs.prices.find((p) => p.fuelType === selectedFuelType)?.price;
+            return (
+              <Marker
+                key={`rec-${rs.id}`}
+                position={[rs.latitude, rs.longitude]}
+                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true)}
+                zIndexOffset={1000}
+                eventHandlers={{ click: () => setSelectedStation(rs) }}
+              />
+            );
+          })
+        }
       </MapContainer>
 
-      {/* Zoom prompt */}
-      {showZoomPrompt && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#1a1a1a]/90 backdrop-blur-xl border border-white/10 rounded-xl px-4 py-2.5 shadow-xl flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[#8ab4f8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+      {/* Logo watermark */}
+      <div className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 bg-white rounded-lg px-2 py-1.5 shadow-lg">
+        <div className="h-5 w-5 rounded-md bg-[#4285f4] flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <span className="text-sm text-[#dadce0]">Zoom in to see fuel prices</span>
         </div>
-      )}
+        <span className="text-xs font-bold text-[#1a1a1a] hidden sm:inline">PetrolSaver</span>
+      </div>
+
 
       <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onChangeTrip={onChangeTrip} />
     </>

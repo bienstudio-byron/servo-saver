@@ -107,7 +107,7 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
       longitude: detail.fuelStation.location.longitude,
       brand: brandMap.get(detail.fuelStation.brandId) || null,
       prices: detail.fuelPrices
-        .filter((p) => p.isAvailable && p.price != null)
+        .filter((p) => p.isAvailable && p.price != null && p.price > 0 && p.price < 500)
         .map((p) => ({
           fuelType: p.fuelType,
           price: p.price as number,
