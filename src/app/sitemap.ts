@@ -29,5 +29,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     ...suburbPages,
+    ...stations.map((s) => ({
+      url: `https://petrolsaver.live/station/${encodeURIComponent(s.id)}`,
+      lastModified: new Date(),
+      changeFrequency: "hourly" as const,
+      priority: 0.6,
+    })),
   ];
 }

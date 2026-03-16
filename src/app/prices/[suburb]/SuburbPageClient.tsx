@@ -119,10 +119,10 @@ export default function SuburbPageClient({ stations }: Props) {
 
                         {/* CTA */}
                         <a
-                          href="/"
+                          href={`/station/${encodeURIComponent(station.id)}`}
                           className="w-full inline-flex items-center justify-center gap-1.5 bg-[#4285f4] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#5a9bf6] transition-colors cursor-pointer"
                         >
-                          View on map
+                          View station details
                         </a>
                       </div>
                     </motion.div>
