@@ -62,6 +62,10 @@ body {
   100% { transform: scale(3.5); opacity: 0; }
 }
 
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Pointer cursor on all interactive elements */
 a, button, [role="button"], select, summary {
   cursor: pointer;

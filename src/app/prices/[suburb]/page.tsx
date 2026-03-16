@@ -132,13 +132,13 @@ export default async function SuburbPage({ params }: Props) {
           <AdSlot slot="suburb-page" format="horizontal" />
         </div>
 
-        {/* Fuel type cards */}
-        <div className="grid gap-3 md:grid-cols-2 mb-8">
+        {/* Fuel type cards — horizontal scroll on mobile */}
+        <div className="flex gap-3 overflow-x-auto pb-2 mb-8 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible scrollbar-hide">
           {fuelSummaries.map((fuel) => {
             const diff = fuel.stateAverage - fuel.average;
             const isCheaper = diff > 0;
             return (
-              <div key={fuel.fuelType} className="rounded-xl border border-white/10 bg-[#242424] p-4">
+              <div key={fuel.fuelType} className="rounded-xl border border-white/10 bg-[#242424] p-4 min-w-[260px] md:min-w-0 snap-start shrink-0 md:shrink">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-sm font-bold text-white uppercase tracking-wider">{fuel.label}</h2>
                   <span className="text-[10px] text-[#5f6368]">{fuel.stationCount} station{fuel.stationCount !== 1 ? "s" : ""}</span>
