@@ -185,10 +185,10 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
   // Store all recommended stations
   useEffect(() => {
     if (options.length > 0) {
-      setRecommendedStations(options.map((o) => o.station));
+      setRecommendedStations(options.filter((o) => o.tag !== "Avoid").map((o) => o.station));
 
       if (tripMode === "trip" && tripDestination && userLocation) {
-        const allPoints = options.map((o) => o.station);
+        const allPoints = options.filter((o) => o.tag !== "Avoid").map((o) => o.station);
         const lats = [userLocation.lat, ...allPoints.map((s) => s.latitude), tripDestination.lat];
         const lngs = [userLocation.lng, ...allPoints.map((s) => s.longitude), tripDestination.lng];
         const latSpan = Math.max(...lats) - Math.min(...lats) + 0.04;
@@ -292,7 +292,13 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip 
 
                     {/* Row — click to expand */}
                     <button
-                      onClick={() => !isAvoid && setExpandedIndex(isExpanded ? null : i)}
+                      onClick={() => {
+                        if (isAvoid) return;
+                        setExpandedIndex(isExpanded ? null : i);
+                        if (!isExpanded) {
+                          setFlyToTarget({ lat: opt.station.latitude, lng: opt.station.longitude, zoom: 15 });
+                        }
+                      }}
                       className={`w-full flex items-center gap-2 px-3 py-2 text-left transition-colors ${
                         isAvoid ? "opacity-40 cursor-default" : "hover:bg-white/5 active:bg-white/10 cursor-pointer"
                       }`}
