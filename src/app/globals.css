@@ -37,17 +37,17 @@
 /* Light theme */
 .light {
   --background: #f8f9fa;
-  --foreground: #1a1a1a;
+  --foreground: #202124;
   --card: #ffffff;
   --card-hover: #f1f3f4;
   --border: #dadce0;
   --accent: #4285f4;
   --accent-hover: #3367d6;
   --muted: #5f6368;
-  --subtle: rgba(0,0,0,0.04);
-  --subtle-hover: rgba(0,0,0,0.06);
-  --subtle-border: rgba(0,0,0,0.1);
-  --shadow: rgba(0,0,0,0.12);
+  --subtle: rgba(0,0,0,0.06);
+  --subtle-hover: rgba(0,0,0,0.08);
+  --subtle-border: rgba(0,0,0,0.12);
+  --shadow: rgba(0,0,0,0.15);
   --pill-bg-cheap: #ffffff;
   --pill-border-cheap: rgba(16,185,129,0.6);
   --pill-text-cheap: #059669;
