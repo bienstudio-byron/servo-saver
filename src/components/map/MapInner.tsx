@@ -430,7 +430,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onOpenAl
       </div>
 
 
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenSettings={onOpenSettings} />
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} onOpenSettings={onOpenSettings} loading={loading} />
     </>
   );
 }

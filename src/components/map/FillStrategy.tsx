@@ -15,6 +15,7 @@ import { getFlaggedStations } from "@/lib/flagged-stations";
 interface FillStrategyProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
+  loading?: boolean;
 
   onOpenSettings?: () => void;
 }
@@ -35,7 +36,7 @@ interface RankedOption {
   tag: string; // "Closest" | "Best value" | "Cheapest"
 }
 
-export default function FillStrategy({ stations, selectedFuelType, onOpenSettings }: FillStrategyProps) {
+export default function FillStrategy({ stations, selectedFuelType, onOpenSettings, loading }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -285,14 +286,14 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenSetting
       {/* Options list — hidden when minimised on mobile */}
       <div className={`overflow-y-auto overflow-x-hidden flex-1 min-h-0 ${minimised ? "hidden md:block" : ""}`}>
         <AnimatePresence mode="wait">
-          {!userLocation ? (
+          {!userLocation || loading ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 flex items-center gap-2.5">
               <div className="h-4 w-4 rounded-full border-2 border-[#4285f4] border-t-transparent animate-spin shrink-0" />
-              <span className="text-xs text-[#9aa0a6]">Finding best deals...</span>
+              <span className="text-xs text-[#9aa0a6]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>
             </motion.div>
           ) : options.length === 0 ? (
             <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 text-xs text-[#9aa0a6] text-center">
-              No stations found nearby
+              No stations found for {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} nearby
             </motion.div>
           ) : isUrgent ? (
             <motion.div key="urgent" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
