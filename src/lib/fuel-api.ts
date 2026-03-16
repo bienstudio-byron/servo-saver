@@ -124,33 +124,7 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
     }));
 
     // Remove stations with no valid prices after filtering
-    const withPrices = merged.filter((s) => s.prices.length > 0);
-
-    // Outlier detection: remove prices that are suspiciously low (>20% below median for that fuel type)
-    // This catches closed stations with stale low prices
-    const medianByType = new Map<string, number>();
-    const pricesByType = new Map<string, number[]>();
-    for (const s of withPrices) {
-      for (const p of s.prices) {
-        const arr = pricesByType.get(p.fuelType) || [];
-        arr.push(p.price);
-        pricesByType.set(p.fuelType, arr);
-      }
-    }
-    for (const [fuelType, prices] of pricesByType) {
-      const sorted = [...prices].sort((a, b) => a - b);
-      medianByType.set(fuelType, sorted[Math.floor(sorted.length / 2)]);
-    }
-
-    const filtered = withPrices.map((s) => ({
-      ...s,
-      prices: s.prices.filter((p) => {
-        const median = medianByType.get(p.fuelType);
-        if (!median) return true;
-        // Exclude if price is more than 20% below median — likely closed/stale
-        return p.price >= median * 0.8;
-      }),
-    })).filter((s) => s.prices.length > 0);
+    const filtered = merged.filter((s) => s.prices.length > 0);
 
     cache.merged = { data: filtered, timestamp: Date.now() };
     return filtered;
