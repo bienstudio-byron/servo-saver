@@ -25,6 +25,8 @@ interface FuelStore {
   setRangeKm: (km: number) => void;
   recommendedStations: StationWithPrices[];
   setRecommendedStations: (stations: StationWithPrices[]) => void;
+  activeRouteStation: StationWithPrices | null;
+  setActiveRouteStation: (station: StationWithPrices | null) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -50,4 +52,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setRangeKm: (km) => set({ rangeKm: km }),
   recommendedStations: [],
   setRecommendedStations: (stations) => set({ recommendedStations: stations }),
+  activeRouteStation: null,
+  setActiveRouteStation: (station) => set({ activeRouteStation: station }),
 }));

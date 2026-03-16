@@ -41,11 +41,12 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
   const rangeKm = useFuelStore((s) => s.rangeKm);
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
   const setRecommendedStations = useFuelStore((s) => s.setRecommendedStations);
+  const setActiveRouteStation = useFuelStore((s) => s.setActiveRouteStation);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
   const rawSetFuelType = useFuelStore((s) => s.setSelectedFuelType);
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
   const [showFuelPicker, setShowFuelPicker] = useState(false);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
   const thresholds = usePriceThresholds();
 
   const setSelectedFuelType = (id: string) => {
@@ -216,6 +217,17 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [options.map(o => o.station.id).join(",")]);
+
+  // Sync expanded option with route line
+  useEffect(() => {
+    if (expandedIndex !== null && options[expandedIndex] && options[expandedIndex].tag !== "Avoid") {
+      setActiveRouteStation(options[expandedIndex].station);
+    } else if (options.length > 0 && options[0].tag !== "Avoid") {
+      setActiveRouteStation(options[0].station);
+    } else {
+      setActiveRouteStation(null);
+    }
+  }, [expandedIndex, options, setActiveRouteStation]);
 
   const handleGoTo = (station: StationWithPrices) => {
     setSelectedStation(station);

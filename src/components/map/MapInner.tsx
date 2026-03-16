@@ -258,6 +258,7 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
   const tripDestination = useFuelStore((s) => s.tripDestination);
   const userLocation = useFuelStore((s) => s.userLocation);
   const recommendedStations = useFuelStore((s) => s.recommendedStations);
+  const activeRouteStation = useFuelStore((s) => s.activeRouteStation);
 
   // Nearby mode: show all pins when zoomed in. Trip mode: only show recommended + destination
   const showPins = tripMode === "nearby" && viewport.zoom >= MIN_ZOOM_FOR_PILLS;
@@ -353,13 +354,14 @@ export default function MapInner({ stations, selectedFuelType, loading, onChange
           })
         }
 
-        {/* Trip route line: user → best station → destination */}
-        {tripMode === "trip" && tripDestination && userLocation && recommendedStations.length > 0 && (() => {
-          const best = recommendedStations[0];
+        {/* Route line: user → active station (→ destination in trip mode) */}
+        {userLocation && activeRouteStation && (() => {
           const points: [number, number][] = [
             [userLocation.lat, userLocation.lng],
-            [best.latitude, best.longitude],
-            [tripDestination.lat, tripDestination.lng],
+            [activeRouteStation.latitude, activeRouteStation.longitude],
+            ...(tripMode === "trip" && tripDestination
+              ? [[tripDestination.lat, tripDestination.lng] as [number, number]]
+              : []),
           ];
           return (
             <>
