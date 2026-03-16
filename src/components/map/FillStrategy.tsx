@@ -307,7 +307,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
                 const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
 
                 return (
-                  <div key={opt.station.id} className={i > 0 ? "border-t border-white/5" : ""}>
+                  <div key={opt.station.id} className={`${i > 0 ? "border-t border-white/5" : ""} ${isExpanded && !isAvoid ? "bg-white/5" : ""}`}>
                     {/* Separator before Avoid */}
                     {isAvoid && (
                       <div className="px-3 py-1 text-center">
@@ -377,7 +377,7 @@ export default function FillStrategy({ stations, selectedFuelType, onOpenAlerts 
                           <div className="px-3 pb-3 pl-10 space-y-2">
                             {/* Breakdown — only for non-closest */}
                             {opt.tag !== "Closest" && opt.detourKm > 0 && (
-                              <div className="rounded-lg bg-white/[0.03] border border-white/5 p-2 space-y-1 text-[11px]">
+                              <div className="rounded-lg p-2 space-y-1 text-[11px]">
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Detour</span>
                                   <span className="text-white font-mono">+{opt.detourKm.toFixed(1)}km · ~{opt.detourMins}min</span>
