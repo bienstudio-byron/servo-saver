@@ -187,11 +187,11 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
     // Show most expensive nearby as contrast — "this is what you'd pay"
     const mostExpensive = [...candidates].filter((c) => c.price < 500).sort((a, b) => b.price - a.price)[0];
     if (mostExpensive && !seen.has(mostExpensive.station.id) && mostExpensive.price > closest.price && mostExpensive.price - closest.price > 2) {
-      const extraKm = Math.max(0, mostExpensive.distance - closest.distance) * 2;
+      const avoidDetour = calcDetour(mostExpensive);
       const priceDiff = ((mostExpensive.price - (cheapest?.price ?? closest.price)) * litresFillingUp) / 100;
       options.push({
         station: mostExpensive.station, price: mostExpensive.price, distance: mostExpensive.distance,
-        detourKm: extraKm, detourMins: 0, netSavings: -priceDiff, tag: "Avoid",
+        detourKm: avoidDetour, detourMins: Math.round((avoidDetour / AVG_CITY_SPEED) * 60), netSavings: -priceDiff, tag: "Avoid",
       });
     }
 
@@ -304,8 +304,8 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
                 const isFirst = i === 0;
                 const isAvoid = opt.tag === "Avoid";
                 const isExpanded = expandedIndex === i;
-                // Calculate breakdown values for non-closest options
-                const fuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * 8.5 * opt.price) / 100 : 0;
+                // Breakdown values — derived from pre-calculated option data
+                const detourFuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * DEFAULT_CONSUMPTION * opt.price) / 100 : 0;
                 const closestOpt = options.find((o) => o.tag === "Closest") || options[options.length - 1];
                 const fillLitres = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
                 const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
@@ -388,7 +388,7 @@ export default function FillStrategy({ stations, selectedFuelType, onChangeTrip,
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Fuel for detour</span>
-                                  <span className="text-red-400 font-mono">-${fuelCost.toFixed(2)}</span>
+                                  <span className="text-red-400 font-mono">-${detourFuelCost.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-[#5f6368]">Price savings</span>

@@ -121,8 +121,10 @@ export default function HowItWorksPage() {
             <p>For each station within your range, we calculate:</p>
 
             <div className="rounded-lg bg-[#1a1a1a] p-4 font-mono text-xs space-y-2">
-              <div className="text-[#9aa0a6]">// How much extra you&apos;d drive</div>
+              <div className="text-[#9aa0a6]">// How much extra you&apos;d drive (nearby mode)</div>
               <div><span className="text-[#4285f4]">detour_km</span> = (distance_to_station - distance_to_nearest) × 2</div>
+              <div className="text-[#9aa0a6] mt-3">// How much extra you&apos;d drive (trip mode)</div>
+              <div><span className="text-[#4285f4]">detour_km</span> = (you → station → dest) - (you → dest)</div>
               <div className="text-[#9aa0a6] mt-3">// Fuel burned on the detour</div>
               <div><span className="text-amber-400">fuel_cost</span> = (detour_km ÷ 100) × 8.5 × station_price</div>
               <div className="text-[#9aa0a6] mt-3">// How full is your tank (based on range slider)</div>
