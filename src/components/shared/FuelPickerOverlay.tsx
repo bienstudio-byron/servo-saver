@@ -188,19 +188,25 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
         </div>
 
         {/* Primary CTA */}
-        <div className="px-5 pb-3">
+        <div className="px-5 pb-2">
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleFindNearby}
             className="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Find cheapest nearby
           </motion.button>
+          <p className="text-[9px] text-[#5f6368] text-center mt-2 flex items-center justify-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            We&apos;ll ask for your location to find stations near you. Never stored or shared.
+          </p>
         </div>
 
         {/* Divider */}

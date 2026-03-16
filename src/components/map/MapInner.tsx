@@ -186,9 +186,11 @@ function MapResizeFix() {
   const map = useMap();
   const selected = useFuelStore((s) => s.selectedStation);
   useEffect(() => {
-    // When modal opens/closes, Leaflet may need to recalculate
-    const t = setTimeout(() => map.invalidateSize(), 100);
-    return () => clearTimeout(t);
+    // On mount + when modal opens/closes, Leaflet may need to recalculate
+    const t1 = setTimeout(() => map.invalidateSize(), 100);
+    const t2 = setTimeout(() => map.invalidateSize(), 500);
+    const t3 = setTimeout(() => map.invalidateSize(), 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [selected, map]);
   return null;
 }
