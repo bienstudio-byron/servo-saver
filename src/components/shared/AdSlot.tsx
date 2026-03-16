@@ -17,14 +17,19 @@ export default function AdSlot({ slot, format = "horizontal", className = "" }: 
 
   useEffect(() => {
     if (!ADSENSE_PUB_ID || pushed.current) return;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const adsbygoogle = (window as any).adsbygoogle || [];
-      adsbygoogle.push({});
-      pushed.current = true;
-    } catch {
-      // AdSense not loaded
-    }
+    // Delay to ensure AdSense script has loaded
+    const timer = setTimeout(() => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((window as any).adsbygoogle) {
+          (window as any).adsbygoogle.push({});
+          pushed.current = true;
+        }
+      } catch {
+        // AdSense not loaded or not approved yet
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   // Hide entirely if no AdSense ID configured — no placeholder
