@@ -23,6 +23,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  verification: {
+    google: "65gTOEq9cJSkP5I9-dFIjWW0bzfw4Nf7YpH5Or5JUMk",
+  },
   title: {
     default: "PetrolSaver — Cheapest Fuel Prices in Victoria",
     template: "%s | PetrolSaver",
