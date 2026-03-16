@@ -38,12 +38,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export async function generateStaticParams() {
-  const stations = await fetchMergedStations();
-  return stations.map((s) => ({
-    id: encodeURIComponent(s.id),
-  }));
-}
+// Don't pre-generate station pages — generate on-demand to avoid build timeout
+// Pages are cached via ISR (revalidate: 3600) after first visit
+export const dynamicParams = true;
 
 export default async function StationPage({ params }: Props) {
   const { id } = await params;
