@@ -24,10 +24,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html, body {
-  height: 100%;
-  overflow: hidden;
-}
 
 body {
   background: var(--background);
