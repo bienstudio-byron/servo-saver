@@ -38,7 +38,7 @@ export default function SuburbSearch() {
 
     setLoading(true);
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Victoria")}&limit=5`,
+      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Australia")}&limit=5`,
       { headers: { "User-Agent": "PetrolSaver/1.0" } }
     )
       .then((r) => r.json())

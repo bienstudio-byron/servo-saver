@@ -106,7 +106,7 @@ export default function ModeToggle() {
     if (q.length < 2) { setDestResults([]); return; }
     setDestLoading(true);
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Victoria")}&limit=4`,
+      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Australia")}&limit=4`,
       { headers: { "User-Agent": "PetrolSaver/1.0" } }
     )
       .then((r) => r.json())
@@ -134,7 +134,7 @@ export default function ModeToggle() {
     if (q.length < 2) { setOriginResults([]); return; }
     setOriginLoading(true);
     fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Victoria")}&limit=4`,
+      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Australia")}&limit=4`,
       { headers: { "User-Agent": "PetrolSaver/1.0" } }
     )
       .then((r) => r.json())
