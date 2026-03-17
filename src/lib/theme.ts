@@ -11,11 +11,10 @@ function getTimeBasedTheme(): Theme {
 }
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const stored = localStorage.getItem("petrolsaver-theme-manual");
-  // If user manually toggled, respect that for this session
   if (stored) return stored as Theme;
-  return getTimeBasedTheme();
+  return "light";
 }
 
 function applyTheme(theme: Theme) {
@@ -25,7 +24,7 @@ function applyTheme(theme: Theme) {
 }
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bell } from "lucide-react";
+import { X, Bell, MessageSquare, Send, Check } from "lucide-react";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 
 interface AlertSignupProps {
@@ -13,12 +13,15 @@ interface AlertSignupProps {
 const MAIN_FUELS = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
 
 export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupProps) {
+  const [step, setStep] = useState<"signup" | "feedback">("signup");
   const [email, setEmail] = useState("");
   const [suburb, setSuburb] = useState("");
   const [fuelType, setFuelType] = useState(selectedFuelType);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "loading" | "success">("idle");
 
-  // Try to auto-detect suburb from reverse geocoding
+  // Try to auto-detect suburb
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
     navigator.geolocation.getCurrentPosition(
@@ -38,7 +41,7 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
     );
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
 
@@ -62,130 +65,192 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
     }
   }
 
+  function handleDismissSignup() {
+    setStep("feedback");
+  }
+
+  async function handleFeedback() {
+    if (!feedbackText.trim()) return;
+    setFeedbackStatus("loading");
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedback: feedbackText }),
+      });
+    } catch {}
+    setFeedbackStatus("success");
+    sessionStorage.setItem("petrolsaver-alert-dismissed", "1");
+    setTimeout(onClose, 2000);
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/70 backdrop-blur-md"
-      onClick={onClose}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.95 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className="fixed bottom-4 right-4 z-[2000] w-[340px] rounded-2xl bg-[var(--card)] border border-[var(--subtle-border)] shadow-2xl overflow-hidden"
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm mx-4 rounded-2xl bg-[var(--card)] border border-[var(--subtle-border)] shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <AnimatePresence mode="wait">
-          {status === "success" ? (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-8 text-center"
-            >
-              <div className="text-4xl mb-3">🎉</div>
-              <h3 className="text-lg font-bold text-[var(--foreground)] mb-1">You&apos;re in!</h3>
-              <p className="text-sm text-[var(--muted)]">
-                We&apos;ll email you when {FUEL_TYPE_LABELS[fuelType] ?? fuelType} prices drop{suburb ? ` in ${suburb}` : ""}.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {/* Header */}
-              <div className="px-5 pt-5 pb-3">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-base font-bold text-[var(--foreground)]">Never miss a price drop</h3>
-                  <button onClick={onClose} className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
-                    <X className="h-5 w-5" strokeWidth={2} />
-                  </button>
+      <AnimatePresence mode="wait">
+        {/* === Step 1: Signup === */}
+        {step === "signup" && status !== "success" && (
+          <motion.div key="signup" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }}>
+            <div className="px-4 pt-4 pb-2">
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-[#4285f4]" strokeWidth={2} />
+                  <h3 className="text-sm font-bold text-[var(--foreground)]">Never miss a price drop</h3>
                 </div>
-                <p className="text-xs text-[var(--muted)]">Get notified when fuel prices change in your area</p>
+                <button onClick={handleDismissSignup} className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </div>
+              <p className="text-[11px] text-[var(--muted)] ml-6">Get notified when prices change in your area</p>
+            </div>
+
+            <form onSubmit={handleSignup} className="px-4 pb-4">
+              <div className="mb-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  style={{ fontSize: "16px" }}
+                  className="w-full rounded-lg border border-[var(--subtle-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none transition-all"
+                />
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="px-5 pb-5">
-                {/* Email */}
-                <div className="mb-3">
-                  <label className="block text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    style={{ fontSize: "16px" }}
-                    className="w-full rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] px-4 py-2.5 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
-                  />
-                </div>
+              <div className="mb-2">
+                <input
+                  type="text"
+                  value={suburb}
+                  onChange={(e) => setSuburb(e.target.value)}
+                  placeholder="Suburb (optional)"
+                  style={{ fontSize: "16px" }}
+                  className="w-full rounded-lg border border-[var(--subtle-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none transition-all"
+                />
+              </div>
 
-                {/* Suburb */}
-                <div className="mb-3">
-                  <label className="block text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-1">Suburb (optional)</label>
-                  <input
-                    type="text"
-                    value={suburb}
-                    onChange={(e) => setSuburb(e.target.value)}
-                    placeholder="e.g. Richmond"
-                    style={{ fontSize: "16px" }}
-                    className="w-full rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] px-4 py-2.5 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none focus:ring-1 focus:ring-[#4285f4]/30 transition-all"
-                  />
-                </div>
+              <div className="flex gap-1 mb-3">
+                {MAIN_FUELS.map((id) => {
+                  const short = id === "DSL" ? "Diesel" : id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setFuelType(id)}
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
+                        fuelType === id
+                          ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                          : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                      }`}
+                    >
+                      {short}
+                    </button>
+                  );
+                })}
+              </div>
 
-                {/* Fuel type */}
-                <div className="mb-4">
-                  <label className="block text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-1.5">Fuel type</label>
-                  <div className="flex gap-1.5">
-                    {MAIN_FUELS.map((id) => {
-                      const short = id === "DSL" ? "Diesel" : id;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => setFuelType(id)}
-                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold text-center transition-all cursor-pointer ${
-                            fuelType === id
-                              ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                              : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
-                          }`}
-                        >
-                          {short}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="w-full py-3 rounded-xl bg-[var(--accent)] text-[var(--accent-contrast)] font-bold text-sm hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {status === "loading" ? (
-                    <div className="h-4 w-4 rounded-full border-2 border-[var(--accent-contrast)] border-t-transparent animate-spin" />
-                  ) : (
-                    <>
-                      <Bell className="h-4 w-4" strokeWidth={2} />
-                      Get notified
-                    </>
-                  )}
-                </button>
-
-                {status === "error" && (
-                  <p className="text-xs text-[var(--tier-exp)] text-center mt-2">Something went wrong. Try again.</p>
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="w-full py-2.5 rounded-xl bg-[#4285f4] text-white font-bold text-xs hover:bg-[#5a9bf6] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {status === "loading" ? (
+                  <div className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <>
+                    <Bell className="h-3.5 w-3.5" strokeWidth={2} />
+                    Get notified
+                  </>
                 )}
+              </button>
 
-                <p className="text-[9px] text-[var(--muted)] text-center mt-3">
-                  No spam, ever. Unsubscribe anytime.
-                </p>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+              {status === "error" && (
+                <p className="text-[10px] text-[var(--tier-exp)] text-center mt-1.5">Something went wrong. Try again.</p>
+              )}
+
+              <p className="text-[8px] text-[var(--muted)] text-center mt-2">No spam, ever. Unsubscribe anytime.</p>
+            </form>
+          </motion.div>
+        )}
+
+        {/* === Signup success === */}
+        {step === "signup" && status === "success" && (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-6 text-center"
+          >
+            <Check className="h-8 w-8 text-[var(--tier-cheap)] mx-auto mb-2" strokeWidth={2} />
+            <h3 className="text-sm font-bold text-[var(--foreground)] mb-0.5">You&apos;re in!</h3>
+            <p className="text-xs text-[var(--muted)]">
+              We&apos;ll email you when {FUEL_TYPE_LABELS[fuelType] ?? fuelType} prices drop{suburb ? ` in ${suburb}` : ""}.
+            </p>
+          </motion.div>
+        )}
+
+        {/* === Step 2: Feedback === */}
+        {step === "feedback" && feedbackStatus !== "success" && (
+          <motion.div key="feedback" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}>
+            <div className="px-4 pt-4 pb-2">
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-[#4285f4]" strokeWidth={2} />
+                  <h3 className="text-sm font-bold text-[var(--foreground)]">Help us improve</h3>
+                </div>
+                <button onClick={() => { sessionStorage.setItem("petrolsaver-alert-dismissed", "1"); onClose(); }} className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </div>
+              <p className="text-[11px] text-[var(--muted)] ml-6">What would make PetrolSaver better for you?</p>
+            </div>
+
+            <div className="px-4 pb-4">
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="Missing a feature? Found a bug? Tell us..."
+                rows={3}
+                style={{ fontSize: "16px" }}
+                className="w-full rounded-lg border border-[var(--subtle-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-[#4285f4] focus:outline-none transition-all resize-none mb-2"
+              />
+
+              <button
+                onClick={handleFeedback}
+                disabled={feedbackStatus === "loading" || !feedbackText.trim()}
+                className="w-full py-2.5 rounded-xl bg-[#4285f4] text-white font-bold text-xs hover:bg-[#5a9bf6] transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {feedbackStatus === "loading" ? (
+                  <div className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <>
+                    <Send className="h-3.5 w-3.5" strokeWidth={2} />
+                    Send feedback
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* === Feedback success === */}
+        {step === "feedback" && feedbackStatus === "success" && (
+          <motion.div
+            key="feedback-success"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-6 text-center"
+          >
+            <Check className="h-8 w-8 text-[var(--tier-cheap)] mx-auto mb-2" strokeWidth={2} />
+            <h3 className="text-sm font-bold text-[var(--foreground)] mb-0.5">Thanks!</h3>
+            <p className="text-xs text-[var(--muted)]">Your feedback helps us build a better PetrolSaver.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

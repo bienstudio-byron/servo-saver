@@ -21,7 +21,7 @@ import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Moon, Sun, Search } from "lucide-react";
+import { Moon, Sun, Search } from "lucide-react";
 import { haversineDistance } from "@/lib/geo";
 import LocationButton from "./LocationButton";
 import ModeToggle from "./ModeToggle";
@@ -382,7 +382,17 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   }, [stationsWithPrice, viewport, showPins]);
 
   return (
-    <>
+    <div className="h-full w-full md:flex">
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex md:w-[24rem] md:shrink-0 md:h-full">
+        <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
+          setSearchOrigin(null);
+          if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
+        }} onEditTrip={() => setTripPlannerOpen(true)} />
+      </div>
+
+      {/* Map + overlays */}
+      <div className="relative flex-1 h-full">
       <MapContainer
         center={MAP_CENTER}
         zoom={13}
@@ -531,43 +541,38 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         })()}
       </MapContainer>
 
-      {/* Mode toggle */}
-      <ModeToggle />
+      {/* Mode toggle + filter chips + theme toggle */}
+      <ModeToggle
+        themeToggle={
+          <button
+            onClick={toggleTheme}
+            className="hidden md:flex rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? (
+              <Moon className="h-3.5 w-3.5" strokeWidth={2} />
+            ) : (
+              <Sun className="h-3.5 w-3.5" strokeWidth={2} />
+            )}
+            {currentTime && <span className="text-[11px] font-semibold font-mono">{currentTime}</span>}
+          </button>
+        }
+      />
 
       {/* Search this area button — desktop only (mobile version is inside FillStrategy) */}
       <div className="hidden md:block">
         <SearchAreaButton mapCentre={viewport.centre} />
       </div>
 
-      {/* Logo — desktop only */}
-      <div className="hidden md:flex absolute top-3 left-3 z-[1000] items-center gap-2">
-        <div className="flex items-center gap-1.5 bg-[var(--card)] rounded-full p-1 border border-[var(--subtle-border)] shadow-xl">
-          <div className="h-6 w-6 rounded-full bg-[#4285f4] flex items-center justify-center">
-            <Zap className="h-3 w-3 text-white" strokeWidth={2.5} />
-          </div>
-          <span className="text-xs font-bold text-[var(--foreground)] pr-2">PetrolSaver</span>
-        </div>
+
+      {/* Mobile: FillStrategy as bottom sheet overlay */}
+      <div className="md:hidden">
+        <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
+          setSearchOrigin(null);
+          if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
+        }} onEditTrip={() => setTripPlannerOpen(true)} />
       </div>
-
-      {/* Theme toggle with clock — desktop only */}
-      <button
-        onClick={toggleTheme}
-        className="hidden md:flex absolute top-3 right-3 z-[1000] rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {theme === "dark" ? (
-          <Moon className="h-3.5 w-3.5" strokeWidth={2} />
-        ) : (
-          <Sun className="h-3.5 w-3.5" strokeWidth={2} />
-        )}
-        {currentTime && <span className="hidden md:inline text-[11px] font-semibold font-mono">{currentTime}</span>}
-      </button>
-
-
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
-        setSearchOrigin(null);
-        if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
-      }} onEditTrip={() => setTripPlannerOpen(true)} />
-    </>
+      </div>
+    </div>
   );
 }

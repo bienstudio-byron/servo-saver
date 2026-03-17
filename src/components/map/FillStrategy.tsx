@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check, Zap } from "lucide-react";
 import { AnimatePresence as AP } from "framer-motion";
 import InlineReportForm from "@/components/shared/InlineReportForm";
 import type { StationWithPrices } from "@/types/fuel";
@@ -701,7 +701,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-stretch">
+    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:relative md:w-full md:h-full flex flex-col items-stretch">
     {/* Floating buttons above the sheet */}
     <MobileFloatingButtons onRecentre={onRecentre} mapCentre={mapCentre} />
 
@@ -709,8 +709,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-      className="w-full max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-clip flex flex-col"
+      className="w-full max-h-[45vh] md:max-h-none md:flex-1 rounded-t-2xl md:rounded-none border-t md:border-t-0 md:border-r border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl md:shadow-none overflow-hidden flex flex-col"
     >
+      {/* Logo header — desktop only */}
+      <div className="hidden md:flex items-center gap-2 px-4 py-4 shrink-0 border-b border-[var(--subtle-border)]">
+        <div className="h-8 w-8 rounded-full bg-[#4285f4] flex items-center justify-center">
+          <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
+        </div>
+        <span className="text-base font-bold text-[var(--foreground)]">PetrolSaver</span>
+      </div>
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
       {selectedOpt === null && (
         <button
@@ -956,7 +963,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       </div>
 
       {/* Support + Footer */}
-      <div className={`shrink-0 border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden" : ""}`}>
+      <div className={`shrink-0 border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden md:block" : ""}`}>
         <a
           href="https://buymeacoffee.com/petrolsaver"
           target="_blank"

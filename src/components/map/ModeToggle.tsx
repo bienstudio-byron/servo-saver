@@ -15,7 +15,7 @@ interface SearchResult {
 
 const FUEL_OPTIONS = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
 
-export default function ModeToggle() {
+export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactNode }) {
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
   const setTripMode = useFuelStore((s) => s.setTripMode);
@@ -189,8 +189,9 @@ export default function ModeToggle() {
   const originDisplayName = localOrigin?.name || gpsSuburb || "Your location";
 
   return (
-    <div ref={panelRef} className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-1.5rem)] md:w-[450px]">
+    <div ref={panelRef} className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-1.5rem)] md:translate-x-0 md:left-3 md:right-3 md:w-auto">
       {/* Search bar */}
+      <div className="md:w-[360px]">
       {!tripPlannerOpen ? (
         <button
           onClick={handleSearchBarClick}
@@ -351,10 +352,12 @@ export default function ModeToggle() {
                 transition={{ type: "spring", damping: 20, stiffness: 200 }}
                 style={{
                   background: rangeKm <= 50
-                    ? "linear-gradient(90deg, #ef4444, #f87171)"
+                    ? "linear-gradient(90deg, #dc2626, #ef4444)"
                     : rangeKm <= 200
-                    ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
-                    : "linear-gradient(90deg, #4285f4, #8ab4f8)",
+                    ? "linear-gradient(90deg, #ea580c, #f59e0b)"
+                    : rangeKm <= 400
+                    ? "linear-gradient(90deg, #f59e0b, #84cc16)"
+                    : "linear-gradient(90deg, #22c55e, #4ade80)",
                 }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
@@ -401,38 +404,12 @@ export default function ModeToggle() {
 
           {/* Brand filter (optional) */}
           <div className="px-4 pb-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider">Brands</span>
-            </div>
-            <div className="flex gap-1 overflow-x-auto pb-0.5 -mx-1 px-1" style={{ WebkitOverflowScrolling: "touch" }}>
-              <button
-                onClick={() => setSelectedBrands([])}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
-                  selectedBrands.length === 0
-                    ? "bg-[var(--accent)] text-[var(--accent-contrast)] border-[var(--accent)]"
-                    : "bg-[var(--subtle)] text-[var(--muted)] border-[var(--subtle-border)] hover:text-[var(--foreground)]"
-                }`}
-              >
-                All
-              </button>
-              {availableBrands.map((brand) => {
-                const isSelected = selectedBrands.includes(brand);
-                return (
-                  <button
-                    key={brand}
-                    onClick={() => toggleBrand(brand)}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
-                      isSelected
-                        ? "bg-[var(--accent)] text-[var(--accent-contrast)] border-[var(--accent)]"
-                        : "bg-[var(--subtle)] text-[var(--muted)] border-[var(--subtle-border)] hover:text-[var(--foreground)]"
-                    }`}
-                  >
-                    <BrandLogo brandName={brand} size="sm" />
-                    {brand}
-                  </button>
-                );
-              })}
-            </div>
+            <PlannerBrandFilter
+              availableBrands={availableBrands}
+              selectedBrands={selectedBrands}
+              setSelectedBrands={setSelectedBrands}
+              toggleBrand={toggleBrand}
+            />
           </div>
 
           {/* CTA */}
@@ -454,9 +431,11 @@ export default function ModeToggle() {
         </motion.div>
       )}
 
-      {/* Filter chips — shown when planner is closed */}
+      </div>
+
+      {/* Filter chips + theme toggle — below search on mobile, top-right on desktop */}
       {!tripPlannerOpen && !isTripActive && (
-        <div className="flex gap-1.5 mt-2">
+        <div className="flex gap-1.5 mt-2 md:absolute md:top-0 md:right-0 md:mt-0">
           <ChipDropdown
             icon={<Droplets className="h-3.5 w-3.5" strokeWidth={2} />}
             label={selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType}
@@ -502,7 +481,7 @@ export default function ModeToggle() {
                     className="absolute inset-y-0 left-0 rounded-full transition-all"
                     style={{
                       width: `${Math.min(100, (rangeKm / 800) * 100)}%`,
-                      background: rangeKm <= 50 ? "#ef4444" : rangeKm <= 200 ? "#f59e0b" : "#4285f4",
+                      background: rangeKm <= 50 ? "#dc2626" : rangeKm <= 200 ? "#ea580c" : rangeKm <= 400 ? "#f59e0b" : "#22c55e",
                     }}
                   />
                   <input
@@ -528,13 +507,113 @@ export default function ModeToggle() {
             setSelectedBrands={setSelectedBrands}
             toggleBrand={toggleBrand}
           />
+          {themeToggle}
         </div>
       )}
     </div>
   );
 }
 
-/* --- Brand filter with search --- */
+/* --- Planner brand filter with search --- */
+
+function PlannerBrandFilter({
+  availableBrands,
+  selectedBrands,
+  setSelectedBrands,
+  toggleBrand,
+}: {
+  availableBrands: string[];
+  selectedBrands: string[];
+  setSelectedBrands: (brands: string[]) => void;
+  toggleBrand: (brand: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = query
+    ? availableBrands.filter((b) => b.toLowerCase().includes(query.toLowerCase()))
+    : availableBrands;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider">Brands</span>
+        {selectedBrands.length > 0 && (
+          <button
+            onClick={() => setSelectedBrands([])}
+            className="text-[10px] font-semibold text-[var(--accent-text)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          >
+            Clear ({selectedBrands.length})
+          </button>
+        )}
+      </div>
+
+      {!expanded ? (
+        <button
+          onClick={() => { setExpanded(true); setTimeout(() => inputRef.current?.focus(), 50); }}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] text-left cursor-pointer hover:bg-[var(--subtle-hover)] transition-colors"
+        >
+          <Search className="h-3.5 w-3.5 text-[var(--muted)] shrink-0" strokeWidth={2} />
+          <span className="text-xs text-[var(--muted)] flex-1">
+            {selectedBrands.length === 0
+              ? "All brands"
+              : selectedBrands.length <= 2
+              ? selectedBrands.join(", ")
+              : `${selectedBrands.length} brands selected`}
+          </span>
+          <ChevronDown className="h-3.5 w-3.5 text-[var(--muted)] shrink-0" strokeWidth={2} />
+        </button>
+      ) : (
+        <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--subtle)] overflow-hidden">
+          <div className="relative px-2.5 pt-2.5 pb-1.5">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search brands..."
+              style={{ fontSize: "16px" }}
+              className="w-full bg-[var(--background)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-8 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+            />
+            <button
+              onClick={() => { setExpanded(false); setQuery(""); }}
+              className="absolute right-5 top-1/2 -translate-y-1/2 p-0.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          </div>
+          <div className="max-h-[160px] overflow-y-auto">
+            {filtered.map((brand) => {
+              const isSelected = selectedBrands.includes(brand);
+              return (
+                <button
+                  key={brand}
+                  onClick={() => toggleBrand(brand)}
+                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center gap-2 ${
+                    isSelected
+                      ? "bg-[var(--background)] text-[var(--foreground)] font-semibold"
+                      : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+                  }`}
+                >
+                  <BrandLogo brandName={brand} size="sm" />
+                  <span className="flex-1 truncate">{brand}</span>
+                  {isSelected && <Check className="h-3.5 w-3.5 text-[var(--tier-cheap)] shrink-0" strokeWidth={2.5} />}
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="px-3 py-2 text-xs text-[var(--muted)] text-center">No brands found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* --- Brand chip filter with search --- */
 
 function BrandChipDropdown({
   availableBrands,
