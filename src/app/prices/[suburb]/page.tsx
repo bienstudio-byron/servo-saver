@@ -17,11 +17,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const display = slugToDisplay(suburb);
   return {
     title: `Cheapest Petrol Prices in ${display} Today — PetrolSaver`,
-    description: `Compare petrol, diesel, and LPG prices at ${display}'s fuel stations. Find the cheapest servo in ${display}, Victoria. Updated daily.`,
+    description: `Compare petrol, diesel, and LPG prices at ${display}'s fuel stations. Find the cheapest servo in ${display}. Updated daily.`,
     alternates: { canonical: `/prices/${suburb}` },
     openGraph: {
       title: `Fuel Prices in ${display} — PetrolSaver`,
-      description: `Compare fuel prices at stations in ${display}, Victoria. Updated hourly.`,
+      description: `Compare fuel prices at stations in ${display}. Updated hourly.`,
       url: `https://petrolsaver.live/prices/${suburb}`,
     },
   };
@@ -106,7 +106,7 @@ export default async function SuburbPage({ params }: Props) {
             Fuel Prices in {display}
           </h1>
           <p className="text-[#9aa0a6] text-sm md:text-base mb-5">
-            Compare prices at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, Victoria.
+            Compare prices at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}.
             {cheapestU91 && (
               <> Cheapest Unleaded 91 is <span className="text-emerald-400 font-semibold">{cheapestU91.price.toFixed(1)}c/L</span> at {cheapestU91.name}.</>
             )}
@@ -191,8 +191,8 @@ export default async function SuburbPage({ params }: Props) {
             </h2>
             <p className="text-sm text-[#9aa0a6] leading-relaxed">
               Looking for cheap fuel in {display}? PetrolSaver compares petrol prices
-              at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, Victoria —
-              updated every 24 hours from the Victorian Government.
+              at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display} —
+              updated every 24 hours from government data.
               {cheapestU91 && (
                 <> The cheapest Unleaded 91 in {display} right now is{" "}
                 <strong className="text-emerald-400">{cheapestU91.price.toFixed(1)}c/L</strong> at{" "}
@@ -221,11 +221,11 @@ export default async function SuburbPage({ params }: Props) {
             <p className="text-sm text-[#9aa0a6] leading-relaxed">
               The table above shows all {totalStations} petrol stations in {display} ranked by price,
               cheapest first. Click any station to see its price history, all fuel types, and how it
-              compares to the Victorian average. You can also{" "}
+              compares to the state average. You can also{" "}
               <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
                 browse fuel prices by suburb
               </a>{" "}
-              across all of Victoria, or check the latest prices on our{" "}
+              across VIC & NSW, or check the latest prices on our{" "}
               <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">
                 interactive fuel price map
               </a>.

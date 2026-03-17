@@ -346,7 +346,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     const r = (n: number) => (Math.round(n * 10) / 10).toFixed(1);
 
     // Short, punchy stats
-    stats.push(`Vic avg **${r(stateAvg)}c** · Best nearby **${r(localBest)}c**`);
+    stats.push(`Avg **${r(stateAvg)}c** · Best nearby **${r(localBest)}c**`);
 
     if (Math.abs(diff) > 0.5) {
       stats.push(diff > 0 ? `Your area is **${r(diff)}c above** average` : `Your area is **${r(Math.abs(diff))}c below** average`);

@@ -1,4 +1,4 @@
-// Victorian Government Fair Fuel Open Data API types
+// Fuel data types (VIC + NSW)
 
 export interface FuelPrice {
   fuelType: string;

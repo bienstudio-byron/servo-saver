@@ -212,7 +212,7 @@ export default async function StationPage({ params }: Props) {
                 </span>
               ))}.
               {ranks[0] && ranks[0].rank <= Math.ceil(ranks[0].total * 0.1) && (
-                <> This is one of the <strong className="text-emerald-400">cheapest fuel prices in Victoria</strong> right now.</>
+                <> This is one of the <strong className="text-emerald-400">cheapest fuel prices in VIC & NSW</strong> right now.</>
               )}
             </p>
           </div>
@@ -226,13 +226,13 @@ export default async function StationPage({ params }: Props) {
                 <>
                   Yes — {station.name} is currently <strong className="text-emerald-400">
                   {(ranks[0].average - ranks[0].price).toFixed(1)}c/L cheaper</strong> than
-                  the Victorian average for {ranks[0].label}. It ranks #{ranks[0].rank} out
-                  of {ranks[0].total} stations across Victoria.
+                  the state average for {ranks[0].label}. It ranks #{ranks[0].rank} out
+                  of {ranks[0].total} stations across VIC & NSW.
                 </>
               ) : ranks[0] ? (
                 <>
                   {station.name} is currently {(ranks[0].price - ranks[0].average).toFixed(1)}c/L
-                  above the Victorian average for {ranks[0].label}. Check{" "}
+                  above the state average for {ranks[0].label}. Check{" "}
                   <a href={`/prices/${suburbSlug}`} className="text-[#8ab4f8] hover:text-[#aecbfa]">
                     other stations in {suburb}
                   </a>{" "}
@@ -260,7 +260,7 @@ export default async function StationPage({ params }: Props) {
               <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
                 fuel prices by suburb
               </a>{" "}
-              across Victoria.
+              across VIC & NSW.
             </p>
           </div>
         </div>

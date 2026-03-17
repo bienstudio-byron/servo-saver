@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "PetrolSaver — Cheapest Fuel Prices in Victoria";
+export const alt = "PetrolSaver — Cheapest Fuel Prices in VIC & NSW";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -69,7 +69,7 @@ export default function Image() {
             marginBottom: 40,
           }}
         >
-          Cheapest Fuel Prices in Victoria
+          Cheapest Fuel Prices in VIC & NSW
         </div>
 
         {/* Stats bar */}
@@ -80,7 +80,7 @@ export default function Image() {
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ fontSize: 36, fontWeight: 700, color: "#4285f4" }}>1,600+</div>
+            <div style={{ fontSize: 36, fontWeight: 700, color: "#4285f4" }}>4,000+</div>
             <div style={{ fontSize: 16, color: "#5f6368", marginTop: 4 }}>Stations</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
