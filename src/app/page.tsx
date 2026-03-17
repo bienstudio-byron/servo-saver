@@ -136,12 +136,13 @@ export default function HomePage() {
     setShowPicker(false);
     sessionStorage.setItem("petrolsaver-onboarded", "1");
 
-    const seen = sessionStorage.getItem(INTERSTITIAL_KEY);
-    if (!seen) {
-      setShowInterstitial(true);
-      sessionStorage.setItem(INTERSTITIAL_KEY, "1");
-      setTimeout(() => setShowInterstitial(false), 5000);
-    }
+    // Interstitial ad disabled until AdSense approval
+    // const seen = sessionStorage.getItem(INTERSTITIAL_KEY);
+    // if (!seen) {
+    //   setShowInterstitial(true);
+    //   sessionStorage.setItem(INTERSTITIAL_KEY, "1");
+    //   setTimeout(() => setShowInterstitial(false), 5000);
+    // }
   }
 
   if (error) {
