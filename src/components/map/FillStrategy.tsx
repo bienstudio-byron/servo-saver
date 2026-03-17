@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart } from "lucide-react";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -739,13 +739,24 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         </AnimatePresence>
       </div>
 
-      {/* Footer */}
-      <div className={`shrink-0 px-3 py-1.5 text-center text-[9px] text-[var(--muted)] border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden" : ""}`}>
-        Data from <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">Service Victoria</a>
-        {" "}&middot;{" "}
-        <a href="/how-it-works" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">How it works</a>
-        {" "}&middot;{" "}
-        <a href="/terms" className="hover:text-[var(--foreground)] cursor-pointer">Terms</a>
+      {/* Support + Footer */}
+      <div className={`shrink-0 border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden" : ""}`}>
+        <a
+          href="https://buymeacoffee.com/petrolsaver"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 px-3 py-2 text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+        >
+          <Heart className="h-3.5 w-3.5" strokeWidth={2} />
+          <span>Keep PetrolSaver free — <span className="font-semibold text-[var(--foreground)]">buy us a coffee</span></span>
+        </a>
+        <div className="px-3 pb-1.5 text-center text-[9px] text-[var(--muted)]">
+          Data from <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">Service Victoria</a>
+          {" "}&middot;{" "}
+          <a href="/how-it-works" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">How it works</a>
+          {" "}&middot;{" "}
+          <a href="/terms" className="hover:text-[var(--foreground)] cursor-pointer">Terms</a>
+        </div>
       </div>
     </motion.div>
     </div>
