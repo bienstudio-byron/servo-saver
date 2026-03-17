@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Flag, X, Navigation, ChevronDown } from "lucide-react";
+import { Flag, X, Navigation, ChevronDown, Users, Pencil } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import ReportPriceModal from "./ReportPriceModal";
 import type { StationWithPrices } from "@/types/fuel";
 import { nearestStations } from "@/lib/geo";
 import BrandLogo from "./BrandLogo";
@@ -30,9 +32,24 @@ export default function StationModal({
 }: StationModalProps) {
   const [showAllPrices, setShowAllPrices] = useState(false);
   const [flagged, setFlagged] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [communityPrice, setCommunityPrice] = useState<{ price: number; reportedAt: string; confidence: number } | null>(null);
+
   useEffect(() => {
     setFlagged(isStationFlagged(station.id));
   }, [station.id]);
+
+  // Fetch community price for this station
+  useEffect(() => {
+    setCommunityPrice(null);
+    fetch(`/api/community-price?stationId=${encodeURIComponent(station.id)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const match = data.prices?.find((p: { fuelType: string }) => p.fuelType === selectedFuelType);
+        if (match) setCommunityPrice({ price: match.price, reportedAt: match.reportedAt, confidence: match.confidence });
+      })
+      .catch(() => {});
+  }, [station.id, selectedFuelType]);
 
   const nearby = nearestStations(
     allStations.filter((s) => s.id !== station.id),
@@ -212,6 +229,46 @@ export default function StationModal({
             </div>
           )}
 
+          {/* Community price */}
+          {communityPrice && (
+            <div className="mb-3 rounded-xl bg-blue-500/5 border border-blue-500/20 p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Users className="h-3.5 w-3.5 text-blue-400" strokeWidth={2} />
+                  <span className="text-[11px] font-semibold text-[var(--foreground)]">Community price</span>
+                </div>
+                <span className="text-base font-bold font-mono text-[var(--foreground)]">
+                  {communityPrice.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-[9px] text-[var(--muted)]">
+                  {(() => {
+                    const mins = Math.floor((Date.now() - new Date(communityPrice.reportedAt).getTime()) / 60000);
+                    if (mins < 1) return "Reported just now";
+                    if (mins < 60) return `Reported ${mins}m ago`;
+                    return `Reported ${Math.floor(mins / 60)}h ago`;
+                  })()}
+                  {communityPrice.confidence > 1 && ` · Confirmed by ${communityPrice.confidence}`}
+                </span>
+                {currentPrice && Math.abs(communityPrice.price - currentPrice.price) > 1 && (
+                  <span className={`text-[10px] font-bold font-mono ${communityPrice.price < currentPrice.price ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>
+                    {communityPrice.price < currentPrice.price ? "" : "+"}{(communityPrice.price - currentPrice.price).toFixed(1)}c vs official
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Update price button */}
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[var(--subtle-hover)] hover:text-[var(--foreground)] transition-colors mb-3 cursor-pointer"
+          >
+            <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
+            {communityPrice ? "Update price" : "Report current price"}
+          </button>
+
           {/* Price history */}
           {currentPrice && (
             <div className="mb-3 rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] p-3">
@@ -284,6 +341,29 @@ export default function StationModal({
           )}
         </div>
       </motion.div>
+
+      {/* Report price modal */}
+      <AnimatePresence>
+        {showReportModal && (
+          <ReportPriceModal
+            stationId={station.id}
+            stationName={station.name}
+            selectedFuelType={selectedFuelType}
+            currentPrice={currentPrice?.price}
+            onClose={() => {
+              setShowReportModal(false);
+              // Refresh community price
+              fetch(`/api/community-price?stationId=${encodeURIComponent(station.id)}`)
+                .then((r) => r.json())
+                .then((data) => {
+                  const match = data.prices?.find((p: { fuelType: string }) => p.fuelType === selectedFuelType);
+                  if (match) setCommunityPrice({ price: match.price, reportedAt: match.reportedAt, confidence: match.confidence });
+                })
+                .catch(() => {});
+            }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
