@@ -36,6 +36,16 @@ const BRAND_LOGOS: Record<string, string> = {
   "NRMA": "/logos/ampol.png",        // Ampol network
   "Liberty": "/logos/viva-energy.png", // Viva Energy network
   "Vibe": "/logos/viva-energy.png",  // Viva Energy network
+
+  // NSW-specific brands (mapped via nsw-provider brand normalization)
+  "Lowes": "/logos/lowes.png",
+  "Budget Petrol": "/logos/budget.png",
+  "APCO": "/logos/apco.png",
+  "Ampol Foodary": "/logos/ampol.png",
+  "Ampol Breeze": "/logos/ampol.png",
+  "EBM Ampol": "/logos/ampol.png",
+  "Arko Energy": "/logos/ampol.png",
+  "NPG Retail": "/logos/ampol.png",
 };
 
 export function getBrandLogoUrl(brandName: string): string | null {

@@ -3,7 +3,7 @@ import { fetchMergedStations } from "@/lib/fuel-api";
 import { extractSuburb, suburbToSlug, slugToDisplay, groupBySuburb } from "@/lib/suburbs";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 import AdSlot from "@/components/shared/AdSlot";
-import SuburbPageClient from "./SuburbPageClient";
+import SuburbPageClient from "@/app/prices/[suburb]/SuburbPageClient";
 import SubpageHeader from "@/components/layout/SubpageHeader";
 
 export const revalidate = 3600;
@@ -12,36 +12,42 @@ interface Props {
   params: Promise<{ suburb: string }>;
 }
 
+function filterNswStations(stations: Awaited<ReturnType<typeof fetchMergedStations>>) {
+  return stations.filter((s) => s.state === "NSW");
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { suburb } = await params;
   const display = slugToDisplay(suburb);
   return {
-    title: `Cheapest Petrol Prices in ${display} Today — PetrolSaver`,
-    description: `Compare petrol, diesel, and LPG prices at ${display}'s fuel stations. Find the cheapest servo in ${display}, Victoria. Updated daily.`,
-    alternates: { canonical: `/prices/${suburb}` },
+    title: `Cheapest Petrol Prices in ${display}, NSW Today — PetrolSaver`,
+    description: `Compare petrol, diesel, and LPG prices at ${display}'s fuel stations. Find the cheapest servo in ${display}, New South Wales. Updated in real-time.`,
+    alternates: { canonical: `/prices/nsw/${suburb}` },
     openGraph: {
-      title: `Fuel Prices in ${display} — PetrolSaver`,
-      description: `Compare fuel prices at stations in ${display}, Victoria. Updated hourly.`,
-      url: `https://petrolsaver.live/prices/${suburb}`,
+      title: `Fuel Prices in ${display}, NSW — PetrolSaver`,
+      description: `Compare fuel prices at stations in ${display}, New South Wales. Updated in real-time.`,
+      url: `https://petrolsaver.live/prices/nsw/${suburb}`,
     },
   };
 }
 
 export async function generateStaticParams() {
   const stations = await fetchMergedStations();
-  const suburbMap = groupBySuburb(stations);
+  const nswStations = filterNswStations(stations);
+  const suburbMap = groupBySuburb(nswStations);
   return [...suburbMap.keys()].map((suburb) => ({
     suburb: suburbToSlug(suburb),
   }));
 }
 
-export default async function SuburbPage({ params }: Props) {
+export default async function NswSuburbPage({ params }: Props) {
   const { suburb: slug } = await params;
   const display = slugToDisplay(slug);
   const stations = await fetchMergedStations();
-  const suburbMap = groupBySuburb(stations);
+  const nswStations = filterNswStations(stations);
+  const suburbMap = groupBySuburb(nswStations);
 
-  let suburbStations: typeof stations = [];
+  let suburbStations: typeof nswStations = [];
   for (const [name, stns] of suburbMap) {
     if (suburbToSlug(name) === slug) {
       suburbStations = stns;
@@ -50,7 +56,7 @@ export default async function SuburbPage({ params }: Props) {
   }
 
   const allPricesByType = new Map<string, number[]>();
-  for (const s of stations) {
+  for (const s of nswStations) {
     for (const p of s.prices) {
       const arr = allPricesByType.get(p.fuelType) || [];
       arr.push(p.price);
@@ -103,16 +109,15 @@ export default async function SuburbPage({ params }: Props) {
       <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a]">
         <div className="max-w-4xl mx-auto px-4 py-8 md:py-10">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-            Fuel Prices in {display}
+            Fuel Prices in {display}, NSW
           </h1>
           <p className="text-[#9aa0a6] text-sm md:text-base mb-5">
-            Compare prices at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, Victoria.
+            Compare prices at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, New South Wales.
             {cheapestU91 && (
               <> Cheapest Unleaded 91 is <span className="text-emerald-400 font-semibold">{cheapestU91.price.toFixed(1)}c/L</span> at {cheapestU91.name}.</>
             )}
           </p>
 
-          {/* CTA */}
           <a
             href="/"
             className="inline-flex items-center gap-2 bg-[#4285f4] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#5a9bf6] active:bg-[#3367d6] transition-colors shadow-lg shadow-[#4285f4]/20"
@@ -127,12 +132,11 @@ export default async function SuburbPage({ params }: Props) {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Ad */}
         <div className="mb-6">
           <AdSlot slot="suburb-page" format="horizontal" />
         </div>
 
-        {/* Fuel type cards — horizontal scroll on mobile */}
+        {/* Fuel type cards */}
         <div className="flex gap-3 overflow-x-auto pb-2 mb-8 snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible scrollbar-hide">
           {fuelSummaries.map((fuel) => {
             const diff = fuel.stateAverage - fuel.average;
@@ -153,7 +157,7 @@ export default async function SuburbPage({ params }: Props) {
                       <div className="text-[11px] text-[#9aa0a6] mt-0.5">{fuel.cheapest.name}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] text-[#5f6368] mb-0.5">vs State Avg</div>
+                      <div className="text-[10px] text-[#5f6368] mb-0.5">vs NSW Avg</div>
                       <div className={`text-lg font-bold font-mono ${isCheaper ? "text-emerald-400" : "text-red-400"}`}>
                         {isCheaper ? "-" : "+"}{Math.abs(diff).toFixed(1)}c
                       </div>
@@ -166,7 +170,7 @@ export default async function SuburbPage({ params }: Props) {
                     <div className="text-xs font-bold text-white font-mono">{fuel.average.toFixed(1)}c</div>
                   </div>
                   <div className="flex-1 rounded-lg bg-white/5 px-2.5 py-1.5 text-center">
-                    <div className="text-[9px] text-[#5f6368]">State Avg</div>
+                    <div className="text-[9px] text-[#5f6368]">NSW Avg</div>
                     <div className="text-xs font-bold text-white font-mono">{fuel.stateAverage.toFixed(1)}c</div>
                   </div>
                 </div>
@@ -187,12 +191,12 @@ export default async function SuburbPage({ params }: Props) {
         <div className="border-t border-white/5 pt-6 mb-6 space-y-4">
           <div>
             <h2 className="text-base font-bold text-white mb-2">
-              Cheapest Petrol in {display} Today
+              Cheapest Petrol in {display}, NSW Today
             </h2>
             <p className="text-sm text-[#9aa0a6] leading-relaxed">
               Looking for cheap fuel in {display}? PetrolSaver compares petrol prices
-              at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, Victoria —
-              updated every 24 hours from the Victorian Government.
+              at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}, New South Wales —
+              updated in real-time from Transport for NSW.
               {cheapestU91 && (
                 <> The cheapest Unleaded 91 in {display} right now is{" "}
                 <strong className="text-emerald-400">{cheapestU91.price.toFixed(1)}c/L</strong> at{" "}
@@ -213,24 +217,6 @@ export default async function SuburbPage({ params }: Props) {
               Filter by Unleaded 91, Premium 95, Premium 98, Diesel, E10, or LPG.
             </p>
           </div>
-
-          <div>
-            <h3 className="text-sm font-bold text-white mb-1">
-              {display} Fuel Price Comparison
-            </h3>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
-              The table above shows all {totalStations} petrol stations in {display} ranked by price,
-              cheapest first. Click any station to see its price history, all fuel types, and how it
-              compares to the Victorian average. You can also{" "}
-              <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
-                browse fuel prices by suburb
-              </a>{" "}
-              across all of Victoria, or check the latest prices on our{" "}
-              <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">
-                interactive fuel price map
-              </a>.
-            </p>
-          </div>
         </div>
 
         {/* Bottom ad */}
@@ -241,13 +227,10 @@ export default async function SuburbPage({ params }: Props) {
         {/* Attribution */}
         <div className="pb-8 text-center text-[10px] text-[#5f6368]">
           Data from{" "}
-          <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
-            Service Victoria
-          </a>
-          {" and "}
           <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
             Transport for NSW
           </a>
+          {" "}&middot; Real-time pricing
         </div>
       </div>
     </div>

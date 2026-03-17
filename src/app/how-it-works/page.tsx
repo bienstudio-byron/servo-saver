@@ -29,19 +29,27 @@ export default function HowItWorksPage() {
           </h2>
           <div className="rounded-xl border border-white/10 bg-[#242424] p-5 space-y-3 text-sm text-[#dadce0] leading-relaxed">
             <p>
-              All fuel price data is sourced from the <strong className="text-white">Victorian Government&apos;s Fair Fuel Open Data API</strong>,
-              operated by <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8] hover:text-[#aecbfa]" target="_blank" rel="noopener noreferrer">Service Victoria</a>.
+              Our fuel price data comes from two government sources:
             </p>
+            <ul className="list-disc list-inside space-y-2 ml-1">
+              <li>
+                <strong className="text-white">Victoria:</strong> The{" "}
+                <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8] hover:text-[#aecbfa]" target="_blank" rel="noopener noreferrer">Victorian Government&apos;s Fair Fuel Open Data API</a>.
+                Prices are delayed ~24 hours.
+              </li>
+              <li>
+                <strong className="text-white">New South Wales:</strong> The{" "}
+                <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8] hover:text-[#aecbfa]" target="_blank" rel="noopener noreferrer">NSW FuelCheck API</a> via Transport for NSW.
+                Prices are updated in real-time.
+              </li>
+            </ul>
             <p>
-              Fuel retailers across Victoria are required to submit their prices to this system.
-              The data is published with a <strong className="text-white">~24 hour delay</strong> to protect commercially sensitive information.
-            </p>
-            <p>
-              We refresh our data <strong className="text-white">every hour</strong> and do not modify the prices in any way.
+              Fuel retailers in both states are required to submit their prices to these systems.
+              We refresh our data regularly and do not modify the prices in any way.
               What you see is exactly what the government publishes.
             </p>
             <p className="text-[#9aa0a6] text-xs">
-              We currently track approximately 1,600+ fuel stations across Victoria.
+              We currently track approximately 4,000+ fuel stations across Victoria and New South Wales.
             </p>
           </div>
         </section>
@@ -165,7 +173,7 @@ export default function HowItWorksPage() {
           </h2>
           <div className="rounded-xl border border-white/10 bg-[#242424] p-5 space-y-3 text-sm text-[#dadce0] leading-relaxed">
             <p>
-              Prices are colour-coded relative to <strong className="text-white">all stations in Victoria</strong> for your selected fuel type,
+              Prices are colour-coded relative to <strong className="text-white">all visible stations</strong> for your selected fuel type,
               not against fixed thresholds. This means the colours adjust as market prices change.
             </p>
             <div className="space-y-2 mt-3">
@@ -275,7 +283,7 @@ export default function HowItWorksPage() {
               The only revenue we earn is through advertising displayed on the site.
             </p>
             <p>
-              The price data is published by the Victorian Government and we are required by the
+              The price data is published by the Victorian and NSW governments and we are required by the
               API terms of use to display it without modification.
             </p>
           </div>
@@ -300,7 +308,10 @@ export default function HowItWorksPage() {
           <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>
-          {" "}&middot; Prices delayed ~24hrs
+          {" and "}
+          <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+            Transport for NSW
+          </a>
         </div>
       </div>
     </div>

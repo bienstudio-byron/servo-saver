@@ -16,6 +16,7 @@ export interface FuelStation {
   address: string;
   latitude: number;
   longitude: number;
+  state?: "VIC" | "NSW";
 }
 
 export interface FuelBrand {

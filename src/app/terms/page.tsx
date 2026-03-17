@@ -3,7 +3,7 @@ import SubpageHeader from "@/components/layout/SubpageHeader";
 
 export const metadata: Metadata = {
   title: "Terms of Use — PetrolSaver",
-  description: "Terms and conditions for using PetrolSaver, a fuel price comparison tool for Victoria, Australia.",
+  description: "Terms and conditions for using PetrolSaver, a fuel price comparison tool for Victoria and New South Wales, Australia.",
 };
 
 export default function TermsPage() {
@@ -19,16 +19,17 @@ export default function TermsPage() {
             <h2 className="text-base font-bold text-white mb-2">1. About PetrolSaver</h2>
             <p>
               PetrolSaver (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is a free fuel price comparison
-              tool for Victoria, Australia. We display fuel price data sourced from the Victorian
-              Government&apos;s Fair Fuel Open Data API, operated by Service Victoria.
+              tool for Victoria and New South Wales, Australia. We display fuel price data sourced from the Victorian
+              Government&apos;s Fair Fuel Open Data API (Service Victoria) and the NSW FuelCheck API (Transport for NSW).
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-bold text-white mb-2">2. Data Accuracy</h2>
             <p>
-              Fuel prices displayed on PetrolSaver are sourced from the Victorian Government and are
-              subject to a delay of approximately 24 hours. We do not modify the price data in any way.
+              Fuel prices displayed on PetrolSaver are sourced from the Victorian and NSW governments.
+              Victorian prices are subject to a delay of approximately 24 hours; NSW prices are updated in real-time.
+              We do not modify the price data in any way.
               While we strive to provide accurate information, we cannot guarantee that all prices are
               current or correct at the time you view them.
             </p>
@@ -86,7 +87,7 @@ export default function TermsPage() {
             <h2 className="text-base font-bold text-white mb-2">7. Independence</h2>
             <p>
               PetrolSaver is not affiliated with, endorsed by, or sponsored by any fuel retailer, fuel brand,
-              or the Victorian Government. Our recommendations are generated algorithmically without any
+              or any state government. Our recommendations are generated algorithmically without any
               commercial influence from fuel companies.
             </p>
           </section>

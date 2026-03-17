@@ -9,15 +9,23 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Fuel Prices by Suburb — PetrolSaver",
   description:
-    "Browse fuel prices across 900+ suburbs in Victoria, Australia. Find the cheapest petrol station in your suburb.",
+    "Browse fuel prices across Victoria and New South Wales, Australia. Find the cheapest petrol station in your suburb.",
   alternates: { canonical: "/prices" },
 };
 
-export default async function PricesIndexPage() {
-  const stations = await fetchMergedStations();
-  const suburbMap = groupBySuburb(stations);
+interface SuburbEntry {
+  name: string;
+  slug: string;
+  count: number;
+  cheapestU91: number | null;
+  state: "VIC" | "NSW";
+}
 
-  const sorted = [...suburbMap.entries()]
+function buildSuburbList(stations: Awaited<ReturnType<typeof fetchMergedStations>>, state: "VIC" | "NSW"): SuburbEntry[] {
+  const filtered = stations.filter((s) => (s.state ?? "VIC") === state);
+  const suburbMap = groupBySuburb(filtered);
+
+  return [...suburbMap.entries()]
     .map(([name, stns]) => ({
       name,
       slug: suburbToSlug(name),
@@ -26,16 +34,86 @@ export default async function PricesIndexPage() {
         .map((s) => s.prices.find((p) => p.fuelType === "U91")?.price)
         .filter((p): p is number => p != null)
         .sort((a, b) => a - b)[0] ?? null,
+      state,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
 
-  const grouped = new Map<string, typeof sorted>();
-  for (const sub of sorted) {
+function groupByLetter(suburbs: SuburbEntry[]) {
+  const grouped = new Map<string, SuburbEntry[]>();
+  for (const sub of suburbs) {
     const letter = sub.name.charAt(0).toUpperCase();
     const arr = grouped.get(letter) || [];
     arr.push(sub);
     grouped.set(letter, arr);
   }
+  return grouped;
+}
+
+function SuburbSection({ title, suburbs, urlPrefix }: { title: string; suburbs: SuburbEntry[]; urlPrefix: string }) {
+  const grouped = groupByLetter(suburbs);
+
+  return (
+    <div className="mb-12">
+      <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        {title}
+        <span className="text-xs font-normal text-[#5f6368]">({suburbs.length} suburbs)</span>
+      </h2>
+
+      {/* Letter quick nav */}
+      <div className="pb-4 border-b border-white/5 mb-4">
+        <div className="flex flex-wrap gap-1">
+          {[...grouped.keys()].map((letter) => (
+            <a
+              key={`${title}-${letter}`}
+              href={`#${title}-${letter}`}
+              className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-[#dadce0] hover:bg-[#4285f4] hover:text-white transition-all"
+            >
+              {letter}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {[...grouped.entries()].map(([letter, subs]) => (
+        <div key={`${title}-${letter}`} id={`${title}-${letter}`} className="mb-8">
+          <h3 className="text-lg font-bold text-white mb-3 sticky top-0 bg-[#1a1a1a] py-2 z-10 border-b border-white/5">
+            {letter}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
+            {subs.map((sub) => (
+              <a
+                key={sub.slug}
+                href={`${urlPrefix}${sub.slug}`}
+                className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors group"
+              >
+                <div>
+                  <div className="text-sm text-[#dadce0] group-hover:text-white transition-colors">
+                    {sub.name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")}
+                  </div>
+                  <div className="text-[10px] text-[#5f6368]">
+                    {sub.count} station{sub.count !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                {sub.cheapestU91 && (
+                  <span className="text-xs font-mono font-bold text-emerald-400">
+                    {sub.cheapestU91.toFixed(1)}c
+                  </span>
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default async function PricesIndexPage() {
+  const stations = await fetchMergedStations();
+  const vicSuburbs = buildSuburbList(stations, "VIC");
+  const nswSuburbs = buildSuburbList(stations, "NSW");
+  const totalSuburbs = vicSuburbs.length + nswSuburbs.length;
 
   return (
     <div className="min-h-screen bg-[#1a1a1a]">
@@ -48,7 +126,7 @@ export default async function PricesIndexPage() {
             Fuel Prices by Suburb
           </h1>
           <p className="text-[#9aa0a6] text-sm md:text-base mb-5">
-            Browse fuel prices across {sorted.length} suburbs in Victoria, Australia.
+            Browse fuel prices across {totalSuburbs} suburbs in Victoria and New South Wales.
           </p>
           <a
             href="/"
@@ -68,60 +146,25 @@ export default async function PricesIndexPage() {
         <AdSlot slot="suburb-index" format="horizontal" />
       </div>
 
-      {/* Letter quick nav */}
-      <div className="max-w-4xl mx-auto px-4 pb-4 border-b border-white/5">
-        <div className="flex flex-wrap gap-1">
-          {[...grouped.keys()].map((letter) => (
-            <a
-              key={letter}
-              href={`#${letter}`}
-              className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-[#dadce0] hover:bg-[#4285f4] hover:text-white transition-all"
-            >
-              {letter}
-            </a>
-          ))}
-        </div>
-      </div>
-
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {[...grouped.entries()].map(([letter, suburbs]) => (
-          <div key={letter} id={letter} className="mb-8">
-            <h2 className="text-lg font-bold text-white mb-3 sticky top-0 bg-[#1a1a1a] py-2 z-10 border-b border-white/5">
-              {letter}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
-              {suburbs.map((sub) => (
-                <a
-                  key={sub.slug}
-                  href={`/prices/${sub.slug}`}
-                  className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors group"
-                >
-                  <div>
-                    <div className="text-sm text-[#dadce0] group-hover:text-white transition-colors">
-                      {sub.name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")}
-                    </div>
-                    <div className="text-[10px] text-[#5f6368]">
-                      {sub.count} station{sub.count !== 1 ? "s" : ""}
-                    </div>
-                  </div>
-                  {sub.cheapestU91 && (
-                    <span className="text-xs font-mono font-bold text-emerald-400">
-                      {sub.cheapestU91.toFixed(1)}c
-                    </span>
-                  )}
-                </a>
-              ))}
-            </div>
-          </div>
-        ))}
+        {vicSuburbs.length > 0 && (
+          <SuburbSection title="Victoria" suburbs={vicSuburbs} urlPrefix="/prices/" />
+        )}
+
+        {nswSuburbs.length > 0 && (
+          <SuburbSection title="New South Wales" suburbs={nswSuburbs} urlPrefix="/prices/nsw/" />
+        )}
 
         {/* Attribution */}
         <div className="mt-8 pb-8 text-center text-[10px] text-[#5f6368]">
           Data from{" "}
           <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
-            the Victorian Government
+            Service Victoria
           </a>
-          {" "}&middot; Prices delayed ~24hrs
+          {" and "}
+          <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+            Transport for NSW
+          </a>
         </div>
       </div>
     </div>

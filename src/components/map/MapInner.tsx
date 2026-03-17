@@ -389,7 +389,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         className="h-full w-full"
         scrollWheelZoom={true}
         zoomControl={false}
-        minZoom={9}
+        minZoom={6}
         maxZoom={18}
       >
         <TileLayer

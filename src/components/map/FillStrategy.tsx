@@ -722,7 +722,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   </span>
                 )}
               </div>
-              <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Live data via Service Victoria</div>
+              <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Data via Service Victoria & Transport for NSW</div>
             </div>
             <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />

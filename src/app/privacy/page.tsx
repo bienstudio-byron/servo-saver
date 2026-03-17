@@ -97,7 +97,8 @@ export default function PrivacyPage() {
             <h2 className="text-base font-bold text-white mb-2">Third-Party Services</h2>
             <p>PetrolSaver uses the following third-party services:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li><strong className="text-white">Service Victoria</strong> — fuel price data (public API)</li>
+              <li><strong className="text-white">Service Victoria</strong> — Victorian fuel price data (public API)</li>
+              <li><strong className="text-white">Transport for NSW</strong> — NSW fuel price data (FuelCheck API)</li>
               <li><strong className="text-white">OpenStreetMap / CartoDB</strong> — map tiles</li>
               <li><strong className="text-white">Nominatim</strong> — suburb/location search</li>
               <li><strong className="text-white">Vercel</strong> — hosting and analytics</li>

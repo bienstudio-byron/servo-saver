@@ -4,11 +4,14 @@ export const MAP_ZOOM = 8;
 export const MAP_MIN_ZOOM = 6;
 export const MAP_MAX_ZOOM = 18;
 
-// Victoria bounding box
-export const VICTORIA_BOUNDS: [[number, number], [number, number]] = [
-  [-34.0, 140.9], // NW corner
-  [-39.2, 150.0], // SE corner
+// Victoria + NSW bounding box
+export const APP_BOUNDS: [[number, number], [number, number]] = [
+  [-28.0, 140.9], // NW corner (covers NSW)
+  [-39.2, 154.0], // SE corner (covers NSW coast)
 ];
+
+// Keep alias for backward compat
+export const VICTORIA_BOUNDS = APP_BOUNDS;
 
 // Fuel type display labels
 export const FUEL_TYPE_LABELS: Record<string, string> = {
@@ -38,6 +41,7 @@ export const PRICE_COLORS = {
 // API
 export const FUEL_API_BASE_URL =
   "https://api.fuel.service.vic.gov.au/open-data/v1";
+export const NSW_API_BASE_URL = "https://api.onegov.nsw.gov.au/FuelCheckApp/v1/fuel";
 export const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 // Calculator defaults

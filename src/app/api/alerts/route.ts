@@ -41,7 +41,7 @@ export async function POST(req: Request) {
             We'll notify you when <strong>${fuelType || "U91"}</strong> prices drop significantly in your area.
           </p>
           <p style="color: #555; line-height: 1.6;">
-            Price alerts are based on data from the Victorian Government's Fair Fuel API, updated every 24 hours.
+            Price alerts are based on government fuel data, updated regularly.
           </p>
           <div style="margin: 24px 0; text-align: center;">
             <a href="https://petrolsaver.live" style="display: inline-block; background: #4285f4; color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 14px;">
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
             </a>
           </div>
           <p style="color: #999; font-size: 12px; text-align: center;">
-            Data from <a href="https://service.vic.gov.au" style="color: #4285f4;">Service Victoria</a> ·
+            Data from <a href="https://service.vic.gov.au" style="color: #4285f4;">Service Victoria</a> &amp; <a href="https://www.transport.nsw.gov.au" style="color: #4285f4;">Transport for NSW</a> ·
             <a href="https://petrolsaver.live/how-it-works" style="color: #4285f4;">How it works</a>
           </p>
         </div>

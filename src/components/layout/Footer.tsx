@@ -9,9 +9,17 @@ export default function Footer() {
           rel="noopener noreferrer"
           className="text-[#8ab4f8] hover:text-[#aecbfa] transition-colors"
         >
-          the Victorian Government
+          Service Victoria
         </a>
-        {" "}&middot; Prices are delayed ~24 hours
+        {" and "}
+        <a
+          href="https://www.transport.nsw.gov.au"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#8ab4f8] hover:text-[#aecbfa] transition-colors"
+        >
+          Transport for NSW
+        </a>
       </div>
     </footer>
   );

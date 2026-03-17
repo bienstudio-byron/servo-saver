@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: `/station/${encodeURIComponent(station.id)}` },
     openGraph: {
       title: `${station.name} — Fuel Prices`,
-      description: `Compare fuel prices at ${station.name}, ${suburb}. Updated hourly via Service Victoria.`,
+      description: `Compare fuel prices at ${station.name}, ${suburb}. Updated hourly.`,
     },
   };
 }
@@ -276,7 +276,10 @@ export default async function StationPage({ params }: Props) {
           <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>
-          {" "}&middot; Prices delayed ~24hrs
+          {" and "}
+          <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+            Transport for NSW
+          </a>
         </div>
       </div>
     </div>

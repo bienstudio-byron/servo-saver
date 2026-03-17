@@ -1,9 +1,27 @@
 import type { StationWithPrices } from "@/types/fuel";
 
-/** Extract suburb from address like "123 Street, SUBURB, 3000" */
+/**
+ * Extract suburb from address.
+ * VIC format: "123 Street, SUBURB, 3000" → pick second-to-last segment
+ * NSW format: "123 Street, SUBURB NSW 2000" → pick last segment, strip state + postcode
+ */
 export function extractSuburb(address: string): string {
   const parts = address.split(",").map((s) => s.trim());
-  if (parts.length >= 2) return parts[parts.length - 2];
+
+  if (parts.length >= 3) {
+    // VIC-style: "street, SUBURB, postcode"
+    return parts[parts.length - 2];
+  }
+
+  if (parts.length === 2) {
+    // NSW-style: "street, SUBURB NSW 2000"
+    const last = parts[1];
+    // Strip trailing state abbreviation + postcode (e.g. " NSW 2000", " VIC 3000")
+    const match = last.match(/^(.+?)\s+(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+\d{4}$/i);
+    if (match) return match[1].trim();
+    return last;
+  }
+
   return address;
 }
 
