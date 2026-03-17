@@ -39,17 +39,20 @@ export default function StationModal({
     setFlagged(isStationFlagged(station.id));
   }, [station.id]);
 
-  // Fetch community price for this station
+  // Fetch community price for this station (only newer than official)
+  const officialUpdatedAt = station.prices.find((p) => p.fuelType === selectedFuelType)?.updatedAt;
   useEffect(() => {
     setCommunityPrice(null);
-    fetch(`/api/community-price?stationId=${encodeURIComponent(station.id)}`)
+    const params = new URLSearchParams({ stationId: station.id });
+    if (officialUpdatedAt) params.set("officialUpdatedAt", officialUpdatedAt);
+    fetch(`/api/community-price?${params}`)
       .then((r) => r.json())
       .then((data) => {
         const match = data.prices?.find((p: { fuelType: string }) => p.fuelType === selectedFuelType);
         if (match) setCommunityPrice({ price: match.price, reportedAt: match.reportedAt, confidence: match.confidence });
       })
       .catch(() => {});
-  }, [station.id, selectedFuelType]);
+  }, [station.id, selectedFuelType, officialUpdatedAt]);
 
   const nearby = nearestStations(
     allStations.filter((s) => s.id !== station.id),
@@ -353,7 +356,9 @@ export default function StationModal({
             onClose={() => {
               setShowReportModal(false);
               // Refresh community price
-              fetch(`/api/community-price?stationId=${encodeURIComponent(station.id)}`)
+              const params = new URLSearchParams({ stationId: station.id });
+              if (officialUpdatedAt) params.set("officialUpdatedAt", officialUpdatedAt);
+              fetch(`/api/community-price?${params}`)
                 .then((r) => r.json())
                 .then((data) => {
                   const match = data.prices?.find((p: { fuelType: string }) => p.fuelType === selectedFuelType);

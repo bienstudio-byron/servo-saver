@@ -5,24 +5,29 @@ import crypto from "crypto";
 const supabase = () =>
   createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-/** GET — fetch fresh community prices for a station */
+/** GET — fetch community prices for a station, newer than the official price */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const stationId = searchParams.get("stationId");
+  const officialUpdatedAt = searchParams.get("officialUpdatedAt");
 
   if (!stationId) {
     return NextResponse.json({ error: "stationId required" }, { status: 400 });
   }
 
-  const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(); // 4hrs
-
-  const { data, error } = await supabase()
+  let query = supabase()
     .from("community_prices")
     .select("fuel_type, price, reported_at, confidence")
     .eq("station_id", stationId)
     .eq("expired", false)
-    .gte("reported_at", cutoff)
     .order("reported_at", { ascending: false });
+
+  // Only return community prices newer than the official update
+  if (officialUpdatedAt) {
+    query = query.gt("reported_at", officialUpdatedAt);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
@@ -91,8 +96,7 @@ export async function POST(req: Request) {
     }
 
     // Insert
-    const db = supabase();
-    const { error } = await db
+    const { error } = await supabase()
       .from("community_prices")
       .insert({
         station_id: stationId,

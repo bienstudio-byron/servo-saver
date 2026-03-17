@@ -216,7 +216,7 @@ export default function ReportPriceModal({
           )}
 
           <p className="text-[9px] text-[var(--muted)] text-center">
-            Help keep prices accurate. Reports expire after 4 hours.
+            Help keep prices accurate. Valid until next official update.
           </p>
         </div>
       </motion.div>

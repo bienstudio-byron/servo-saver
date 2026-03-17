@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, AlertCircle } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check } from "lucide-react";
 import { AnimatePresence as AP } from "framer-motion";
-import ReportPriceModal from "@/components/shared/ReportPriceModal";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -45,6 +44,135 @@ interface RankedOption {
   tag: string; // "Best value" | "Cheapest" | "Good deal" | "Nearby"
   isStale: boolean;
   updatedAt: string;
+}
+
+function getDeviceId(): string {
+  const key = "petrolsaver-device-id";
+  let id = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+  if (!id) {
+    id = crypto.randomUUID();
+    try { localStorage.setItem(key, id); } catch {}
+  }
+  return id;
+}
+
+function InlineReportForm({
+  stationId,
+  stationName,
+  currentPrice,
+  selectedFuelType,
+  onClose,
+}: {
+  stationId: string;
+  stationName: string;
+  currentPrice: number;
+  selectedFuelType: string;
+  onClose: () => void;
+}) {
+  const [priceInput, setPriceInput] = useState(currentPrice ? currentPrice.toFixed(1) : "");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error" | "rate-limited">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const scrollInputIntoView = () => {
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+  };
+
+  const handleSubmit = async () => {
+    const price = parseFloat(priceInput);
+    if (isNaN(price) || price <= 0 || price >= 500) {
+      setErrorMsg("Enter a valid price");
+      setStatus("error");
+      return;
+    }
+    setStatus("submitting");
+    try {
+      const res = await fetch("/api/community-price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stationId, fuelType: selectedFuelType, price, deviceId: getDeviceId() }),
+      });
+      if (res.status === 429) { setStatus("rate-limited"); return; }
+      if (!res.ok) { setStatus("error"); setErrorMsg("Something went wrong"); return; }
+      setStatus("success");
+      setTimeout(onClose, 1200);
+    } catch {
+      setStatus("error");
+      setErrorMsg("Network error");
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className="space-y-2.5 pt-1"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <button onClick={onClose} className="p-0.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+          <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="text-xs font-semibold text-[var(--foreground)] truncate">Report price</div>
+          <div className="text-[10px] text-[var(--muted)] truncate">{stationName}</div>
+        </div>
+      </div>
+
+      {/* Price input */}
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="number"
+          inputMode="decimal"
+          step="0.1"
+          value={priceInput}
+          onChange={(e) => { setPriceInput(e.target.value); setStatus("idle"); setErrorMsg(""); }}
+          onFocus={scrollInputIntoView}
+          placeholder="e.g. 175.9"
+          style={{ fontSize: "16px" }}
+          className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg px-3 py-2 text-sm font-bold font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+          autoFocus
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--muted)] font-mono">c/L</span>
+      </div>
+
+      {/* Status */}
+      {status === "error" && <p className="text-[10px] text-[var(--tier-exp)]">{errorMsg}</p>}
+      {status === "rate-limited" && <p className="text-[10px] text-[var(--tier-mid)]">Already reported recently. Try again in an hour.</p>}
+      {status === "success" && (
+        <div className="flex items-center gap-1.5 text-[11px] text-[var(--tier-cheap)] font-medium">
+          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+          Thanks! Price submitted.
+        </div>
+      )}
+
+      {/* Submit */}
+      {status !== "success" && (
+        <button
+          onClick={handleSubmit}
+          disabled={status === "submitting" || status === "rate-limited" || !priceInput}
+          className={`w-full py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            status === "submitting" || !priceInput
+              ? "bg-[var(--subtle)] text-[var(--muted)] cursor-not-allowed"
+              : "bg-[var(--foreground)] text-[var(--card)] hover:opacity-90"
+          }`}
+        >
+          {status === "submitting" ? (
+            <div className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          ) : (
+            <Send className="h-3.5 w-3.5" strokeWidth={2.5} />
+          )}
+          Submit
+        </button>
+      )}
+
+      <p className="text-[8px] text-[var(--muted)] text-center">Valid until next official update</p>
+    </motion.div>
+  );
 }
 
 function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => void; mapCentre?: { lat: number; lng: number } }) {
@@ -119,7 +247,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
   const [tripSelectedIdx, setTripSelectedIdx] = useState(0); // which option is selected in trip summary
-  const [reportStation, setReportStation] = useState<{ id: string; name: string; price?: number } | null>(null);
+  const [reportingStationId, setReportingStationId] = useState<string | null>(null);
   const [showAllTrip, setShowAllTrip] = useState(false);
   const lastUpdated = useMemo(() => {
     if (stations.length === 0) return "";
@@ -506,6 +634,21 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     const fillLitres = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
     const detourFuelCost = opt.detourKm > 0 ? ((opt.detourKm / 100) * DEFAULT_CONSUMPTION * opt.price) / 100 : 0;
     const rawSavings = closestOpt ? ((closestOpt.price - opt.price) * fillLitres) / 100 : 0;
+    const isReporting = reportingStationId === opt.station.id;
+
+    if (isReporting) {
+      return (
+        <div className="px-3 pb-3">
+          <InlineReportForm
+            stationId={opt.station.id}
+            stationName={opt.station.name}
+            currentPrice={opt.price}
+            selectedFuelType={selectedFuelType}
+            onClose={() => setReportingStationId(null)}
+          />
+        </div>
+      );
+    }
 
     return (
       <div className="px-3 pb-3 space-y-2">
@@ -591,20 +734,22 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
             Directions
           </a>
-          <button
-            onClick={() => setReportStation({ id: opt.station.id, name: opt.station.name, price: opt.price })}
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
-          >
-            <AlertCircle className="h-3.5 w-3.5" strokeWidth={2} />
-            Report price
-          </button>
-          <button
-            onClick={() => setSelectedStation(opt.station)}
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
-          >
-            <Info className="h-3.5 w-3.5" strokeWidth={2} />
-            Details
-          </button>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => setReportingStationId(opt.station.id)}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+            >
+              <TriangleAlert className="h-3.5 w-3.5" strokeWidth={2} />
+              Report
+            </button>
+            <button
+              onClick={() => setSelectedStation(opt.station)}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+            >
+              <Info className="h-3.5 w-3.5" strokeWidth={2} />
+              Details
+            </button>
+          </div>
         </motion.div>
       </div>
     );
@@ -946,18 +1091,6 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       </div>
     </motion.div>
 
-    {/* Report price modal */}
-    <AP>
-      {reportStation && (
-        <ReportPriceModal
-          stationId={reportStation.id}
-          stationName={reportStation.name}
-          selectedFuelType={selectedFuelType}
-          currentPrice={reportStation.price}
-          onClose={() => setReportStation(null)}
-        />
-      )}
-    </AP>
     </div>
   );
 }
