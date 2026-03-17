@@ -357,10 +357,11 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         <FitBoundsTarget />
         <ViewportTracker onChange={handleViewport} />
 
-        {/* Show pins — in trip mode only show highlighted stations */}
-        {visibleMarkers
-          .filter(({ station }) => highlightedStationIds.length === 0 || highlightedStationIds.includes(station.id))
-          .map(({ station, price }) => (
+        {/* Show pins */}
+        {visibleMarkers.map(({ station, price }) => {
+          const isHighlighted = highlightedStationIds.length === 0 || highlightedStationIds.includes(station.id);
+          if (!isHighlighted && tripMode === "trip") return null;
+          return (
             <Marker
               key={station.id}
               position={[station.latitude, station.longitude]}
@@ -368,13 +369,14 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
                 station.brand?.name ?? "?",
                 price,
                 getPriceTier(price, thresholds),
-                true,
+                isHighlighted,
                 theme
               )}
-              zIndexOffset={1000}
+              zIndexOffset={isHighlighted ? 1000 : 0}
               eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
             />
-          ))}
+          );
+        })}
 
         {/* Trip mode: show destination pin */}
         {tripMode === "trip" && tripDestination && (
