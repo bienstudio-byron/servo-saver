@@ -276,7 +276,7 @@ function PinFader() {
 
   useEffect(() => {
     const container = map.getContainer();
-    if (selected || highlighted.length > 0) {
+    if (selected || highlighted.size > 0) {
       container.classList.add("pins-faded");
     } else {
       container.classList.remove("pins-faded");
@@ -357,10 +357,9 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         <FitBoundsTarget />
         <ViewportTracker onChange={handleViewport} />
 
-        {/* Show pins */}
+        {/* Nearby mode: show all visible pins */}
         {visibleMarkers.map(({ station, price }) => {
-          const isHighlighted = highlightedStationIds.length === 0 || highlightedStationIds.includes(station.id);
-          if (!isHighlighted && tripMode === "trip") return null;
+          const isActive = selectedStation?.id === station.id || highlightedStationIds.has(station.id);
           return (
             <Marker
               key={station.id}
@@ -369,10 +368,10 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
                 station.brand?.name ?? "?",
                 price,
                 getPriceTier(price, thresholds),
-                isHighlighted,
+                isActive,
                 theme
               )}
-              zIndexOffset={isHighlighted ? 1000 : 0}
+              zIndexOffset={isActive ? 1000 : 0}
               eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
             />
           );

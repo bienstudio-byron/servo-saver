@@ -29,8 +29,8 @@ interface FuelStore {
   setFitBoundsTarget: (target: { points: [number, number][] } | null) => void;
   pinClickedStationId: string | null;
   setPinClickedStationId: (id: string | null) => void;
-  highlightedStationIds: string[];
-  setHighlightedStationIds: (ids: string[]) => void;
+  highlightedStationIds: Set<string>;
+  setHighlightedStationIds: (ids: Set<string>) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -60,6 +60,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setFitBoundsTarget: (target) => set({ fitBoundsTarget: target }),
   pinClickedStationId: null,
   setPinClickedStationId: (id) => set({ pinClickedStationId: id }),
-  highlightedStationIds: [],
+  highlightedStationIds: new Set<string>(),
   setHighlightedStationIds: (ids) => set({ highlightedStationIds: ids }),
 }));

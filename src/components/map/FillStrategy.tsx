@@ -314,17 +314,17 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   useEffect(() => {
     const focusedIndex = selectedIndex ?? expandedIndex;
     if (focusedIndex !== null && options[focusedIndex]) {
-      setHighlightedStationIds([options[focusedIndex].station.id]);
+      setHighlightedStationIds(new Set([options[focusedIndex].station.id]));
     } else if (options.length > 0) {
       const visibleOptions = tripMode === "trip" && !showAllTrip
         ? options.slice(0, 5)
         : options;
-      setHighlightedStationIds(visibleOptions.map((o) => o.station.id));
+      setHighlightedStationIds(new Set(visibleOptions.map((o) => o.station.id)));
     } else {
-      setHighlightedStationIds([]);
+      setHighlightedStationIds(new Set());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIndex, expandedIndex, showAllTrip, tripMode, options.map(o => o.station.id).join(",")]);
+  }, [selectedIndex, expandedIndex, showAllTrip, options.length]);
 
   useEffect(() => {
     setActiveRouteStation(activeStation);
