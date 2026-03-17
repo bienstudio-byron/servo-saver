@@ -403,11 +403,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }, [options.map(o => o.station.id).join(",")]);
 
   // Sync expanded/selected option with route line
-  // In trip mode, use tripSelectedIdx. In nearby mode, use selectedIndex/expandedIndex.
   const activeStation = tripMode === "trip" && tripDestination && options.length > 0
     ? options[tripSelectedIdx]?.station ?? options[0].station
-    : selectedIndex !== null && options[selectedIndex]
-    ? options[selectedIndex].station
     : expandedIndex !== null && options[expandedIndex]
     ? options[expandedIndex].station
     : null;
@@ -470,32 +467,18 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       } else {
         // Nearby mode
         const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-        if (isMobile) {
-          setSelectedIndex(null);
-          setExpandedIndex(null);
-          setMinimised(false);
-          // Scroll horizontal card list to the tapped station
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              const card = rowRefs.current.get(idx);
-              if (card) {
-                card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-              }
-            }, 50);
-          });
-        } else {
-          setExpandedIndex(idx);
-          setSelectedIndex(null);
-          setMinimised(false);
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              const row = rowRefs.current.get(idx);
-              if (row) {
-                row.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }, 50);
-          });
-        }
+        setExpandedIndex(idx);
+        setSelectedIndex(null);
+        setMinimised(false);
+        // Scroll horizontal card list to the tapped station
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const card = rowRefs.current.get(idx);
+            if (card) {
+              card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+            }
+          }, 50);
+        });
         if (origin) {
           setFitBoundsTarget({
             points: [
@@ -662,9 +645,10 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   };
 
   const handleRowClick = (i: number, opt: RankedOption) => {
-    // Mobile: tap card → open detail view. Desktop: inline expand
+    // Tap card → expand details below cards. Tap again → collapse.
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    if (isMobile) {
+    if (isMobile && expandedIndex === i) {
+      // Second tap on mobile → open full detail view
       setSelectedIndex(i);
       setExpandedIndex(null);
     } else {
@@ -703,7 +687,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-stretch">
+    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:bottom-4 md:left-3 md:right-3 flex flex-col items-stretch">
     {/* Floating buttons above the sheet */}
     <MobileFloatingButtons onRecentre={onRecentre} mapCentre={mapCentre} />
 
@@ -818,8 +802,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             </div>
           ) : (
             <>
-              {/* Mobile: horizontal snap-scroll cards */}
-              <div ref={listRef} className="md:hidden flex gap-2 overflow-x-auto px-3 py-2.5 snap-x snap-mandatory scrollbar-hide overscroll-x-contain" style={{ WebkitOverflowScrolling: "touch" }}>
+              {/* Horizontal snap-scroll cards */}
+              <div ref={listRef} className="flex gap-2 overflow-x-auto px-3 py-2.5 snap-x snap-mandatory scrollbar-hide overscroll-x-contain" style={{ WebkitOverflowScrolling: "touch" }}>
                 {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
                   const tierColor = getTierColor(opt.price);
                   const isActive = activeStation?.id === opt.station.id || (activeStation === null && i === 0);
@@ -861,78 +845,24 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 })}
               </div>
 
-              {/* Desktop: vertical list with inline expand */}
-              <div className={`hidden md:block overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised ? "!hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
-                {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
-                  const tierColor = getTierColor(opt.price);
-                  const isExpanded = expandedIndex === i;
-                  const isActive = activeStation?.id === opt.station.id;
-
-                  return (
-                    <div
-                      ref={(el: HTMLElement | null) => setRowRef(i, el)}
-                      key={opt.station.id}
-                      className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
-                    >
-                      <button
-                        onClick={() => handleRowClick(i, opt)}
-                        className="w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer px-3 py-1.5 flex items-center gap-2"
-                      >
-                        <span className="text-[10px] font-mono text-[var(--muted)] w-3 text-right shrink-0">{i + 1}</span>
-                        <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="sm" />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-medium truncate text-[var(--foreground)] text-xs">{opt.station.name}</span>
-                            {opt.tag && (
-                              <span className="text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 text-[var(--muted)]">{opt.tag}</span>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-[var(--muted)]">
-                            {opt.isStale ? (
-                              <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
-                                <TriangleAlert className="h-2.5 w-2.5 inline shrink-0" strokeWidth={2} />
-                                Price may be outdated
-                              </span>
-                            ) : (
-                              <>{(opt.distance + opt.detourKm).toFixed(1)}km</>
-                            )}
-                          </div>
-                        </div>
-                        <div className={`font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-xs`}>
-                          {opt.price.toFixed(1)}c
-                        </div>
-                      </button>
-
-                      {/* Inline expand */}
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="overflow-hidden pl-[36px]"
-                          >
-                            {renderStationCard(opt, false)}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-
-                {tripMode === "trip" && !showAllTrip && options.length > 5 && (
-                  <button
-                    onClick={() => { setShowAllTrip(true); setRecommendedStations(options.map((o) => o.station)); }}
-                    className="w-full py-2 text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors border-t border-[var(--subtle-border)]"
+              {/* Inline expand — shown below cards when a card is selected */}
+              <AnimatePresence>
+                {expandedIndex !== null && options[expandedIndex] && (
+                  <motion.div
+                    key={`expand-${options[expandedIndex].station.id}`}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="overflow-hidden border-t border-[var(--subtle-border)]"
                   >
-                    Show all {options.length} stations
-                  </button>
+                    {renderStationCard(options[expandedIndex], false)}
+                  </motion.div>
                 )}
-              </div>
+              </AnimatePresence>
 
               {options[0]?.distance > 5 && tripMode === "nearby" && (
-                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-2 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors md:hidden">
+                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-2 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
                   <RefreshCw className="h-3 w-3" strokeWidth={2} />
                   Doesn&apos;t look right? Refresh location
                 </button>
@@ -941,8 +871,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           )}
       </div>
 
-      {/* Support + Footer — desktop only */}
-      <div className={`shrink-0 border-t border-[var(--subtle-border)] hidden md:block ${minimised && selectedOpt === null ? "!hidden" : ""}`}>
+      {/* Support + Footer */}
+      <div className={`shrink-0 border-t border-[var(--subtle-border)] hidden md:block`}>
         <a
           href="https://buymeacoffee.com/petrolsaver"
           target="_blank"
