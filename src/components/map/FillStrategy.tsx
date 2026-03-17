@@ -56,13 +56,25 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
   const [showAllTrip, setShowAllTrip] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState("");
-  useEffect(() => {
-    const update = () => setLastUpdated(new Date().toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true }));
-    update();
-    const interval = setInterval(update, 60_000);
-    return () => clearInterval(interval);
-  }, []);
+  const lastUpdated = useMemo(() => {
+    if (stations.length === 0) return "";
+    let latest = "";
+    for (const s of stations) {
+      for (const p of s.prices) {
+        if (p.updatedAt && p.updatedAt > latest) latest = p.updatedAt;
+      }
+    }
+    if (!latest) return "";
+    const d = new Date(latest);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHrs = Math.floor(diffMins / 60);
+    if (diffHrs < 24) return `${diffHrs}h ago`;
+    return `${Math.floor(diffHrs / 24)}d ago`;
+  }, [stations]);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const listRef = useRef<HTMLDivElement>(null);
   const setRowRef = useCallback((i: number, el: HTMLDivElement | null) => {
