@@ -383,14 +383,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       const visibleStations = tripMode === "trip" ? options.slice(0, 5) : options;
       setRecommendedStations(visibleStations.map((o) => o.station));
 
-      // Fit map to show origin + top stations (+ destination in trip mode)
-      if (origin) {
-        const fitOptions = tripMode === "trip" ? options.slice(0, 5) : options;
+      // Fit map to show origin + top stations (trip mode only — nearby mode
+      // stays at the user's current zoom to avoid a jarring zoom-out on load)
+      if (origin && tripMode === "trip") {
+        const fitOptions = options.slice(0, 5);
         const points: [number, number][] = [
           [origin.lat, origin.lng],
           ...fitOptions.map((o) => [o.station.latitude, o.station.longitude] as [number, number]),
         ];
-        if (tripMode === "trip" && tripDestination) {
+        if (tripDestination) {
           points.push([tripDestination.lat, tripDestination.lng]);
         }
         setFitBoundsTarget({ points });
