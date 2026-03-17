@@ -362,7 +362,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
           const isActive = selectedStation?.id === station.id || highlightedStationIds.includes(station.id);
           return (
             <Marker
-              key={station.id}
+              key={`${station.id}-${isActive}`}
               position={[station.latitude, station.longitude]}
               icon={getPillIcon(
                 station.brand?.name ?? "?",
