@@ -331,7 +331,7 @@ function SearchAreaButton({ mapCentre }: { mapCentre: { lat: number; lng: number
 }
 
 export default function MapInner({ stations, selectedFuelType, loading }: MapInnerProps) {
-  const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9, centre: { lat: MAP_CENTER[0], lng: MAP_CENTER[1] } });
+  const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 13, centre: { lat: MAP_CENTER[0], lng: MAP_CENTER[1] } });
   const thresholds = usePriceThresholds();
   const { theme, toggle: toggleTheme, currentTime } = useTheme();
   const tileUrl = theme === "light"
@@ -385,7 +385,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
     <>
       <MapContainer
         center={MAP_CENTER}
-        zoom={9}
+        zoom={13}
         className="h-full w-full"
         scrollWheelZoom={true}
         zoomControl={false}
