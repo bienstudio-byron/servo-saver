@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Navigation, Info, ChevronDown, Pencil, X, Heart } from "lucide-react";
+import { Navigation, Info, ChevronDown, Pencil, X, Heart, Droplets, Gauge, TriangleAlert } from "lucide-react";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
 import { usePriceThresholds } from "@/stores/price-context";
 import { getPriceTier } from "@/lib/price-utils";
 import BrandLogo from "@/components/shared/BrandLogo";
+import InlineReportForm from "@/components/shared/InlineReportForm";
+import { FUEL_TYPE_LABELS } from "@/lib/constants";
 
 export interface RankedOption {
   station: StationWithPrices;
@@ -20,6 +22,7 @@ export interface RankedOption {
   tag: string;
   isStale: boolean;
   updatedAt: string;
+  source?: "official" | "community";
 }
 
 interface TripSummaryCardProps {
@@ -44,9 +47,11 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
   const setTripDestination = useFuelStore((s) => s.setTripDestination);
   const setTripOrigin = useFuelStore((s) => s.setTripOrigin);
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
+  const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
   const thresholds = usePriceThresholds();
 
   const [showMore, setShowMore] = useState(false);
+  const [reportingStationId, setReportingStationId] = useState<string | null>(null);
 
   if (!tripDestination || options.length === 0) return null;
 
@@ -56,7 +61,7 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
     ? haversineDistance(origin.lat, origin.lng, tripDestination.lat, tripDestination.lng) * ROAD_FACTOR
     : 0;
   const litresFillingUp = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
-  const tripCost = (tripDistance / 100) * DEFAULT_CONSUMPTION * selected.price / 100;
+  const fillCost = litresFillingUp * selected.price / 100;
   const saving = selected.netSavings;
 
   const originName = tripOrigin?.name || "Your location";
@@ -71,15 +76,16 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
     }
   };
 
-  const formatUpdated = (iso: string) => {
+  const formatUpdated = (iso: string, source?: "official" | "community") => {
     const d = new Date(iso);
     const now = new Date();
     const diffHrs = Math.floor((now.getTime() - d.getTime()) / 3600000);
-    if (diffHrs < 1) return "Updated just now";
-    if (diffHrs < 24) return `Updated ${diffHrs}h ago`;
+    const prefix = source === "community" ? "Reported" : "Updated";
+    if (diffHrs < 1) return `${prefix} just now`;
+    if (diffHrs < 24) return `${prefix} ${diffHrs}h ago`;
     const diffDays = Math.floor(diffHrs / 24);
-    if (diffDays === 1) return "Updated yesterday";
-    return `Updated ${diffDays}d ago`;
+    if (diffDays === 1) return `${prefix} yesterday`;
+    return `${prefix} ${diffDays}d ago`;
   };
 
   const handleClearTrip = () => {
@@ -99,7 +105,7 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
         className="w-full max-h-[55vh] md:max-h-[70vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-clip flex flex-col"
       >
         {/* Trip header */}
-        <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <div className="text-sm font-bold text-[var(--foreground)] truncate">
               Trip to {tripDestination.name}
@@ -126,70 +132,99 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="px-4 pb-3 grid grid-cols-3 gap-2">
-          <div className="bg-[var(--subtle)] rounded-xl p-2.5 text-center">
-            <div className="text-[9px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-0.5">Trip cost</div>
-            <div className="text-base font-bold font-mono text-[var(--foreground)]">${tripCost.toFixed(2)}</div>
-          </div>
-          <div className="bg-[var(--subtle)] rounded-xl p-2.5 text-center">
-            <div className="text-[9px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-0.5">Saving</div>
-            <div className={`text-base font-bold font-mono ${saving > 0 ? "text-[var(--tier-cheap)]" : "text-[var(--muted)]"}`}>
-              {saving > 0 ? `$${saving.toFixed(2)}` : "$0"}
-            </div>
-          </div>
-          <div className="bg-[var(--subtle)] rounded-xl p-2.5 text-center">
-            <div className="text-[9px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-0.5">Fill up</div>
-            <div className="text-base font-bold font-mono text-[var(--foreground)]">{Math.round(litresFillingUp)}L</div>
+        {/* Settings */}
+        <div className="px-4 pb-3 flex items-center gap-3 text-[11px] text-[var(--muted)]">
+          <button onClick={onEditTrip} className="inline-flex items-center gap-1 underline underline-offset-2 decoration-[var(--subtle-border)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+            <Droplets className="h-3 w-3" strokeWidth={2} />
+            {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType}
+          </button>
+          <span className="text-[var(--subtle-border)]">·</span>
+          <button onClick={onEditTrip} className="inline-flex items-center gap-1 underline underline-offset-2 decoration-[var(--subtle-border)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+            <Gauge className="h-3 w-3" strokeWidth={2} />
+            ~{rangeKm}km range
+          </button>
+        </div>
+
+        {/* Recommendation explanation */}
+        <div className="px-4 pb-3">
+          <div className="rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] px-3 py-2.5 text-[11px] text-[var(--foreground)] leading-relaxed">
+            {saving > 0 ? (
+              <>
+                Stop at <span className="font-bold">{selected.station.name}</span> at <span className="font-bold font-mono">{selected.price.toFixed(1)}c/L</span>.
+                {" "}You&apos;ll save <span className="font-bold font-mono text-[var(--tier-cheap)]">${saving.toFixed(2)}</span> vs the closest station
+                {selected.detourKm >= 0.5 && <>, even with the {selected.detourKm.toFixed(1)}km detour</>}.
+              </>
+            ) : (
+              <>
+                Stop at <span className="font-bold">{selected.station.name}</span> at <span className="font-bold font-mono">{selected.price.toFixed(1)}c/L</span>.
+                {" "}Best option{selected.detourKm < 0.5 ? " — no detour needed" : " on your route"}.
+              </>
+            )}
           </div>
         </div>
 
         {/* Selected stop */}
         <div className="px-4 pb-3">
-          <div className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">
-            {selectedIdx === 0 ? "Recommended stop" : `Option ${selectedIdx + 1}`}
-          </div>
-          <div className="flex items-center gap-3">
-            <BrandLogo brandName={selected.station.brand?.name ?? "?"} size="lg" />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-[var(--foreground)] text-sm truncate">{selected.station.name}</span>
-                {selected.tag && (
-                  <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded-full border ${getTierColor(selected.price)} border-current opacity-80`}>
-                    {selected.tag}
-                  </span>
-                )}
+          {reportingStationId === selected.station.id ? (
+            <InlineReportForm
+              stationId={selected.station.id}
+              stationName={selected.station.name}
+              currentPrice={selected.price}
+              selectedFuelType={selectedFuelType}
+              onClose={() => setReportingStationId(null)}
+            />
+          ) : (
+            <>
+              <div className="flex items-center gap-3">
+                <BrandLogo brandName={selected.station.brand?.name ?? "?"} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-[var(--foreground)] text-sm truncate">{selected.station.name}</span>
+                    {selected.tag && (
+                      <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded-full border ${getTierColor(selected.price)} border-current opacity-80`}>
+                        {selected.tag}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-[var(--muted)]">
+                    {(selected.distance + selected.detourKm).toFixed(1)}km · {formatUpdated(selected.updatedAt, selected.source)}
+                  </div>
+                </div>
+                <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(selected.price)}`}>
+                  {selected.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
+                </div>
               </div>
-              <div className="text-[10px] text-[var(--muted)]">
-                {selected.distance.toFixed(1)}km
-                {selected.detourKm < 0.5 ? " · no detour" : ` · +${selected.detourKm.toFixed(1)}km detour`}
-                {" · "}{formatUpdated(selected.updatedAt)}
-              </div>
-            </div>
-            <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(selected.price)}`}>
-              {selected.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
-            </div>
-          </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 mt-3">
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${selected.station.latitude},${selected.station.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
-            >
-              <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
-              Directions
-            </a>
-            <button
-              onClick={() => setSelectedStation(selected.station)}
-              className="inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
-            >
-              <Info className="h-3.5 w-3.5" strokeWidth={2} />
-              Details
-            </button>
-          </div>
+              {/* Actions */}
+              <div className="flex flex-col gap-1.5 mt-3">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${selected.station.latitude},${selected.station.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+                >
+                  <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
+                  Directions
+                </a>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setReportingStationId(selected.station.id)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+                  >
+                    <TriangleAlert className="h-3.5 w-3.5" strokeWidth={2} />
+                    Update price
+                  </button>
+                  <button
+                    onClick={() => setSelectedStation(selected.station)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+                  >
+                    <Info className="h-3.5 w-3.5" strokeWidth={2} />
+                    Details
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Other options */}
@@ -233,8 +268,7 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                             )}
                           </div>
                           <div className="text-[10px] text-[var(--muted)]">
-                            {opt.distance.toFixed(1)}km
-                            {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km</>}
+                            {(opt.distance + opt.detourKm).toFixed(1)}km
                             {closestOpt && opt.netSavings > 0 && (
                               <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
                             )}

@@ -50,26 +50,53 @@ export default function HomePage() {
   }, [setSelectedFuelType]);
 
   useEffect(() => {
-    fetch("/api/fuel/stations")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch stations");
-        return res.json();
-      })
-      .then((data) => {
-        setStations(data.stations);
-        setAllStations(data.stations);
+    Promise.all([
+      fetch("/api/fuel/stations").then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch stations");
+        return r.json();
+      }),
+      fetch("/api/community-price/all").then((r) => r.json()).catch(() => ({ prices: [] })),
+    ])
+      .then(([stationData, communityData]) => {
+        let merged: StationWithPrices[] = stationData.stations;
+
+        // Overlay community prices where they're newer than the official price
+        if (communityData.prices?.length > 0) {
+          const communityMap = new Map<string, { fuelType: string; price: number; reportedAt: string }[]>();
+          for (const cp of communityData.prices) {
+            const key = cp.stationId;
+            if (!communityMap.has(key)) communityMap.set(key, []);
+            communityMap.get(key)!.push(cp);
+          }
+
+          merged = merged.map((station) => {
+            const reports = communityMap.get(station.id);
+            if (!reports) return station;
+            const updatedPrices = station.prices.map((p) => {
+              const report = reports.find((r) => r.fuelType === p.fuelType);
+              // Use community price if it's newer than the official update
+              if (report && new Date(report.reportedAt) > new Date(p.updatedAt)) {
+                return { ...p, price: report.price, updatedAt: report.reportedAt, source: "community" as const, isStale: false };
+              }
+              return p;
+            });
+            return { ...station, prices: updatedPrices };
+          });
+        }
+
+        setStations(merged);
+        setAllStations(merged);
         setLoading(false);
 
         // If ?station=ID in URL, fly to that station and open modal
         const params = new URLSearchParams(window.location.search);
         const stationParam = params.get("station");
         if (stationParam) {
-          const target = data.stations.find((s: { id: string }) => s.id === stationParam);
+          const target = merged.find((s: { id: string }) => s.id === stationParam);
           if (target) {
             setSelectedStation(target);
             setFlyToTarget({ lat: target.latitude, lng: target.longitude, zoom: 15 });
           }
-          // Clean up URL
           window.history.replaceState({}, "", "/");
         }
       })

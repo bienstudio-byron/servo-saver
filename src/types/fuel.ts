@@ -6,6 +6,7 @@ export interface FuelPrice {
   isAvailable: boolean;
   updatedAt: string; // ISO datetime
   isStale?: boolean; // true if price hasn't been updated in 3+ days
+  source?: "official" | "community"; // where this price came from
 }
 
 export interface FuelStation {

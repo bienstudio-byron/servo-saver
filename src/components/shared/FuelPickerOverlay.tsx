@@ -12,7 +12,6 @@ interface FuelPickerOverlayProps {
 const MAIN_FUELS = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
 
 export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps) {
-  const [rangeKm, setRangeKm] = useState(200);
   const [selectedFuel, setSelectedFuel] = useState(
     typeof window !== "undefined" ? localStorage.getItem("petrolsaver-fuel-chosen") || "U91" : "U91"
   );
@@ -33,7 +32,7 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
   const fuelLabel = FUEL_TYPE_LABELS[selectedFuel] ?? selectedFuel;
 
   const handleGo = () => {
-    onComplete({ fuelType: selectedFuel, rangeKm });
+    onComplete({ fuelType: selectedFuel, rangeKm: 200 });
   };
 
   return (
@@ -61,55 +60,6 @@ export default function FuelPickerOverlay({ onComplete }: FuelPickerOverlayProps
             </div>
           </motion.div>
           <h2 className="text-lg font-bold text-[var(--foreground)]">Find cheap fuel</h2>
-        </div>
-
-        {/* Fuel gauge */}
-        <div className="px-5 pb-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider">How much fuel have you got?</span>
-            <span className="text-sm font-bold font-mono text-[var(--foreground)]">
-              ~{rangeKm}km
-            </span>
-          </div>
-
-          <div className="relative mb-2">
-            <div className="h-8 rounded-lg bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden relative">
-              <motion.div
-                className="absolute inset-y-0 left-0 rounded-lg"
-                animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
-                transition={{ type: "spring", damping: 20, stiffness: 200 }}
-                style={{
-                  background: rangeKm <= 50
-                    ? "linear-gradient(90deg, #ef4444, #f87171)"
-                    : rangeKm <= 200
-                    ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
-                    : "linear-gradient(90deg, #4285f4, #8ab4f8)",
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white">
-                  {rangeKm <= 50 ? "Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
-                </span>
-              </div>
-            </div>
-            <input
-              type="range"
-              min={10}
-              max={800}
-              step={10}
-              value={rangeKm}
-              onChange={(e) => setRangeKm(Number(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-          </div>
-
-          <div className="flex justify-between px-1 text-[9px] text-[var(--muted)]">
-            <span>E</span>
-            <span>¼</span>
-            <span>½</span>
-            <span>¾</span>
-            <span>F</span>
-          </div>
         </div>
 
         {/* Fuel type */}

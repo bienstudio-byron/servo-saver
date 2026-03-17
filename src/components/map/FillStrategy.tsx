@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check } from "lucide-react";
 import { AnimatePresence as AP } from "framer-motion";
+import InlineReportForm from "@/components/shared/InlineReportForm";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -44,135 +45,7 @@ interface RankedOption {
   tag: string; // "Best value" | "Cheapest" | "Good deal" | "Nearby"
   isStale: boolean;
   updatedAt: string;
-}
-
-function getDeviceId(): string {
-  const key = "petrolsaver-device-id";
-  let id = typeof window !== "undefined" ? localStorage.getItem(key) : null;
-  if (!id) {
-    id = crypto.randomUUID();
-    try { localStorage.setItem(key, id); } catch {}
-  }
-  return id;
-}
-
-function InlineReportForm({
-  stationId,
-  stationName,
-  currentPrice,
-  selectedFuelType,
-  onClose,
-}: {
-  stationId: string;
-  stationName: string;
-  currentPrice: number;
-  selectedFuelType: string;
-  onClose: () => void;
-}) {
-  const [priceInput, setPriceInput] = useState(currentPrice ? currentPrice.toFixed(1) : "");
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error" | "rate-limited">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const scrollInputIntoView = () => {
-    setTimeout(() => {
-      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 300);
-  };
-
-  const handleSubmit = async () => {
-    const price = parseFloat(priceInput);
-    if (isNaN(price) || price <= 0 || price >= 500) {
-      setErrorMsg("Enter a valid price");
-      setStatus("error");
-      return;
-    }
-    setStatus("submitting");
-    try {
-      const res = await fetch("/api/community-price", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stationId, fuelType: selectedFuelType, price, deviceId: getDeviceId() }),
-      });
-      if (res.status === 429) { setStatus("rate-limited"); return; }
-      if (!res.ok) { setStatus("error"); setErrorMsg("Something went wrong"); return; }
-      setStatus("success");
-      setTimeout(onClose, 1200);
-    } catch {
-      setStatus("error");
-      setErrorMsg("Network error");
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ type: "spring", damping: 25, stiffness: 300 }}
-      className="space-y-2.5 pt-1"
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <button onClick={onClose} className="p-0.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
-          <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-        </button>
-        <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold text-[var(--foreground)] truncate">Report price</div>
-          <div className="text-[10px] text-[var(--muted)] truncate">{stationName}</div>
-        </div>
-      </div>
-
-      {/* Price input */}
-      <div className="relative">
-        <input
-          ref={inputRef}
-          type="number"
-          inputMode="decimal"
-          step="0.1"
-          value={priceInput}
-          onChange={(e) => { setPriceInput(e.target.value); setStatus("idle"); setErrorMsg(""); }}
-          onFocus={scrollInputIntoView}
-          placeholder="e.g. 175.9"
-          style={{ fontSize: "16px" }}
-          className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg px-3 py-2 text-sm font-bold font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
-          autoFocus
-        />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--muted)] font-mono">c/L</span>
-      </div>
-
-      {/* Status */}
-      {status === "error" && <p className="text-[10px] text-[var(--tier-exp)]">{errorMsg}</p>}
-      {status === "rate-limited" && <p className="text-[10px] text-[var(--tier-mid)]">Already reported recently. Try again in an hour.</p>}
-      {status === "success" && (
-        <div className="flex items-center gap-1.5 text-[11px] text-[var(--tier-cheap)] font-medium">
-          <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Thanks! Price submitted.
-        </div>
-      )}
-
-      {/* Submit */}
-      {status !== "success" && (
-        <button
-          onClick={handleSubmit}
-          disabled={status === "submitting" || status === "rate-limited" || !priceInput}
-          className={`w-full py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            status === "submitting" || !priceInput
-              ? "bg-[var(--subtle)] text-[var(--muted)] cursor-not-allowed"
-              : "bg-[var(--foreground)] text-[var(--card)] hover:opacity-90"
-          }`}
-        >
-          {status === "submitting" ? (
-            <div className="h-3.5 w-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-          ) : (
-            <Send className="h-3.5 w-3.5" strokeWidth={2.5} />
-          )}
-          Submit
-        </button>
-      )}
-
-      <p className="text-[8px] text-[var(--muted)] text-center">Valid until next official update</p>
-    </motion.div>
-  );
+  source?: "official" | "community";
 }
 
 function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => void; mapCentre?: { lat: number; lng: number } }) {
@@ -248,6 +121,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
   const [tripSelectedIdx, setTripSelectedIdx] = useState(0); // which option is selected in trip summary
   const [reportingStationId, setReportingStationId] = useState<string | null>(null);
+  const [reportedStationIds, setReportedStationIds] = useState<Set<string>>(new Set());
   const [showAllTrip, setShowAllTrip] = useState(false);
   const lastUpdated = useMemo(() => {
     if (stations.length === 0) return "";
@@ -315,16 +189,17 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const allFuelTypes = Object.entries(FUEL_TYPE_LABELS);
   const fuelShort = selectedFuelType === "PDSL" ? "P.Diesel" : (FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType).replace("Unleaded ", "U").replace("Premium ", "P");
 
-  const formatUpdated = (iso: string) => {
+  const formatUpdated = (iso: string, source?: "official" | "community") => {
     const d = new Date(iso);
     const now = new Date();
     const diffMs = now.getTime() - d.getTime();
     const diffHrs = Math.floor(diffMs / 3600000);
-    if (diffHrs < 1) return "Updated just now";
-    if (diffHrs < 24) return `Updated ${diffHrs}h ago`;
+    const prefix = source === "community" ? "Reported" : "Updated";
+    if (diffHrs < 1) return `${prefix} just now`;
+    if (diffHrs < 24) return `${prefix} ${diffHrs}h ago`;
     const diffDays = Math.floor(diffHrs / 24);
-    if (diffDays === 1) return "Updated yesterday";
-    return `Updated ${diffDays}d ago`;
+    if (diffDays === 1) return `${prefix} yesterday`;
+    return `${prefix} ${diffDays}d ago`;
   };
 
   const getTierColor = (price: number) => {
@@ -350,8 +225,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       .map((s) => {
         const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
         if (!p) return null;
-        return { station: s, price: p.price, isStale: !!p.isStale, updatedAt: p.updatedAt, distance: haversineDistance(origin.lat, origin.lng, s.latitude, s.longitude) * ROAD_FACTOR };
-      }).filter((x): x is { station: StationWithPrices; price: number; isStale: boolean; updatedAt: string; distance: number } => x !== null);
+        return { station: s, price: p.price, isStale: !!p.isStale, updatedAt: p.updatedAt, source: p.source, distance: haversineDistance(origin.lat, origin.lng, s.latitude, s.longitude) * ROAD_FACTOR };
+      }).filter(Boolean) as { station: StationWithPrices; price: number; isStale: boolean; updatedAt: string; source?: "official" | "community"; distance: number }[];
 
     if (withDistance.length === 0) return { options: [] };
 
@@ -433,6 +308,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         tag: item.isStale ? "" : tag,
         isStale: item.isStale,
         updatedAt: item.updatedAt,
+        source: item.source,
       };
     });
 
@@ -645,6 +521,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             currentPrice={opt.price}
             selectedFuelType={selectedFuelType}
             onClose={() => setReportingStationId(null)}
+            onSuccess={() => setReportedStationIds((prev) => new Set(prev).add(opt.station.id))}
           />
         </div>
       );
@@ -667,9 +544,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 {opt.tag && <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded-full border ${tierColor} border-current opacity-80`}>{opt.tag}</span>}
               </div>
               <div className="text-[11px] text-[var(--muted)]">
-                {opt.distance.toFixed(1)}km away
-                {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
-                {" · "}{formatUpdated(opt.updatedAt)}
+                {(opt.distance + opt.detourKm).toFixed(1)}km · {reportedStationIds.has(opt.station.id)
+                  ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
+                  : formatUpdated(opt.updatedAt, opt.source)}
               </div>
             </div>
             <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
@@ -740,7 +617,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
             >
               <TriangleAlert className="h-3.5 w-3.5" strokeWidth={2} />
-              Report
+              Update price
             </button>
             <button
               onClick={() => setSelectedStation(opt.station)}
@@ -923,7 +800,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                     <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${getTierColor(options[0].price)}`}>{options[0].tag}</span>
                   )}
                 </div>
-                <div className="text-[10px] text-[var(--muted)]">{options[0].distance.toFixed(1)}km{options[0].detourKm > 0.5 && <> · +{options[0].detourKm.toFixed(1)}km detour</>}</div>
+                <div className="text-[10px] text-[var(--muted)]">{(options[0].distance + options[0].detourKm).toFixed(1)}km</div>
               </div>
               <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(options[0].price)}`}>
                 {options[0].price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
@@ -978,7 +855,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                                   <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${tierColor}`}>{opt.tag}</span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-[var(--muted)]">{opt.distance.toFixed(1)}km{opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>} · {formatUpdated(opt.updatedAt)}</div>
+                              <div className="text-[10px] text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km · {reportedStationIds.has(opt.station.id)
+                                ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
+                                : formatUpdated(opt.updatedAt, opt.source)}</div>
                             </div>
                             <div className={`text-xl font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
                               {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
@@ -1015,15 +894,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                                 </span>
                               ) : (
                                 <>
-                                  {opt.distance.toFixed(1)}km
-                                  {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
-                                  {closestOpt && opt.price < closestOpt.price && opt.netSavings >= 0 && (
+                                  {(opt.distance + opt.detourKm).toFixed(1)}km
+                                  {closestOpt && opt.netSavings > 0 && (
                                     <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
                                   )}
-                                  {closestOpt && opt.price < closestOpt.price && opt.netSavings < 0 && (
-                                    <> · <span className="text-[var(--tier-exp)]">${Math.abs(opt.netSavings).toFixed(2)} extra</span></>
-                                  )}
-                                  {" · "}{formatUpdated(opt.updatedAt)}
+                                  {" · "}{reportedStationIds.has(opt.station.id)
+                                    ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
+                                    : formatUpdated(opt.updatedAt, opt.source)}
                                 </>
                               )}
                             </div>
