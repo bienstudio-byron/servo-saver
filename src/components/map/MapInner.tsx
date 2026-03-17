@@ -276,7 +276,7 @@ function PinFader() {
 
   useEffect(() => {
     const container = map.getContainer();
-    if (selected || highlighted.size > 0) {
+    if (selected || highlighted.length > 0) {
       container.classList.add("pins-faded");
     } else {
       container.classList.remove("pins-faded");
@@ -359,7 +359,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
 
         {/* Nearby mode: show all visible pins */}
         {visibleMarkers.map(({ station, price }) => {
-          const isActive = selectedStation?.id === station.id || highlightedStationIds.has(station.id);
+          const isActive = selectedStation?.id === station.id || highlightedStationIds.includes(station.id);
           return (
             <Marker
               key={station.id}
