@@ -13,12 +13,18 @@ import BrandLogo from "@/components/shared/BrandLogo";
 
 import { getFlaggedStations } from "@/lib/flagged-stations";
 
+import TripSummaryCard from "./TripSummaryCard";
+import type { RankedOption as TripRankedOption } from "./TripSummaryCard";
+
 interface FillStrategyProps {
   stations: StationWithPrices[];
   selectedFuelType: string;
   loading?: boolean;
   onRecentre?: () => void;
+  onEditTrip?: () => void;
 }
+
+export type { TripRankedOption as RankedOption };
 
 const DEFAULT_CONSUMPTION = 8.5; // L/100km — average passenger car
 const DEFAULT_TANK_SIZE = 55; // litres — average Australian car tank
@@ -38,10 +44,11 @@ interface RankedOption {
   updatedAt: string;
 }
 
-export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre }: FillStrategyProps) {
+export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre, onEditTrip }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
+  const tripOrigin = useFuelStore((s) => s.tripOrigin);
   const rangeKm = useFuelStore((s) => s.rangeKm);
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
   const setRecommendedStations = useFuelStore((s) => s.setRecommendedStations);
@@ -55,11 +62,12 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
   const searchOrigin = useFuelStore((s) => s.searchOrigin);
   const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
-  const origin = searchOrigin ?? userLocation;
+  const origin = (tripMode === "trip" && tripOrigin) ? { lat: tripOrigin.lat, lng: tripOrigin.lng } : (searchOrigin ?? userLocation);
   const [showFuelPicker, setShowFuelPicker] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
+  const [tripSelectedIdx, setTripSelectedIdx] = useState(0); // which option is selected in trip summary
   const [showAllTrip, setShowAllTrip] = useState(false);
   const lastUpdated = useMemo(() => {
     if (stations.length === 0) return "";
@@ -308,6 +316,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     setShowAllTrip(false);
     setExpandedIndex(null);
     setSelectedIndex(null);
+    setTripSelectedIdx(0);
     listRef.current?.scrollTo({ top: 0 });
     if (options.length > 0) {
       // In trip mode only recommend top 5, in nearby mode show all
@@ -333,13 +342,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }, [options.map(o => o.station.id).join(",")]);
 
   // Sync expanded/selected option with route line
-  // In trip mode, default to #1 station. In nearby mode, only show when user selects.
-  const activeStation = selectedIndex !== null && options[selectedIndex]
+  // In trip mode, use tripSelectedIdx. In nearby mode, use selectedIndex/expandedIndex.
+  const activeStation = tripMode === "trip" && tripDestination && options.length > 0
+    ? options[tripSelectedIdx]?.station ?? options[0].station
+    : selectedIndex !== null && options[selectedIndex]
     ? options[selectedIndex].station
     : expandedIndex !== null && options[expandedIndex]
     ? options[expandedIndex].station
-    : tripMode === "trip" && tripDestination && options.length > 0
-    ? options[0].station
     : null;
 
   const setHighlightedStationIds = useFuelStore((s) => s.setHighlightedStationIds);
@@ -347,13 +356,17 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
   // Control which pins are highlighted (recommended) and which is focused
   useEffect(() => {
-    const focusedIndex = selectedIndex ?? expandedIndex;
-
     // Focused: the one station the user is looking at
-    if (focusedIndex !== null && options[focusedIndex]) {
-      setFocusedStationId(options[focusedIndex].station.id);
+    if (tripMode === "trip" && options.length > 0) {
+      const focused = options[tripSelectedIdx]?.station ?? options[0].station;
+      setFocusedStationId(focused.id);
     } else {
-      setFocusedStationId(null);
+      const focusedIndex = selectedIndex ?? expandedIndex;
+      if (focusedIndex !== null && options[focusedIndex]) {
+        setFocusedStationId(options[focusedIndex].station.id);
+      } else {
+        setFocusedStationId(null);
+      }
     }
 
     // Highlighted: all recommended stations (always)
@@ -366,7 +379,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       setHighlightedStationIds(new Set());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIndex, expandedIndex, showAllTrip, options.length]);
+  }, [selectedIndex, expandedIndex, showAllTrip, options.length, tripSelectedIdx, tripMode]);
 
   useEffect(() => {
     setActiveRouteStation(activeStation);
@@ -379,32 +392,48 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     const idx = options.findIndex((o) => o.station.id === pinClickedStationId);
     if (idx !== -1) {
       const opt = options[idx];
-      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-      if (isMobile) {
-        setSelectedIndex(idx);
-        setExpandedIndex(null);
-        setMinimised(false);
+
+      if (tripMode === "trip") {
+        // Trip mode: update which option is selected in TripSummaryCard
+        setTripSelectedIdx(idx);
+        setActiveRouteStation(opt.station);
+        if (origin && tripDestination) {
+          setFitBoundsTarget({
+            points: [
+              [origin.lat, origin.lng],
+              [opt.station.latitude, opt.station.longitude],
+              [tripDestination.lat, tripDestination.lng],
+            ],
+          });
+        }
       } else {
-        setExpandedIndex(idx);
-        setSelectedIndex(null);
-        setMinimised(false);
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            const row = rowRefs.current.get(idx);
-            if (row) {
-              row.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 50);
-        });
-      }
-      // Fit map to show both origin and selected station
-      if (origin) {
-        setFitBoundsTarget({
-          points: [
-            [origin.lat, origin.lng],
-            [opt.station.latitude, opt.station.longitude],
-          ],
-        });
+        // Nearby mode
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+        if (isMobile) {
+          setSelectedIndex(idx);
+          setExpandedIndex(null);
+          setMinimised(false);
+        } else {
+          setExpandedIndex(idx);
+          setSelectedIndex(null);
+          setMinimised(false);
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              const row = rowRefs.current.get(idx);
+              if (row) {
+                row.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }, 50);
+          });
+        }
+        if (origin) {
+          setFitBoundsTarget({
+            points: [
+              [origin.lat, origin.lng],
+              [opt.station.latitude, opt.station.longitude],
+            ],
+          });
+        }
       }
     }
     setPinClickedStationId(null);
@@ -541,6 +570,34 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       });
     }
   };
+
+  // Trip mode: render TripSummaryCard instead
+  if (tripMode === "trip" && tripDestination && options.length > 0 && onEditTrip) {
+    return (
+      <TripSummaryCard
+        options={options}
+        closestOpt={closestOpt}
+        onEditTrip={onEditTrip}
+        selectedIdx={tripSelectedIdx}
+        onSelectIdx={(idx) => {
+          setTripSelectedIdx(idx);
+          const opt = options[idx];
+          if (opt) {
+            setActiveRouteStation(opt.station);
+            if (origin && tripDestination) {
+              setFitBoundsTarget({
+                points: [
+                  [origin.lat, origin.lng],
+                  [opt.station.latitude, opt.station.longitude],
+                  [tripDestination.lat, tripDestination.lng],
+                ],
+              });
+            }
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-end">

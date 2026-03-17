@@ -236,10 +236,11 @@ function FitBoundsTarget() {
     if (target && target.points.length >= 2) {
       try {
         const bounds = L.latLngBounds(target.points.map(([lat, lng]) => L.latLng(lat, lng)));
+        const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
         map.fitBounds(bounds, {
-          paddingTopLeft: [40, 80],     // top: search bar + chips
-          paddingBottomRight: [40, 350], // bottom: bottom sheet
-          maxZoom: 16,
+          paddingTopLeft: isMobile ? [20, 80] : [40, 80],
+          paddingBottomRight: isMobile ? [20, Math.round(window.innerHeight * 0.5)] : [40, 350],
+          maxZoom: 14,
           animate: true,
           duration: 0.8,
         });
@@ -342,6 +343,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
   const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
   const searchOrigin = useFuelStore((s) => s.searchOrigin);
+  const setTripPlannerOpen = useFuelStore((s) => s.setTripPlannerOpen);
 
   const handleViewport = useCallback((state: ViewportState) => {
     setViewport(state);
@@ -358,6 +360,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   }, [stations, selectedFuelType]);
 
   const tripDestination = useFuelStore((s) => s.tripDestination);
+  const tripOrigin = useFuelStore((s) => s.tripOrigin);
   const recommendedStations = useFuelStore((s) => s.recommendedStations);
   const highlightedStationIds = useFuelStore((s) => s.highlightedStationIds);
   const focusedStationId = useFuelStore((s) => s.focusedStationId);
@@ -467,10 +470,32 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
           })
         }
 
-        {/* Route line: user → active station (→ destination in trip mode). Hidden when browsing a searched area. */}
-        {userLocation && activeRouteStation && !searchOrigin && (() => {
+        {/* Trip mode: show custom origin pin when tripOrigin is set */}
+        {tripMode === "trip" && tripOrigin && (
+          <Marker
+            position={[tripOrigin.lat, tripOrigin.lng]}
+            icon={L.divIcon({
+              html: `<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 5px;border-radius:4px;background:#4285f4;border:1.5px solid #4285f4;box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,0.4));cursor:default;white-space:nowrap;transform:translate(-50%,-50%);width:fit-content;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                <span style="font-size:11px;font-weight:700;color:#fff;line-height:1">${tripOrigin.name}</span>
+              </div>`,
+              className: "",
+              iconSize: [0, 0],
+              iconAnchor: [0, 0],
+            })}
+            interactive={false}
+            zIndexOffset={1500}
+          />
+        )}
+
+        {/* Route line: origin → active station (→ destination in trip mode). Hidden when browsing a searched area. */}
+        {(() => {
+          const routeOrigin = tripMode === "trip" && tripOrigin
+            ? tripOrigin
+            : userLocation;
+          if (!routeOrigin || !activeRouteStation || searchOrigin) return null;
           const points: [number, number][] = [
-            [userLocation.lat, userLocation.lng],
+            [routeOrigin.lat, routeOrigin.lng],
             [activeRouteStation.latitude, activeRouteStation.longitude],
             ...(tripMode === "trip" && tripDestination
               ? [[tripDestination.lat, tripDestination.lng] as [number, number]]
@@ -540,7 +565,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
       <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} onRecentre={() => {
         setSearchOrigin(null);
         if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
-      }} />
+      }} onEditTrip={() => setTripPlannerOpen(true)} />
     </>
   );
 }
