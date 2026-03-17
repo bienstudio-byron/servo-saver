@@ -13,6 +13,7 @@ interface PriceHistoryProps {
 }
 
 export default function PriceHistory({ stationId, fuelType }: PriceHistoryProps) {
+  const safeId = stationId.replace(/[^a-zA-Z0-9_-]/g, "-");
   const [history, setHistory] = useState<PricePoint[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -107,12 +108,12 @@ export default function PriceHistory({ stationId, fuelType }: PriceHistoryProps)
 
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-12" preserveAspectRatio="none">
         <defs>
-          <linearGradient id={`grad-${stationId}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={`grad-${safeId}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={lineColor} stopOpacity="0.2" />
             <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path d={fillPath} fill={`url(#grad-${stationId})`} />
+        <path d={fillPath} fill={`url(#grad-${safeId})`} />
         <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {/* Current price dot */}
         <circle

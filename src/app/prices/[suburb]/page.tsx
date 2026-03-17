@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export async function generateStaticParams() {
   const stations = await fetchMergedStations();
-  const suburbMap = groupBySuburb(stations);
+  const vicStations = stations.filter((s) => s.state === "VIC");
+  const suburbMap = groupBySuburb(vicStations);
   return [...suburbMap.keys()].map((suburb) => ({
     suburb: suburbToSlug(suburb),
   }));
@@ -39,7 +40,8 @@ export default async function SuburbPage({ params }: Props) {
   const { suburb: slug } = await params;
   const display = slugToDisplay(slug);
   const stations = await fetchMergedStations();
-  const suburbMap = groupBySuburb(stations);
+  const vicStations = stations.filter((s) => (s.state ?? "VIC") === "VIC");
+  const suburbMap = groupBySuburb(vicStations);
 
   let suburbStations: typeof stations = [];
   for (const [name, stns] of suburbMap) {
@@ -50,7 +52,7 @@ export default async function SuburbPage({ params }: Props) {
   }
 
   const allPricesByType = new Map<string, number[]>();
-  for (const s of stations) {
+  for (const s of vicStations) {
     for (const p of s.prices) {
       const arr = allPricesByType.get(p.fuelType) || [];
       arr.push(p.price);

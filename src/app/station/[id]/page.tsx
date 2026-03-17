@@ -61,6 +61,7 @@ export default async function StationPage({ params }: Props) {
 
   const suburb = extractSuburb(station.address);
   const suburbSlug = suburbToSlug(suburb);
+  const suburbUrl = station.state === "NSW" ? `/prices/nsw/${suburbSlug}` : `/prices/${suburbSlug}`;
   const nearby = nearestStations(
     stations.filter((s) => s.id !== station.id),
     station.latitude,
@@ -233,7 +234,7 @@ export default async function StationPage({ params }: Props) {
                 <>
                   {station.name} is currently {(ranks[0].price - ranks[0].average).toFixed(1)}c/L
                   above the state average for {ranks[0].label}. Check{" "}
-                  <a href={`/prices/${suburbSlug}`} className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                  <a href={suburbUrl} className="text-[#8ab4f8] hover:text-[#aecbfa]">
                     other stations in {suburb}
                   </a>{" "}
                   for a better deal.
@@ -253,7 +254,7 @@ export default async function StationPage({ params }: Props) {
               find the cheapest servo near you — our smart recommendation engine factors in
               the cost of driving to each station, so you know exactly how much you&apos;ll
               actually save. Browse all{" "}
-              <a href={`/prices/${suburbSlug}`} className="text-[#8ab4f8] hover:text-[#aecbfa]">
+              <a href={suburbUrl} className="text-[#8ab4f8] hover:text-[#aecbfa]">
                 fuel prices in {suburb}
               </a>{" "}
               or explore{" "}

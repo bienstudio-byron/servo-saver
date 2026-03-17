@@ -29,13 +29,14 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
 
   const stations: StationWithPrices[] = [];
 
-  for (const result of results) {
+  const providerNames = ["VIC", "NSW"];
+  results.forEach((result, i) => {
     if (result.status === "fulfilled") {
       stations.push(...result.value);
     } else {
-      console.error("Provider failed:", result.reason);
+      console.error(`${providerNames[i]} provider failed:`, result.reason);
     }
-  }
+  });
 
   if (stations.length === 0) {
     throw new Error("All fuel data providers failed");

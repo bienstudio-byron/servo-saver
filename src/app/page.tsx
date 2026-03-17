@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useTransition, startTransition } from "react";
+import { useEffect, useState, useMemo, startTransition } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import FuelMap from "@/components/map/FuelMap";

@@ -61,7 +61,9 @@ function parseNswDate(dateStr: string): Date {
   const [datePart, timePart] = dateStr.split(" ");
   if (!datePart || !timePart) return new Date(dateStr);
   const [day, month, year] = datePart.split("/");
-  return new Date(`${year}-${month}-${day}T${timePart}+11:00`); // AEDT
+  const monthNum = parseInt(month, 10);
+  const offset = (monthNum >= 4 && monthNum <= 9) ? "+10:00" : "+11:00"; // AEST vs AEDT
+  return new Date(`${year}-${month}-${day}T${timePart}${offset}`);
 }
 
 // --- Zod schemas ---
@@ -166,6 +168,7 @@ export const nswProvider: FuelDataProvider = {
               isAvailable: true as const,
               updatedAt: parsedDate.toISOString(),
               isStale: ageMs > staleMs,
+              source: "official" as const,
             };
           })
           .filter((p): p is NonNullable<typeof p> => p !== null);
