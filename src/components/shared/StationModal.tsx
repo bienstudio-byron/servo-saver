@@ -269,7 +269,7 @@ export default function StationModal({
             className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[var(--subtle-hover)] hover:text-[var(--foreground)] transition-colors mb-3 cursor-pointer"
           >
             <Pencil className="h-3.5 w-3.5" strokeWidth={2} />
-            {communityPrice ? "Update price" : "Report current price"}
+            Report a price
           </button>
 
           {/* Price history */}

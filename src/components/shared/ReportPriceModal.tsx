@@ -115,7 +115,7 @@ export default function ReportPriceModal({
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div>
-            <h3 className="text-sm font-bold text-[var(--foreground)]">Update price</h3>
+            <h3 className="text-sm font-bold text-[var(--foreground)]">Report a price</h3>
             <p className="text-[11px] text-[var(--muted)] truncate max-w-[250px]">{stationName}</p>
           </div>
           <button onClick={onClose} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
@@ -216,7 +216,7 @@ export default function ReportPriceModal({
           )}
 
           <p className="text-[9px] text-[var(--muted)] text-center">
-            Help keep prices accurate. Valid until next official update.
+            This will update the price shown to all PetrolSaver users. Valid until next official update.
           </p>
         </div>
       </motion.div>

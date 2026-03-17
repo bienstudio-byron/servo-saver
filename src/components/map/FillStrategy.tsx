@@ -551,6 +551,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 {(opt.distance + opt.detourKm).toFixed(1)}km · {reportedStationIds.has(opt.station.id)
                   ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
                   : formatUpdated(opt.updatedAt, opt.source)}
+                {!opt.isStale && closestOpt && opt.netSavings > 0 && (
+                  <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
+                )}
               </div>
             </div>
             <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
@@ -621,7 +624,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
             >
               <TriangleAlert className="h-3.5 w-3.5" strokeWidth={2} />
-              Update price
+              Report a price
             </button>
             <button
               onClick={() => setSelectedStation(opt.station)}
@@ -704,6 +707,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           <div className="flex items-center justify-between px-3 py-2">
             <div className="min-w-0 flex-1 text-left">
               <div className="text-sm font-bold text-[var(--foreground)] truncate flex items-center gap-1.5">
+                <Navigation className="h-3.5 w-3.5 shrink-0 text-[#4285f4] fill-[#4285f4]" strokeWidth={0} />
                 <span className="truncate">
                   {tripMode === "trip" && tripDestination
                     ? `Trip to ${tripDestination.name}`
@@ -859,9 +863,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                                   <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${tierColor}`}>{opt.tag}</span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km · {reportedStationIds.has(opt.station.id)
-                                ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
-                                : formatUpdated(opt.updatedAt, opt.source)}</div>
+                              <div className="text-[10px] text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km away</div>
                             </div>
                             <div className={`text-xl font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
                               {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
@@ -870,12 +872,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                           {opt.isStale && (
                             <div className="flex items-center gap-1 text-[10px] text-[var(--tier-mid)] mb-0.5">
                               <TriangleAlert className="h-3 w-3 shrink-0" strokeWidth={2} />
-                              Price may be outdated — not updated recently
-                            </div>
-                          )}
-                          {!opt.isStale && closestOpt && opt.netSavings > 0 && (
-                            <div className="text-[11px] text-[var(--tier-cheap)] font-medium">
-                              Saves ${opt.netSavings.toFixed(2)} per fill vs closest station
+                              Price may be outdated
                             </div>
                           )}
                         </>
@@ -897,15 +894,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                                   Price may be outdated
                                 </span>
                               ) : (
-                                <>
-                                  {(opt.distance + opt.detourKm).toFixed(1)}km
-                                  {closestOpt && opt.netSavings > 0 && (
-                                    <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
-                                  )}
-                                  {" · "}{reportedStationIds.has(opt.station.id)
-                                    ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
-                                    : formatUpdated(opt.updatedAt, opt.source)}
-                                </>
+                                <>{(opt.distance + opt.detourKm).toFixed(1)}km</>
                               )}
                             </div>
                           </div>

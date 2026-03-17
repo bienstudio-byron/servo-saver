@@ -87,7 +87,7 @@ export default function InlineReportForm({
           <ArrowLeft className="h-4 w-4" strokeWidth={2} />
         </button>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold text-[var(--foreground)] truncate">Update {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} price</div>
+          <div className="text-xs font-semibold text-[var(--foreground)] truncate">Report {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} price</div>
           <div className="text-[10px] text-[var(--muted)] truncate">{stationName}</div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function InlineReportForm({
         </button>
       )}
 
-      <p className="text-[8px] text-[var(--muted)] text-center">Valid until next official update</p>
+      <p className="text-[8px] text-[var(--muted)] text-center">This will update the price shown to all PetrolSaver users</p>
     </motion.div>
   );
 }
