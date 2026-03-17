@@ -438,7 +438,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
         <div className="flex gap-1.5 mt-2 md:absolute md:top-0 md:right-0 md:mt-0">
           <ChipDropdown
             icon={<Droplets className="h-3.5 w-3.5" strokeWidth={2} />}
-            label={selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType}
+            label={`Fuel ·${selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType}`}
           >
             {(close) => (
               <>
@@ -468,7 +468,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
 
           <ChipDropdown
             icon={<Gauge className="h-3.5 w-3.5" strokeWidth={2} />}
-            label={rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full"}
+            label={`Tank ·${rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full"}`}
           >
             {() => (
               <div className="p-3">
@@ -660,7 +660,7 @@ function BrandChipDropdown({
         }`}
       >
         <Store className="h-3.5 w-3.5" strokeWidth={2} />
-        {selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length}`}
+        {`Brands ·${selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : selectedBrands.length}`}
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={2} />
       </button>
 
@@ -671,7 +671,7 @@ function BrandChipDropdown({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.1 }}
-            className="absolute top-full left-0 mt-2 min-w-[220px] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
+            className="absolute top-full right-0 mt-2 w-[min(250px,calc(100vw-2rem))] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
           >
             <div className="px-2.5 pt-2.5 pb-1.5">
               <div className="relative">
@@ -770,7 +770,7 @@ function ChipDropdown({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.1 }}
-            className="absolute top-full left-0 mt-2 min-w-[200px] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
+            className="absolute top-full right-0 mt-2 w-[min(250px,calc(100vw-2rem))] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
           >
             {children(() => setOpen(false))}
           </motion.div>
