@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useTransition, startTransition } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import FuelMap from "@/components/map/FuelMap";
@@ -84,9 +84,13 @@ export default function HomePage() {
           });
         }
 
-        setStations(merged);
-        setAllStations(merged);
-        setLoading(false);
+        // Use startTransition to avoid blocking the main thread while React
+        // processes ~4,000 stations — prevents frame drops on mobile
+        startTransition(() => {
+          setStations(merged);
+          setAllStations(merged);
+          setLoading(false);
+        });
 
         // If ?station=ID in URL, fly to that station and open modal
         const params = new URLSearchParams(window.location.search);

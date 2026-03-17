@@ -219,7 +219,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     // Filter out user-flagged stations
     const flagged = getFlaggedStations();
 
+    // Rough bounding box pre-filter (~0.45° ≈ 50km) to avoid computing
+    // haversine distance for thousands of distant stations
+    const boxDeg = 0.45;
     const withDistance = stations
+      .filter((s) => Math.abs(s.latitude - origin.lat) < boxDeg && Math.abs(s.longitude - origin.lng) < boxDeg)
       .filter((s) => !flagged.has(s.id))
       .filter((s) => selectedBrands.length === 0 || (s.brand?.name && selectedBrands.includes(s.brand.name)))
       .map((s) => {
