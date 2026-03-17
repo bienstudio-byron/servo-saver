@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// Replace with your real AdSense publisher ID
 const ADSENSE_PUB_ID = process.env.NEXT_PUBLIC_ADSENSE_PUB_ID || "";
 
 interface AdSlotProps {
-  slot: string; // AdSense ad slot ID
+  slot: string;
   format?: "horizontal" | "rectangle" | "vertical" | "fluid";
   className?: string;
 }
@@ -14,10 +13,11 @@ interface AdSlotProps {
 export default function AdSlot({ slot, format = "horizontal", className = "" }: AdSlotProps) {
   const adRef = useRef<HTMLDivElement>(null);
   const pushed = useRef(false);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
     if (!ADSENSE_PUB_ID || pushed.current) return;
-    // Delay to ensure AdSense script has loaded
+
     const timer = setTimeout(() => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,16 +26,29 @@ export default function AdSlot({ slot, format = "horizontal", className = "" }: 
           pushed.current = true;
         }
       } catch {
-        // AdSense not loaded or not approved yet
+        setHidden(true);
       }
+
+      // Check if ad actually filled after a delay
+      setTimeout(() => {
+        const container = adRef.current;
+        if (!container) return;
+        const ins = container.querySelector("ins.adsbygoogle");
+        if (!ins) { setHidden(true); return; }
+
+        // AdSense sets data-ad-status="unfilled" when no ad is available
+        const status = ins.getAttribute("data-ad-status");
+        const height = ins.clientHeight;
+        if (status === "unfilled" || height === 0) {
+          setHidden(true);
+        }
+      }, 3000);
     }, 1000);
+
     return () => clearTimeout(timer);
   }, []);
 
-  // Hide entirely if no AdSense ID configured — no placeholder
-  if (!ADSENSE_PUB_ID) {
-    return null;
-  }
+  if (!ADSENSE_PUB_ID || hidden) return null;
 
   const styles: Record<string, { width: string; height: string }> = {
     horizontal: { width: "100%", height: "90px" },
