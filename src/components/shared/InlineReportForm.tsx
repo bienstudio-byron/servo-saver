@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Check } from "lucide-react";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
@@ -36,12 +36,18 @@ export default function InlineReportForm({
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error" | "rate-limited">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
-  const scrollInputIntoView = () => {
-    setTimeout(() => {
-      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 300);
-  };
+  // Scroll form into view first, then focus input after it's visible
+  useEffect(() => {
+    const t1 = setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+    const t2 = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
 
   const handleSubmit = async () => {
     const price = parseFloat(priceInput);
@@ -70,6 +76,7 @@ export default function InlineReportForm({
 
   return (
     <motion.div
+      ref={formRef}
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 300 }}
@@ -93,11 +100,9 @@ export default function InlineReportForm({
           step="0.1"
           value={priceInput}
           onChange={(e) => { setPriceInput(e.target.value); setStatus("idle"); setErrorMsg(""); }}
-          onFocus={scrollInputIntoView}
           placeholder="e.g. 175.9"
           style={{ fontSize: "16px" }}
           className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg px-3 py-2 text-sm font-bold font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-          autoFocus
         />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--muted)] font-mono">c/L</span>
       </div>
