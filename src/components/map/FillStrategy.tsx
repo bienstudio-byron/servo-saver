@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X } from "lucide-react";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -53,6 +53,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const setPinClickedStationId = useFuelStore((s) => s.setPinClickedStationId);
   const rawSetFuelType = useFuelStore((s) => s.setSelectedFuelType);
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
+  const searchOrigin = useFuelStore((s) => s.searchOrigin);
+  const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
+  const origin = searchOrigin ?? userLocation;
   const [showFuelPicker, setShowFuelPicker] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
@@ -79,11 +82,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [minimised, setMinimised] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : true);
   const thresholds = usePriceThresholds();
 
-  // Reverse geocode user location to get suburb name
+  // Reverse geocode origin (searchOrigin or userLocation) to get suburb name
   useEffect(() => {
-    if (!userLocation) return;
+    if (!origin) return;
     fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`,
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${origin.lat}&lon=${origin.lng}`,
       { headers: { "User-Agent": "PetrolSaver/1.0" } }
     )
       .then((r) => r.json())
@@ -92,7 +95,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         if (name) setLocationName(name);
       })
       .catch(() => {});
-  }, [userLocation?.lat, userLocation?.lng]);
+  }, [origin?.lat, origin?.lng]);
 
   const setSelectedFuelType = (id: string) => {
     rawSetFuelType(id);
@@ -101,6 +104,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   };
 
   const refreshLocation = () => {
+    setSearchOrigin(null);
     if (!("geolocation" in navigator)) {
       setUserLocation({ lat: -37.8136, lng: 144.9631 });
       return;
@@ -147,7 +151,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
   // Build ranked options
   const { options } = useMemo(() => {
-    if (!userLocation || stations.length === 0) return { options: [] as RankedOption[] };
+    if (!origin || stations.length === 0) return { options: [] as RankedOption[] };
 
     // Filter out user-flagged stations
     const flagged = getFlaggedStations();
@@ -158,13 +162,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       .map((s) => {
         const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
         if (!p) return null;
-        return { station: s, price: p.price, isStale: !!p.isStale, updatedAt: p.updatedAt, distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude) * ROAD_FACTOR };
+        return { station: s, price: p.price, isStale: !!p.isStale, updatedAt: p.updatedAt, distance: haversineDistance(origin.lat, origin.lng, s.latitude, s.longitude) * ROAD_FACTOR };
       }).filter((x): x is { station: StationWithPrices; price: number; isStale: boolean; updatedAt: string; distance: number } => x !== null);
 
     if (withDistance.length === 0) return { options: [] };
 
     const safeRange = rangeKm * 0.7;
-    const maxRadius = Math.min(15, safeRange);
+    const maxRadius = Math.min(searchOrigin ? 5 : 15, safeRange);
     // Estimate fuel in tank as a proportion of full tank based on range slider
     // Range slider: 10km (empty) to 800km (full) → maps to 0% to 100% of tank
     const tankPercent = Math.min(1, rangeKm / MAX_RANGE_KM);
@@ -175,7 +179,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     let candidates: typeof withDistance;
     if (tripMode === "trip" && tripDestination) {
       const onRoute = withDistance
-        .filter((s) => isOnRoute(s.station.latitude, s.station.longitude, userLocation.lat, userLocation.lng, tripDestination.lat, tripDestination.lng))
+        .filter((s) => isOnRoute(s.station.latitude, s.station.longitude, origin.lat, origin.lng, tripDestination.lat, tripDestination.lng))
         .filter((s) => s.distance <= safeRange);
       candidates = onRoute.length > 0 ? onRoute : withDistance.filter((s) => s.distance <= safeRange);
     } else {
@@ -193,11 +197,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
     // Calculate real detour for a station based on mode
     const calcDetour = (station: { station: StationWithPrices; distance: number }) => {
-      if (tripMode === "trip" && tripDestination && userLocation) {
+      if (tripMode === "trip" && tripDestination && origin) {
         // Trip mode: how much does stopping here add to your trip?
-        const directRoute = haversineDistance(userLocation.lat, userLocation.lng, tripDestination.lat, tripDestination.lng) * ROAD_FACTOR;
+        const directRoute = haversineDistance(origin.lat, origin.lng, tripDestination.lat, tripDestination.lng) * ROAD_FACTOR;
         const viaStation = (
-          haversineDistance(userLocation.lat, userLocation.lng, station.station.latitude, station.station.longitude) +
+          haversineDistance(origin.lat, origin.lng, station.station.latitude, station.station.longitude) +
           haversineDistance(station.station.latitude, station.station.longitude, tripDestination.lat, tripDestination.lng)
         ) * ROAD_FACTOR;
         return Math.max(0, viaStation - directRoute);
@@ -245,7 +249,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     });
 
     return { options };
-  }, [userLocation, stations, selectedFuelType, tripMode, tripDestination, rangeKm, thresholds, selectedBrands]);
+  }, [origin, stations, selectedFuelType, tripMode, tripDestination, rangeKm, thresholds, selectedBrands]);
 
   const closestOpt = useMemo(() => {
     if (options.length === 0) return null;
@@ -310,11 +314,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       const visibleStations = tripMode === "trip" ? options.slice(0, 5) : options;
       setRecommendedStations(visibleStations.map((o) => o.station));
 
-      // Fit map to show user + top stations (+ destination in trip mode)
-      if (userLocation) {
+      // Fit map to show origin + top stations (+ destination in trip mode)
+      if (origin) {
         const fitOptions = tripMode === "trip" ? options.slice(0, 5) : options;
         const points: [number, number][] = [
-          [userLocation.lat, userLocation.lng],
+          [origin.lat, origin.lng],
           ...fitOptions.map((o) => [o.station.latitude, o.station.longitude] as [number, number]),
         ];
         if (tripMode === "trip" && tripDestination) {
@@ -393,11 +397,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           }, 50);
         });
       }
-      // Fit map to show both user location and selected station
-      if (userLocation) {
+      // Fit map to show both origin and selected station
+      if (origin) {
         setFitBoundsTarget({
           points: [
-            [userLocation.lat, userLocation.lng],
+            [origin.lat, origin.lng],
             [opt.station.latitude, opt.station.longitude],
           ],
         });
@@ -528,10 +532,10 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       setExpandedIndex(expandedIndex === i ? null : i);
       setSelectedIndex(null);
     }
-    if (userLocation) {
+    if (origin) {
       setFitBoundsTarget({
         points: [
-          [userLocation.lat, userLocation.lng],
+          [origin.lat, origin.lng],
           [opt.station.latitude, opt.station.longitude],
         ],
       });
@@ -569,13 +573,26 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         >
           <div className="flex items-center justify-between px-3 py-2">
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-sm font-bold text-[var(--foreground)] truncate">
-                {tripMode === "trip" && tripDestination
-                  ? `Trip to ${tripDestination.name}`
-                  : locationName
-                  ? `Best deals in ${locationName}`
-                  : "Best deals near you"
-                }
+              <div className="text-sm font-bold text-[var(--foreground)] truncate flex items-center gap-1.5">
+                <span className="truncate">
+                  {tripMode === "trip" && tripDestination
+                    ? `Trip to ${tripDestination.name}`
+                    : searchOrigin && locationName
+                    ? `Searching near ${locationName}`
+                    : locationName
+                    ? `Best deals in ${locationName}`
+                    : "Best deals near you"
+                  }
+                </span>
+                {searchOrigin && tripMode === "nearby" && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSearchOrigin(null); }}
+                    className="shrink-0 h-5 w-5 rounded-full bg-[var(--subtle)] hover:bg-[var(--subtle-hover)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                    title="Back to my location"
+                  >
+                    <X className="h-3 w-3" strokeWidth={2.5} />
+                  </button>
+                )}
               </div>
               <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Live data via Service Victoria</div>
             </div>
@@ -672,7 +689,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
       {/* Options list */}
       <div ref={listRef} className={`overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised || selectedOpt !== null ? "hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
-          {(!userLocation || loading) && options.length === 0 ? (
+          {(!origin || loading) && options.length === 0 ? (
             <div className="px-3 py-4 flex items-center gap-2.5">
               <div className="h-4 w-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
               <span className="text-xs text-[var(--muted)]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>

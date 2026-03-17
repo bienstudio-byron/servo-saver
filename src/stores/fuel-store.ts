@@ -33,6 +33,8 @@ interface FuelStore {
   setHighlightedStationIds: (ids: Set<string>) => void;
   focusedStationId: string | null;
   setFocusedStationId: (id: string | null) => void;
+  searchOrigin: { lat: number; lng: number } | null;
+  setSearchOrigin: (origin: { lat: number; lng: number } | null) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -49,7 +51,7 @@ export const useFuelStore = create<FuelStore>((set) => ({
   allStations: [],
   setAllStations: (stations) => set({ allStations: stations }),
   tripMode: "nearby",
-  setTripMode: (mode) => set({ tripMode: mode }),
+  setTripMode: (mode) => set({ tripMode: mode, searchOrigin: null }),
   tripDestination: null,
   setTripDestination: (dest) => set({ tripDestination: dest }),
   rangeKm: 200,
@@ -66,4 +68,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setHighlightedStationIds: (ids) => set({ highlightedStationIds: ids }),
   focusedStationId: null,
   setFocusedStationId: (id) => set({ focusedStationId: id }),
+  searchOrigin: null,
+  setSearchOrigin: (origin) => set({ searchOrigin: origin }),
 }));

@@ -20,7 +20,9 @@ import { usePriceThresholds } from "@/stores/price-context";
 import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
-import { Zap, Moon, Sun } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Zap, Moon, Sun, Search } from "lucide-react";
+import { haversineDistance } from "@/lib/geo";
 import LocationButton from "./LocationButton";
 import ModeToggle from "./ModeToggle";
 import AreaPriceList from "./AreaPriceList";
@@ -170,13 +172,15 @@ function UserLocationMarker() {
 interface ViewportState {
   bounds: L.LatLngBounds | null;
   zoom: number;
+  centre: { lat: number; lng: number };
 }
 
 function ViewportTracker({ onChange }: { onChange: (state: ViewportState) => void }) {
   const map = useMap();
 
   const update = useCallback(() => {
-    onChange({ bounds: map.getBounds(), zoom: map.getZoom() });
+    const c = map.getCenter();
+    onChange({ bounds: map.getBounds(), zoom: map.getZoom(), centre: { lat: c.lat, lng: c.lng } });
   }, [map, onChange]);
 
   useMapEvents({ moveend: update, zoomend: update });
@@ -294,8 +298,39 @@ function PinFader() {
   return null;
 }
 
+function SearchAreaButton({ mapCentre }: { mapCentre: { lat: number; lng: number } }) {
+  const userLocation = useFuelStore((s) => s.userLocation);
+  const searchOrigin = useFuelStore((s) => s.searchOrigin);
+  const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
+  const tripMode = useFuelStore((s) => s.tripMode);
+
+  if (tripMode !== "nearby" || !userLocation) return null;
+
+  const effectiveOrigin = searchOrigin ?? userLocation;
+  const distFromOrigin = haversineDistance(effectiveOrigin.lat, effectiveOrigin.lng, mapCentre.lat, mapCentre.lng);
+  const show = distFromOrigin > 2;
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.85, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.85, y: 8 }}
+          transition={{ type: "spring", damping: 22, stiffness: 300 }}
+          onClick={() => setSearchOrigin(mapCentre)}
+          className="absolute bottom-[48vh] md:bottom-6 left-1/2 -translate-x-1/2 z-[1000] inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2 rounded-full text-xs font-bold shadow-xl hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+        >
+          <Search className="h-3.5 w-3.5" strokeWidth={2.5} />
+          Search this area
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export default function MapInner({ stations, selectedFuelType, loading }: MapInnerProps) {
-  const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9 });
+  const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 9, centre: { lat: MAP_CENTER[0], lng: MAP_CENTER[1] } });
   const thresholds = usePriceThresholds();
   const { theme, toggle: toggleTheme, currentTime } = useTheme();
   const tileUrl = theme === "light"
@@ -305,6 +340,8 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   const tripMode = useFuelStore((s) => s.tripMode);
   const userLocation = useFuelStore((s) => s.userLocation);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
+  const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
+  const searchOrigin = useFuelStore((s) => s.searchOrigin);
 
   const handleViewport = useCallback((state: ViewportState) => {
     setViewport(state);
@@ -430,8 +467,8 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
           })
         }
 
-        {/* Route line: user → active station (→ destination in trip mode) */}
-        {userLocation && activeRouteStation && (() => {
+        {/* Route line: user → active station (→ destination in trip mode). Hidden when browsing a searched area. */}
+        {userLocation && activeRouteStation && !searchOrigin && (() => {
           const points: [number, number][] = [
             [userLocation.lat, userLocation.lng],
             [activeRouteStation.latitude, activeRouteStation.longitude],
@@ -472,6 +509,9 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
       {/* Mode toggle */}
       <ModeToggle />
 
+      {/* Search this area button */}
+      <SearchAreaButton mapCentre={viewport.centre} />
+
       {/* Logo — desktop only */}
       <div className="hidden md:flex absolute top-3 left-3 z-[1000] items-center gap-2">
         <div className="flex items-center gap-1.5 bg-[var(--card)] rounded-full p-1 border border-[var(--subtle-border)] shadow-xl">
@@ -498,6 +538,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
 
 
       <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} onRecentre={() => {
+        setSearchOrigin(null);
         if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
       }} />
     </>
