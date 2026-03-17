@@ -562,6 +562,18 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           </motion.div>
         )}
 
+        {/* Metadata summary — shown in inline expand (no header) */}
+        {!showHeader && (
+          <div className="text-[10px] text-[var(--muted)] pt-1">
+            {reportedStationIds.has(opt.station.id)
+              ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
+              : formatUpdated(opt.updatedAt, opt.source)}
+            {!opt.isStale && closestOpt && opt.netSavings > 0 && (
+              <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
+            )}
+          </div>
+        )}
+
         {/* Breakdown */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
