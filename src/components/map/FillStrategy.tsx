@@ -56,6 +56,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
   const [showAllTrip, setShowAllTrip] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
+  useEffect(() => {
+    const update = () => setLastUpdated(new Date().toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true }));
+    update();
+    const interval = setInterval(update, 60_000);
+    return () => clearInterval(interval);
+  }, []);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const listRef = useRef<HTMLDivElement>(null);
   const setRowRef = useCallback((i: number, el: HTMLDivElement | null) => {
@@ -517,7 +524,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           className="shrink-0 w-full cursor-pointer"
         >
           <div className="flex items-center justify-between px-3 py-2">
-            <div>
+            <div className="min-w-0">
               <span className="text-sm font-bold text-[var(--foreground)]">
                 {tripMode === "trip" && tripDestination
                   ? `Trip to ${tripDestination.name}`
@@ -526,7 +533,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   : "Best deals near you"
                 }
               </span>
-              <div className="text-[9px] text-[var(--muted)]">Ranked by true cost — price + fuel to get there</div>
+              <div className="text-[9px] text-[var(--muted)]">Ranked by true cost · Updated {lastUpdated}</div>
             </div>
             <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
