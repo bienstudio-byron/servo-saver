@@ -277,8 +277,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     setSelectedIndex(null);
     listRef.current?.scrollTo({ top: 0 });
     if (options.length > 0) {
-      // Always show ALL option pins (faded ones still render)
-      setRecommendedStations(options.map((o) => o.station));
+      // In trip mode only recommend top 5, in nearby mode show all
+      const visibleStations = tripMode === "trip" ? options.slice(0, 5) : options;
+      setRecommendedStations(visibleStations.map((o) => o.station));
 
       // Fit map to show user + top stations (+ destination in trip mode)
       if (userLocation) {
@@ -719,7 +720,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
               {tripMode === "trip" && !showAllTrip && options.length > 5 && (
                 <button
-                  onClick={() => setShowAllTrip(true)}
+                  onClick={() => { setShowAllTrip(true); setRecommendedStations(options.map((o) => o.station)); }}
                   className="w-full py-2 text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors border-t border-[var(--subtle-border)]"
                 >
                   Show all {options.length} stations

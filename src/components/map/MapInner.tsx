@@ -357,8 +357,10 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         <FitBoundsTarget />
         <ViewportTracker onChange={handleViewport} />
 
-        {/* Nearby mode: show all visible pins */}
-        {visibleMarkers.map(({ station, price }) => {
+        {/* Show pins — in trip mode, only show recommended stations */}
+        {visibleMarkers
+          .filter(({ station }) => tripMode !== "trip" || recommendedStations.some((r) => r.id === station.id))
+          .map(({ station, price }) => {
           const isActive = selectedStation?.id === station.id || highlightedStationIds.has(station.id);
           return (
             <Marker
