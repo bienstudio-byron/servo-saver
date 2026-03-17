@@ -154,6 +154,16 @@ export default function StationModal({
                   <div className="text-2xl font-bold font-mono text-[var(--foreground)]">
                     {currentPrice.price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c/L</span>
                   </div>
+                  <div className="text-[9px] text-[var(--muted)]">
+                    {(() => {
+                      const d = new Date(currentPrice.updatedAt);
+                      const hrs = Math.floor((Date.now() - d.getTime()) / 3600000);
+                      if (hrs < 1) return "Updated just now";
+                      if (hrs < 24) return `Updated ${hrs}h ago`;
+                      const days = Math.floor(hrs / 24);
+                      return days === 1 ? "Updated yesterday" : `Updated ${days}d ago`;
+                    })()}
+                  </div>
                 </div>
                 <div className="text-right">
                   {priceInsight.percentile >= 90 ? (

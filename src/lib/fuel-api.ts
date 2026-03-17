@@ -109,18 +109,19 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
       prices: detail.fuelPrices
         .filter((p) => {
           if (!p.isAvailable || p.price == null || p.price <= 0 || p.price >= 500) return false;
-          // Filter stale prices — exclude anything older than 48 hours
-          const ageMs = Date.now() - new Date(p.updatedAt).getTime();
-          const maxAgeMs = 48 * 60 * 60 * 1000;
-          if (ageMs > maxAgeMs) return false;
           return true;
         })
-        .map((p) => ({
-          fuelType: p.fuelType,
-          price: p.price as number,
-          isAvailable: p.isAvailable,
-          updatedAt: p.updatedAt,
-        })),
+        .map((p) => {
+          const ageMs = Date.now() - new Date(p.updatedAt).getTime();
+          const staleMs = 3 * 24 * 60 * 60 * 1000; // 3 days
+          return {
+            fuelType: p.fuelType,
+            price: p.price as number,
+            isAvailable: p.isAvailable,
+            updatedAt: p.updatedAt,
+            isStale: ageMs > staleMs,
+          };
+        }),
     }));
 
     // Remove stations with no valid prices after filtering

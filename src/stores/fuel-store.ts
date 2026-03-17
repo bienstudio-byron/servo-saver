@@ -31,6 +31,8 @@ interface FuelStore {
   setPinClickedStationId: (id: string | null) => void;
   highlightedStationIds: Set<string>;
   setHighlightedStationIds: (ids: Set<string>) => void;
+  focusedStationId: string | null;
+  setFocusedStationId: (id: string | null) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -62,4 +64,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setPinClickedStationId: (id) => set({ pinClickedStationId: id }),
   highlightedStationIds: new Set<string>(),
   setHighlightedStationIds: (ids) => set({ highlightedStationIds: ids }),
+  focusedStationId: null,
+  setFocusedStationId: (id) => set({ focusedStationId: id }),
 }));

@@ -5,6 +5,7 @@ export interface FuelPrice {
   price: number; // cents per litre
   isAvailable: boolean;
   updatedAt: string; // ISO datetime
+  isStale?: boolean; // true if price hasn't been updated in 3+ days
 }
 
 export interface FuelStation {

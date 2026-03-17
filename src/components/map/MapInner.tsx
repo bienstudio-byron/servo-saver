@@ -52,21 +52,27 @@ function getTierStyles(): Record<PriceTier, { bg: string; border: string; text: 
 // Icon cache to avoid rebuilding identical icons
 const iconCache = new Map<string, L.DivIcon>();
 
-function getPillIcon(brandName: string, price: number, tier: PriceTier, active = false, themeKey = "dark"): L.DivIcon {
-  const key = `${themeKey}|${brandName}|${price.toFixed(1)}|${tier}|${active}`;
+type PinHighlight = "focused" | "recommended" | "none";
+
+function getPillIcon(brandName: string, price: number, tier: PriceTier, highlight: PinHighlight = "none", themeKey = "dark"): L.DivIcon {
+  const key = `${themeKey}|${brandName}|${price.toFixed(1)}|${tier}|${highlight}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
   const s = getTierStyles()[tier];
   const logoUrl = getBrandLogoUrl(brandName);
-  const pillClass = active ? "fuel-pill fuel-pill-active" : "fuel-pill";
+  const pillClass = highlight === "focused"
+    ? "fuel-pill fuel-pill-focused"
+    : highlight === "recommended"
+    ? "fuel-pill fuel-pill-recommended"
+    : "fuel-pill";
 
   const logoHtml = logoUrl
     ? `<img src="${logoUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:contain;background:#fff;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'" /><div style="display:none;width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`
     : `<div style="width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`;
 
   const icon = L.divIcon({
-    html: `<div class="${pillClass}" style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,0.4));cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
+    html: `<div class="${pillClass}" style="--pill-glow:${s.text};display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,0.4));cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
     className: "",
     iconSize: [0, 0],
     iconAnchor: [0, 0],
@@ -228,7 +234,7 @@ function FitBoundsTarget() {
         const bounds = L.latLngBounds(target.points.map(([lat, lng]) => L.latLng(lat, lng)));
         map.fitBounds(bounds, {
           paddingTopLeft: [40, 80],     // top: search bar + chips
-          paddingBottomRight: [40, 280], // bottom: bottom sheet
+          paddingBottomRight: [40, 350], // bottom: bottom sheet
           maxZoom: 16,
           animate: true,
           duration: 0.8,
@@ -273,16 +279,17 @@ function PinFader() {
   const map = useMap();
   const selected = useFuelStore((s) => s.selectedStation);
   const highlighted = useFuelStore((s) => s.highlightedStationIds);
+  const focused = useFuelStore((s) => s.focusedStationId);
 
   useEffect(() => {
     const container = map.getContainer();
-    if (selected || highlighted.size > 0) {
-      container.classList.add("pins-faded");
-    } else {
-      container.classList.remove("pins-faded");
-    }
-    return () => container.classList.remove("pins-faded");
-  }, [selected, highlighted, map]);
+    const hasPins = selected || highlighted.size > 0;
+    container.classList.toggle("pins-faded", !!hasPins);
+    container.classList.toggle("pins-has-focus", !!focused);
+    return () => {
+      container.classList.remove("pins-faded", "pins-has-focus");
+    };
+  }, [selected, highlighted, focused, map]);
 
   return null;
 }
@@ -316,6 +323,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   const tripDestination = useFuelStore((s) => s.tripDestination);
   const recommendedStations = useFuelStore((s) => s.recommendedStations);
   const highlightedStationIds = useFuelStore((s) => s.highlightedStationIds);
+  const focusedStationId = useFuelStore((s) => s.focusedStationId);
   const activeRouteStation = useFuelStore((s) => s.activeRouteStation);
 
   // Nearby mode: show all pins when zoomed in. Trip mode: only show recommended + destination
@@ -361,7 +369,12 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         {visibleMarkers
           .filter(({ station }) => tripMode !== "trip" || recommendedStations.some((r) => r.id === station.id))
           .map(({ station, price }) => {
-          const isActive = selectedStation?.id === station.id || highlightedStationIds.has(station.id);
+          const highlight: PinHighlight =
+            station.id === focusedStationId || station.id === selectedStation?.id
+              ? "focused"
+              : highlightedStationIds.has(station.id)
+              ? "recommended"
+              : "none";
           return (
             <Marker
               key={station.id}
@@ -370,10 +383,10 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
                 station.brand?.name ?? "?",
                 price,
                 getPriceTier(price, thresholds),
-                isActive,
+                highlight,
                 theme
               )}
-              zIndexOffset={isActive ? 1000 : 0}
+              zIndexOffset={highlight === "focused" ? 1200 : highlight === "recommended" ? 1000 : 0}
               eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
             />
           );
@@ -399,14 +412,18 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         {/* Show recommended station pins — always visible, highlighted, with rank */}
         {recommendedStations
           .filter((rs) => !visibleMarkers.some((m) => m.station.id === rs.id))
-          .map((rs, i) => {
+          .map((rs) => {
             const price = rs.prices.find((p) => p.fuelType === selectedFuelType)?.price;
+            const recHighlight: PinHighlight =
+              rs.id === focusedStationId || rs.id === selectedStation?.id
+                ? "focused"
+                : "recommended";
             return (
               <Marker
                 key={`rec-${rs.id}`}
                 position={[rs.latitude, rs.longitude]}
-                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", true, theme)}
-                zIndexOffset={1000}
+                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", recHighlight, theme)}
+                zIndexOffset={recHighlight === "focused" ? 1200 : 1000}
                 eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(rs.id) }}
               />
             );

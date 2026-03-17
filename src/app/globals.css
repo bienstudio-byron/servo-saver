@@ -112,14 +112,23 @@ body {
   z-index: 1000 !important;
 }
 
-/* Fade other pins when one is selected — opaque, not invisible */
+/* Three-tier pin fading */
 .pins-faded .fuel-pill {
-  opacity: 0.5 !important;
+  opacity: 0.25 !important;
 }
-.pins-faded .fuel-pill-active {
+.pins-faded .fuel-pill-recommended {
   opacity: 1 !important;
-  transform: translate(-50%, -50%);
   z-index: 1001 !important;
+}
+/* When a station is focused, dim recommended pins to mid-level */
+.pins-faded.pins-has-focus .fuel-pill-recommended {
+  opacity: 0.6 !important;
+}
+.pins-faded .fuel-pill-focused {
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1.08);
+  z-index: 1002 !important;
+  filter: drop-shadow(0 0 6px var(--pill-glow));
 }
 
 @keyframes pulse-ring {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert } from "lucide-react";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -34,6 +34,8 @@ interface RankedOption {
   detourMins: number;
   netSavings: number; // vs nearest station
   tag: string; // "Best value" | "Cheapest" | "Good deal" | "Nearby"
+  isStale: boolean;
+  updatedAt: string;
 }
 
 export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre }: FillStrategyProps) {
@@ -121,6 +123,18 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const allFuelTypes = Object.entries(FUEL_TYPE_LABELS);
   const fuelShort = selectedFuelType === "PDSL" ? "P.Diesel" : (FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType).replace("Unleaded ", "U").replace("Premium ", "P");
 
+  const formatUpdated = (iso: string) => {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHrs = Math.floor(diffMs / 3600000);
+    if (diffHrs < 1) return "Updated just now";
+    if (diffHrs < 24) return `Updated ${diffHrs}h ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    if (diffDays === 1) return "Updated yesterday";
+    return `Updated ${diffDays}d ago`;
+  };
+
   const getTierColor = (price: number) => {
     const tier = getPriceTier(price, thresholds);
     switch (tier) {
@@ -144,8 +158,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       .map((s) => {
         const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
         if (!p) return null;
-        return { station: s, price: p.price, distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude) * ROAD_FACTOR };
-      }).filter((x): x is { station: StationWithPrices; price: number; distance: number } => x !== null);
+        return { station: s, price: p.price, isStale: !!p.isStale, updatedAt: p.updatedAt, distance: haversineDistance(userLocation.lat, userLocation.lng, s.latitude, s.longitude) * ROAD_FACTOR };
+      }).filter((x): x is { station: StationWithPrices; price: number; isStale: boolean; updatedAt: string; distance: number } => x !== null);
 
     if (withDistance.length === 0) return { options: [] };
 
@@ -224,7 +238,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         detourKm: item.detourKm,
         detourMins: item.detourMins,
         netSavings: item.netSavings,
-        tag,
+        tag: item.isStale ? "" : tag,
+        isStale: item.isStale,
+        updatedAt: item.updatedAt,
       };
     });
 
@@ -323,13 +339,21 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     : null;
 
   const setHighlightedStationIds = useFuelStore((s) => s.setHighlightedStationIds);
+  const setFocusedStationId = useFuelStore((s) => s.setFocusedStationId);
 
-  // Control which pins are highlighted (bright) vs faded
+  // Control which pins are highlighted (recommended) and which is focused
   useEffect(() => {
     const focusedIndex = selectedIndex ?? expandedIndex;
+
+    // Focused: the one station the user is looking at
     if (focusedIndex !== null && options[focusedIndex]) {
-      setHighlightedStationIds(new Set([options[focusedIndex].station.id]));
-    } else if (options.length > 0) {
+      setFocusedStationId(options[focusedIndex].station.id);
+    } else {
+      setFocusedStationId(null);
+    }
+
+    // Highlighted: all recommended stations (always)
+    if (options.length > 0) {
       const visibleOptions = tripMode === "trip" && !showAllTrip
         ? options.slice(0, 5)
         : options;
@@ -350,12 +374,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     if (!pinClickedStationId) return;
     const idx = options.findIndex((o) => o.station.id === pinClickedStationId);
     if (idx !== -1) {
+      const opt = options[idx];
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
       if (isMobile) {
         setSelectedIndex(idx);
+        setExpandedIndex(null);
         setMinimised(false);
       } else {
         setExpandedIndex(idx);
+        setSelectedIndex(null);
         setMinimised(false);
         requestAnimationFrame(() => {
           setTimeout(() => {
@@ -364,6 +391,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               row.scrollIntoView({ behavior: "smooth", block: "center" });
             }
           }, 50);
+        });
+      }
+      // Fit map to show both user location and selected station
+      if (userLocation) {
+        setFitBoundsTarget({
+          points: [
+            [userLocation.lat, userLocation.lng],
+            [opt.station.latitude, opt.station.longitude],
+          ],
         });
       }
     }
@@ -405,6 +441,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               <div className="text-[11px] text-[var(--muted)]">
                 {opt.distance.toFixed(1)}km away
                 {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
+                {" · "}{formatUpdated(opt.updatedAt)}
               </div>
             </div>
             <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
@@ -486,8 +523,10 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     if (isMobile) {
       setSelectedIndex(selectedIndex === i ? null : i);
+      setExpandedIndex(null);
     } else {
       setExpandedIndex(expandedIndex === i ? null : i);
+      setSelectedIndex(null);
     }
     if (userLocation) {
       setFitBoundsTarget({
@@ -520,7 +559,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-      className="w-full max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+      className="w-full max-h-[45vh] md:max-h-[65vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-clip flex flex-col"
     >
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
       {selectedOpt === null && (
@@ -529,7 +568,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           className="shrink-0 w-full cursor-pointer"
         >
           <div className="flex items-center justify-between px-3 py-2">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 text-left">
               <div className="text-sm font-bold text-[var(--foreground)] truncate">
                 {tripMode === "trip" && tripDestination
                   ? `Trip to ${tripDestination.name}`
@@ -538,7 +577,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   : "Best deals near you"
                 }
               </div>
-              <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost{lastUpdated && <> · Prices as of {lastUpdated}</>}</div>
+              <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Live data via Service Victoria</div>
             </div>
             <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
@@ -604,7 +643,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            onClick={() => setMinimised(false)}
+            onClick={() => setSelectedIndex(0)}
             className="md:hidden px-3 py-3 cursor-pointer"
           >
             <div className="flex items-center gap-2.5 mb-1">
@@ -632,19 +671,18 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       </AnimatePresence>
 
       {/* Options list */}
-      <div ref={listRef} className={`overflow-y-auto overflow-x-hidden flex-1 min-h-0 ${minimised || selectedOpt !== null ? "hidden" : ""}`}>
-        <AnimatePresence mode="wait">
+      <div ref={listRef} className={`overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised || selectedOpt !== null ? "hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
           {(!userLocation || loading) && options.length === 0 ? (
-            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 flex items-center gap-2.5">
+            <div className="px-3 py-4 flex items-center gap-2.5">
               <div className="h-4 w-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
               <span className="text-xs text-[var(--muted)]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>
-            </motion.div>
+            </div>
           ) : options.length === 0 ? (
-            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-3 py-4 text-xs text-[var(--muted)] text-center">
+            <div className="px-3 py-4 text-xs text-[var(--muted)] text-center">
               No stations found for {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} nearby
-            </motion.div>
+            </div>
           ) : (
-            <motion.div key="options" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <div>
               {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
                 const tierColor = getTierColor(opt.price);
                 const isFirst = i === 0;
@@ -652,12 +690,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 const isActive = activeStation?.id === opt.station.id;
 
                 return (
-                  <motion.div
+                  <div
                     ref={(el: HTMLDivElement | null) => setRowRef(i, el)}
                     key={opt.station.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03, duration: 0.2 }}
                     className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
                   >
                     <button
@@ -675,13 +710,19 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                                   <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${tierColor}`}>{opt.tag}</span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-[var(--muted)]">{opt.distance.toFixed(1)}km{opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}</div>
+                              <div className="text-[10px] text-[var(--muted)]">{opt.distance.toFixed(1)}km{opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>} · {formatUpdated(opt.updatedAt)}</div>
                             </div>
-                            <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
+                            <div className={`text-xl font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
                               {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
                             </div>
                           </div>
-                          {closestOpt && opt.netSavings > 0 && (
+                          {opt.isStale && (
+                            <div className="flex items-center gap-1 text-[10px] text-[var(--tier-mid)] mb-0.5">
+                              <TriangleAlert className="h-3 w-3 shrink-0" strokeWidth={2} />
+                              Price may be outdated — not updated recently
+                            </div>
+                          )}
+                          {!opt.isStale && closestOpt && opt.netSavings > 0 && (
                             <div className="text-[11px] text-[var(--tier-cheap)] font-medium">
                               Saves ${opt.netSavings.toFixed(2)} per fill vs closest station
                             </div>
@@ -699,17 +740,27 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                               )}
                             </div>
                             <div className="text-[10px] text-[var(--muted)]">
-                              {opt.distance.toFixed(1)}km
-                              {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
-                              {closestOpt && opt.price < closestOpt.price && opt.netSavings >= 0 && (
-                                <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
-                              )}
-                              {closestOpt && opt.price < closestOpt.price && opt.netSavings < 0 && (
-                                <> · <span className="text-[var(--tier-exp)]">${Math.abs(opt.netSavings).toFixed(2)} extra</span></>
+                              {opt.isStale ? (
+                                <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
+                                  <TriangleAlert className="h-2.5 w-2.5 inline shrink-0" strokeWidth={2} />
+                                  Price may be outdated
+                                </span>
+                              ) : (
+                                <>
+                                  {opt.distance.toFixed(1)}km
+                                  {opt.detourKm > 0.5 && <> · +{opt.detourKm.toFixed(1)}km detour</>}
+                                  {closestOpt && opt.price < closestOpt.price && opt.netSavings >= 0 && (
+                                    <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
+                                  )}
+                                  {closestOpt && opt.price < closestOpt.price && opt.netSavings < 0 && (
+                                    <> · <span className="text-[var(--tier-exp)]">${Math.abs(opt.netSavings).toFixed(2)} extra</span></>
+                                  )}
+                                  {" · "}{formatUpdated(opt.updatedAt)}
+                                </>
                               )}
                             </div>
                           </div>
-                          <div className={`font-bold font-mono shrink-0 ${tierColor} text-xs`}>
+                          <div className={`font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-xs`}>
                             {opt.price.toFixed(1)}c
                           </div>
                         </>
@@ -730,7 +781,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </motion.div>
+                  </div>
                 );
               })}
 
@@ -749,9 +800,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   Doesn&apos;t look right? Refresh location
                 </button>
               )}
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
 
       {/* Support + Footer */}
@@ -760,17 +810,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           href="https://buymeacoffee.com/petrolsaver"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-3 py-2 text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+          className="flex items-center justify-center gap-2 px-3 py-3 text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
         >
           <Heart className="h-3.5 w-3.5" strokeWidth={2} />
           <span>Keep PetrolSaver free — <span className="font-semibold text-[var(--foreground)]">buy us a coffee</span></span>
         </a>
-        <div className="px-3 pb-1.5 text-center text-[9px] text-[var(--muted)]">
-          Data from <a href="https://www.service.vic.gov.au" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">Service Victoria</a>
-          {" "}&middot;{" "}
-          <a href="/how-it-works" className="text-[var(--accent-text)] cursor-pointer hover:text-[var(--foreground)]">How it works</a>
-          {" "}&middot;{" "}
-          <a href="/terms" className="hover:text-[var(--foreground)] cursor-pointer">Terms</a>
+        <div className="px-3 pb-2 flex items-center justify-center gap-1.5">
+          <a href="/how-it-works" className="text-[9px] text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
+          <a href="/terms" className="text-[9px] text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
+          <a href="/privacy" className="text-[9px] text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
         </div>
       </div>
     </motion.div>

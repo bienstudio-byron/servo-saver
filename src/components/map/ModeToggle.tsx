@@ -13,7 +13,7 @@ interface SearchResult {
   lon: string;
 }
 
-const FUEL_OPTIONS = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
+const FUEL_OPTIONS = ["U91", "P95", "P98", "DSL", "PDSL", "E10", "LPG"];
 
 export default function ModeToggle() {
   const setTripMode = useFuelStore((s) => s.setTripMode);
@@ -111,7 +111,7 @@ export default function ModeToggle() {
     setDestResults([]);
   };
 
-  const fuelShort = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType;
+  const fuelShort = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType;
   const rangeLabel = rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full";
   const brandLabel = selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length}`;
   const closeAllDropdowns = () => { setShowFuelDropdown(false); setShowRangeDropdown(false); setShowBrandDropdown(false); };
@@ -196,9 +196,9 @@ export default function ModeToggle() {
                 transition={{ duration: 0.1 }}
                 className="mt-2.5 rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden"
               >
-                <div className="grid grid-cols-3 gap-0">
+                <div>
                   {FUEL_OPTIONS.map((id) => {
-                    const label = id === "DSL" ? "Diesel" : (FUEL_TYPE_LABELS[id] ?? id);
+                    const label = id === "DSL" ? "Diesel" : id === "PDSL" ? "Premium Diesel" : (FUEL_TYPE_LABELS[id] ?? id);
                     return (
                       <button
                         key={id}
@@ -207,9 +207,9 @@ export default function ModeToggle() {
                           try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {}
                           setShowFuelDropdown(false);
                         }}
-                        className={`px-4 py-2.5 text-sm text-center transition-colors cursor-pointer border-b border-r border-[var(--subtle-border)] last:border-r-0 ${
+                        className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
                           selectedFuelType === id
-                            ? "bg-[var(--foreground)] text-[var(--card)] font-semibold"
+                            ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
                             : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
                         }`}
                       >
