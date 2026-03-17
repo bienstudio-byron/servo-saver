@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, AlertCircle } from "lucide-react";
+import { AnimatePresence as AP } from "framer-motion";
+import ReportPriceModal from "@/components/shared/ReportPriceModal";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -117,6 +119,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // mobile card view
   const [tripSelectedIdx, setTripSelectedIdx] = useState(0); // which option is selected in trip summary
+  const [reportStation, setReportStation] = useState<{ id: string; name: string; price?: number } | null>(null);
   const [showAllTrip, setShowAllTrip] = useState(false);
   const lastUpdated = useMemo(() => {
     if (stations.length === 0) return "";
@@ -577,20 +580,27 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-2"
+          className="flex flex-col gap-1.5"
         >
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
           >
             <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
             Directions
           </a>
           <button
+            onClick={() => setReportStation({ id: opt.station.id, name: opt.station.name, price: opt.price })}
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+          >
+            <AlertCircle className="h-3.5 w-3.5" strokeWidth={2} />
+            Report price
+          </button>
+          <button
             onClick={() => setSelectedStation(opt.station)}
-            className="inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
           >
             <Info className="h-3.5 w-3.5" strokeWidth={2} />
             Details
@@ -935,6 +945,19 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         </div>
       </div>
     </motion.div>
+
+    {/* Report price modal */}
+    <AP>
+      {reportStation && (
+        <ReportPriceModal
+          stationId={reportStation.id}
+          stationName={reportStation.name}
+          selectedFuelType={selectedFuelType}
+          currentPrice={reportStation.price}
+          onClose={() => setReportStation(null)}
+        />
+      )}
+    </AP>
     </div>
   );
 }

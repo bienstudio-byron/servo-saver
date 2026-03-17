@@ -91,7 +91,8 @@ export async function POST(req: Request) {
     }
 
     // Insert
-    const { error } = await supabase()
+    const db = supabase();
+    const { error } = await db
       .from("community_prices")
       .insert({
         station_id: stationId,
@@ -101,7 +102,7 @@ export async function POST(req: Request) {
       });
 
     if (error) {
-      console.error("Community price insert error:", error);
+      console.error("Community price insert error:", error.message);
       return NextResponse.json({ error: "Failed to save" }, { status: 500 });
     }
 
