@@ -12,4 +12,4 @@ jobs:
       - name: Trigger price snapshot
         run: |
           curl -s -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://petrolsaver.live/api/cron"
+            "https://www.petrolsaver.live/api/cron"
