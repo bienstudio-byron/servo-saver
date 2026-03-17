@@ -517,14 +517,17 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           className="shrink-0 w-full cursor-pointer"
         >
           <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-sm font-bold text-[var(--foreground)]">
-              {tripMode === "trip" && tripDestination
-                ? `Trip to ${tripDestination.name}`
-                : locationName
-                ? `Best deals in ${locationName}`
-                : "Best deals near you"
-              }
-            </span>
+            <div>
+              <span className="text-sm font-bold text-[var(--foreground)]">
+                {tripMode === "trip" && tripDestination
+                  ? `Trip to ${tripDestination.name}`
+                  : locationName
+                  ? `Best deals in ${locationName}`
+                  : "Best deals near you"
+                }
+              </span>
+              <div className="text-[9px] text-[var(--muted)]">Ranked by true cost — price + fuel to get there</div>
+            </div>
             <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
             </motion.div>
