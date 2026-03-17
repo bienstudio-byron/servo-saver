@@ -135,9 +135,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     const d = new Date(latest);
     return d.toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
   }, [stations]);
-  const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const rowRefs = useRef<Map<number, HTMLElement>>(new Map());
   const listRef = useRef<HTMLDivElement>(null);
-  const setRowRef = useCallback((i: number, el: HTMLDivElement | null) => {
+  const setRowRef = useCallback((i: number, el: HTMLElement | null) => {
     if (el) rowRefs.current.set(i, el);
     else rowRefs.current.delete(i);
   }, []);
@@ -377,7 +377,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     setExpandedIndex(null);
     setSelectedIndex(null);
     setTripSelectedIdx(0);
-    listRef.current?.scrollTo({ top: 0 });
+    listRef.current?.scrollTo({ top: 0, left: 0 });
     if (options.length > 0) {
       // In trip mode only recommend top 5, in nearby mode show all
       const visibleStations = tripMode === "trip" ? options.slice(0, 5) : options;
@@ -471,9 +471,18 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         // Nearby mode
         const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
         if (isMobile) {
-          setSelectedIndex(idx);
+          setSelectedIndex(null);
           setExpandedIndex(null);
           setMinimised(false);
+          // Scroll horizontal card list to the tapped station
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              const card = rowRefs.current.get(idx);
+              if (card) {
+                card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+              }
+            }, 50);
+          });
         } else {
           setExpandedIndex(idx);
           setSelectedIndex(null);
@@ -653,23 +662,16 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   };
 
   const handleRowClick = (i: number, opt: RankedOption) => {
-    // Mobile: show card view. Desktop: inline expand
+    // Mobile: tap card → open detail view. Desktop: inline expand
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     if (isMobile) {
-      setSelectedIndex(selectedIndex === i ? null : i);
+      setSelectedIndex(i);
       setExpandedIndex(null);
     } else {
       setExpandedIndex(expandedIndex === i ? null : i);
       setSelectedIndex(null);
     }
-    if (origin) {
-      setFitBoundsTarget({
-        points: [
-          [origin.lat, origin.lng],
-          [opt.station.latitude, opt.station.longitude],
-        ],
-      });
-    }
+    setFlyToTarget({ lat: opt.station.latitude, lng: opt.station.longitude, zoom: 15 });
   };
 
   // Trip mode: render TripSummaryCard instead
@@ -801,43 +803,10 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         )}
       </AnimatePresence>
 
-      {/* Collapsed preview — show #1 station on mobile when minimised */}
-      <AnimatePresence>
-        {minimised && selectedOpt === null && options.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            onClick={() => setSelectedIndex(0)}
-            className="md:hidden px-3 py-3 cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5 mb-1">
-              <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="lg" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-[var(--foreground)] text-sm truncate">{options[0].station.name}</span>
-                  {options[0].tag && (
-                    <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${getTierColor(options[0].price)}`}>{options[0].tag}</span>
-                  )}
-                </div>
-                <div className="text-[10px] text-[var(--muted)]">{(options[0].distance + options[0].detourKm).toFixed(1)}km</div>
-              </div>
-              <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(options[0].price)}`}>
-                {options[0].price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
-              </div>
-            </div>
-            {closestOpt && options[0].netSavings > 0 && (
-              <div className="text-[11px] text-[var(--tier-cheap)] font-medium">
-                Saves ${options[0].netSavings.toFixed(2)} per fill vs closest station
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Collapsed preview — show cards on mobile when minimised */}
 
-      {/* Options list */}
-      <div ref={listRef} className={`overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised || selectedOpt !== null ? "hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
+      {/* Options — horizontal cards on mobile, vertical list on desktop */}
+      <div className={`${selectedOpt !== null ? "hidden" : ""}`}>
           {(!origin || loading) && options.length === 0 ? (
             <div className="px-3 py-4 flex items-center gap-2.5">
               <div className="h-4 w-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
@@ -848,115 +817,132 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               No stations found for {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} nearby
             </div>
           ) : (
-            <div>
-              {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
-                const tierColor = getTierColor(opt.price);
-                const isFirst = i === 0;
-                const isExpanded = expandedIndex === i;
-                const isActive = activeStation?.id === opt.station.id;
+            <>
+              {/* Mobile: horizontal snap-scroll cards */}
+              <div ref={listRef} className="md:hidden flex gap-2 overflow-x-auto px-3 py-2.5 snap-x snap-mandatory scrollbar-hide overscroll-x-contain" style={{ WebkitOverflowScrolling: "touch" }}>
+                {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
+                  const tierColor = getTierColor(opt.price);
+                  const isActive = activeStation?.id === opt.station.id || (activeStation === null && i === 0);
 
-                return (
-                  <div
-                    ref={(el: HTMLDivElement | null) => setRowRef(i, el)}
-                    key={opt.station.id}
-                    className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
-                  >
+                  return (
                     <button
+                      ref={(el: HTMLElement | null) => setRowRef(i, el)}
+                      key={opt.station.id}
                       onClick={() => handleRowClick(i, opt)}
-                      className={`w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer ${isFirst ? "px-3 py-3" : "px-3 py-1.5 flex items-center gap-2"}`}
+                      className={`snap-start shrink-0 w-[200px] rounded-xl border p-2.5 text-left transition-all cursor-pointer ${
+                        isActive
+                          ? "border-[#4285f4] bg-[#4285f4]/10 shadow-lg shadow-[#4285f4]/10"
+                          : "border-[var(--subtle-border)] bg-[var(--card)] hover:bg-[var(--subtle-hover)]"
+                      }`}
                     >
-                      {isFirst ? (
-                        <>
-                          <div className="flex items-center gap-2.5 mb-1.5">
-                            <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="lg" />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-semibold text-[var(--foreground)] text-sm truncate">{opt.station.name}</span>
-                                {opt.tag && (
-                                  <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${tierColor}`}>{opt.tag}</span>
-                                )}
-                              </div>
-                              <div className="text-[10px] text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km away</div>
-                            </div>
-                            <div className={`text-xl font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
-                              {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
-                            </div>
-                          </div>
-                          {opt.isStale && (
-                            <div className="flex items-center gap-1 text-[10px] text-[var(--tier-mid)] mb-0.5">
-                              <TriangleAlert className="h-3 w-3 shrink-0" strokeWidth={2} />
-                              Price may be outdated
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-[10px] font-mono text-[var(--muted)] w-3 text-right shrink-0">{i + 1}</span>
-                          <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="sm" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium truncate text-[var(--foreground)] text-xs">{opt.station.name}</span>
-                              {opt.tag && (
-                                <span className="text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 text-[var(--muted)]">{opt.tag}</span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-[var(--muted)]">
-                              {opt.isStale ? (
-                                <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
-                                  <TriangleAlert className="h-2.5 w-2.5 inline shrink-0" strokeWidth={2} />
-                                  Price may be outdated
-                                </span>
-                              ) : (
-                                <>{(opt.distance + opt.detourKm).toFixed(1)}km</>
-                              )}
-                            </div>
-                          </div>
-                          <div className={`font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-xs`}>
-                            {opt.price.toFixed(1)}c
-                          </div>
-                        </>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="md" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-[var(--foreground)] text-xs truncate">{opt.station.name}</div>
+                          <div className="text-[10px] text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className={`text-lg font-bold font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
+                          {opt.price.toFixed(1)}<span className="text-[10px] text-[var(--muted)]">c</span>
+                        </div>
+                        {opt.tag && (
+                          <span className={`text-[7px] font-bold uppercase px-1.5 py-0.5 rounded ${isActive ? "bg-[#4285f4]/20 text-[#4285f4]" : "bg-[var(--subtle)] text-[var(--muted)]"}`}>{opt.tag}</span>
+                        )}
+                      </div>
+                      {opt.isStale && (
+                        <div className="flex items-center gap-1 text-[9px] text-[var(--tier-mid)] mt-1">
+                          <TriangleAlert className="h-2.5 w-2.5 shrink-0" strokeWidth={2} />
+                          May be outdated
+                        </div>
                       )}
                     </button>
+                  );
+                })}
+              </div>
 
-                    {/* Desktop only: inline expand */}
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="overflow-hidden hidden md:block pl-[36px]"
-                        >
-                          {renderStationCard(opt, false)}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
+              {/* Desktop: vertical list with inline expand */}
+              <div className={`hidden md:block overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised ? "!hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
+                {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
+                  const tierColor = getTierColor(opt.price);
+                  const isExpanded = expandedIndex === i;
+                  const isActive = activeStation?.id === opt.station.id;
 
-              {tripMode === "trip" && !showAllTrip && options.length > 5 && (
-                <button
-                  onClick={() => { setShowAllTrip(true); setRecommendedStations(options.map((o) => o.station)); }}
-                  className="w-full py-2 text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors border-t border-[var(--subtle-border)]"
-                >
-                  Show all {options.length} stations
-                </button>
-              )}
+                  return (
+                    <div
+                      ref={(el: HTMLElement | null) => setRowRef(i, el)}
+                      key={opt.station.id}
+                      className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
+                    >
+                      <button
+                        onClick={() => handleRowClick(i, opt)}
+                        className="w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer px-3 py-1.5 flex items-center gap-2"
+                      >
+                        <span className="text-[10px] font-mono text-[var(--muted)] w-3 text-right shrink-0">{i + 1}</span>
+                        <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="sm" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium truncate text-[var(--foreground)] text-xs">{opt.station.name}</span>
+                            {opt.tag && (
+                              <span className="text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 text-[var(--muted)]">{opt.tag}</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-[var(--muted)]">
+                            {opt.isStale ? (
+                              <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
+                                <TriangleAlert className="h-2.5 w-2.5 inline shrink-0" strokeWidth={2} />
+                                Price may be outdated
+                              </span>
+                            ) : (
+                              <>{(opt.distance + opt.detourKm).toFixed(1)}km</>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-xs`}>
+                          {opt.price.toFixed(1)}c
+                        </div>
+                      </button>
+
+                      {/* Inline expand */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="overflow-hidden pl-[36px]"
+                          >
+                            {renderStationCard(opt, false)}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+
+                {tripMode === "trip" && !showAllTrip && options.length > 5 && (
+                  <button
+                    onClick={() => { setShowAllTrip(true); setRecommendedStations(options.map((o) => o.station)); }}
+                    className="w-full py-2 text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors border-t border-[var(--subtle-border)]"
+                  >
+                    Show all {options.length} stations
+                  </button>
+                )}
+              </div>
 
               {options[0]?.distance > 5 && tripMode === "nearby" && (
-                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-3 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
+                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-2 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors md:hidden">
                   <RefreshCw className="h-3 w-3" strokeWidth={2} />
                   Doesn&apos;t look right? Refresh location
                 </button>
               )}
-            </div>
+            </>
           )}
       </div>
 
-      {/* Support + Footer */}
-      <div className={`shrink-0 border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden" : ""}`}>
+      {/* Support + Footer — desktop only */}
+      <div className={`shrink-0 border-t border-[var(--subtle-border)] hidden md:block ${minimised && selectedOpt === null ? "!hidden" : ""}`}>
         <a
           href="https://buymeacoffee.com/petrolsaver"
           target="_blank"
