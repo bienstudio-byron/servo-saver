@@ -357,25 +357,24 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         <FitBoundsTarget />
         <ViewportTracker onChange={handleViewport} />
 
-        {/* Nearby mode: show all visible pins */}
-        {visibleMarkers.map(({ station, price }) => {
-          const isActive = selectedStation?.id === station.id || highlightedStationIds.includes(station.id);
-          return (
+        {/* Show pins — in trip mode only show highlighted stations */}
+        {visibleMarkers
+          .filter(({ station }) => highlightedStationIds.length === 0 || highlightedStationIds.includes(station.id))
+          .map(({ station, price }) => (
             <Marker
-              key={`${station.id}-${isActive}`}
+              key={station.id}
               position={[station.latitude, station.longitude]}
               icon={getPillIcon(
                 station.brand?.name ?? "?",
                 price,
                 getPriceTier(price, thresholds),
-                isActive,
+                true,
                 theme
               )}
-              zIndexOffset={isActive ? 1000 : 0}
+              zIndexOffset={1000}
               eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
             />
-          );
-        })}
+          ))}
 
         {/* Trip mode: show destination pin */}
         {tripMode === "trip" && tripDestination && (
