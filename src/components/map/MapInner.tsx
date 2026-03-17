@@ -319,7 +319,7 @@ function SearchAreaButton({ mapCentre }: { mapCentre: { lat: number; lng: number
           exit={{ opacity: 0, scale: 0.85, y: 8 }}
           transition={{ type: "spring", damping: 22, stiffness: 300 }}
           onClick={() => setSearchOrigin(mapCentre)}
-          className="absolute bottom-[48vh] md:bottom-6 left-1/2 -translate-x-1/2 z-[1000] inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2 rounded-full text-xs font-bold shadow-xl hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+          className="absolute bottom-[48vh] md:bottom-6 left-1/2 -translate-x-1/2 z-[1001] inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2 rounded-full text-xs font-bold shadow-xl hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
         >
           <Search className="h-3.5 w-3.5" strokeWidth={2.5} />
           Search this area
