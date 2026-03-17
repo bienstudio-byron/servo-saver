@@ -522,44 +522,126 @@ export default function ModeToggle() {
             )}
           </ChipDropdown>
 
-          <ChipDropdown
-            icon={<Store className="h-3.5 w-3.5" strokeWidth={2} />}
-            label={selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length}`}
-            active={selectedBrands.length > 0}
-          >
-            {() => (
-              <div className="max-h-[240px] overflow-y-auto">
-                {selectedBrands.length > 0 && (
-                  <button
-                    onClick={() => setSelectedBrands([])}
-                    className="w-full text-left px-4 py-2 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
-                  >
-                    Clear all
-                  </button>
-                )}
-                {availableBrands.map((brand) => {
-                  const isSelected = selectedBrands.includes(brand);
-                  return (
-                    <button
-                      key={brand}
-                      onClick={() => toggleBrand(brand)}
-                      className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2.5 ${
-                        isSelected
-                          ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
-                          : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
-                      }`}
-                    >
-                      <BrandLogo brandName={brand} size="sm" />
-                      <span className="flex-1">{brand}</span>
-                      {isSelected && <Check className="h-3.5 w-3.5 text-[var(--tier-cheap)]" strokeWidth={2.5} />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </ChipDropdown>
+          <BrandChipDropdown
+            availableBrands={availableBrands}
+            selectedBrands={selectedBrands}
+            setSelectedBrands={setSelectedBrands}
+            toggleBrand={toggleBrand}
+          />
         </div>
       )}
+    </div>
+  );
+}
+
+/* --- Brand filter with search --- */
+
+function BrandChipDropdown({
+  availableBrands,
+  selectedBrands,
+  setSelectedBrands,
+  toggleBrand,
+}: {
+  availableBrands: string[];
+  selectedBrands: string[];
+  setSelectedBrands: (brands: string[]) => void;
+  toggleBrand: (brand: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) {
+      setQuery("");
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  const filtered = query
+    ? availableBrands.filter((b) => b.toLowerCase().includes(query.toLowerCase()))
+    : availableBrands;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl text-[11px] font-semibold font-mono transition-colors cursor-pointer ${
+          open || selectedBrands.length > 0 ? "text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+        }`}
+      >
+        <Store className="h-3.5 w-3.5" strokeWidth={2} />
+        {selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length}`}
+        <ChevronDown className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={2} />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.1 }}
+            className="absolute top-full left-0 mt-2 min-w-[220px] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
+          >
+            <div className="px-2.5 pt-2.5 pb-1.5">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search brands..."
+                  style={{ fontSize: "16px" }}
+                  className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+                />
+              </div>
+            </div>
+            <div className="max-h-[200px] overflow-y-auto">
+              {selectedBrands.length > 0 && !query && (
+                <button
+                  onClick={() => setSelectedBrands([])}
+                  className="w-full text-left px-4 py-2 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
+                >
+                  Clear all
+                </button>
+              )}
+              {filtered.map((brand) => {
+                const isSelected = selectedBrands.includes(brand);
+                return (
+                  <button
+                    key={brand}
+                    onClick={() => toggleBrand(brand)}
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2.5 ${
+                      isSelected
+                        ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
+                        : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+                    }`}
+                  >
+                    <BrandLogo brandName={brand} size="sm" />
+                    <span className="flex-1">{brand}</span>
+                    {isSelected && <Check className="h-3.5 w-3.5 text-[var(--tier-cheap)]" strokeWidth={2.5} />}
+                  </button>
+                );
+              })}
+              {filtered.length === 0 && (
+                <div className="px-4 py-3 text-xs text-[var(--muted)] text-center">No brands found</div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
