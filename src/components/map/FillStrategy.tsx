@@ -263,6 +263,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
   const [insightIndex, setInsightIndex] = useState(0);
   useEffect(() => {
+    setInsightIndex(0);
     if (insightStats.length <= 1) return;
     const interval = setInterval(() => {
       setInsightIndex((prev) => (prev + 1) % insightStats.length);
@@ -547,7 +548,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25 }}
                 dangerouslySetInnerHTML={{
-                  __html: insightStats[insightIndex]
+                  __html: (insightStats[insightIndex % insightStats.length] || "")
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
                 }}
               />
