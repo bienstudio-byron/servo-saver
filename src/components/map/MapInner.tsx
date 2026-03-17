@@ -320,10 +320,10 @@ function SearchAreaButton({ mapCentre }: { mapCentre: { lat: number; lng: number
           exit={{ opacity: 0, scale: 0.85, y: 8 }}
           transition={{ type: "spring", damping: 22, stiffness: 300 }}
           onClick={() => setSearchOrigin(mapCentre)}
-          className="absolute bottom-[48vh] md:bottom-6 left-1/2 -translate-x-1/2 z-[1001] inline-flex items-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-4 py-2 rounded-full text-xs font-bold shadow-xl hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1001] inline-flex items-center gap-1 bg-[var(--card)] border border-[var(--subtle-border)] text-[var(--foreground)] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-xl hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
         >
-          <Search className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Search this area
+          <Search className="h-3 w-3" strokeWidth={2.5} />
+          Search here
         </motion.button>
       )}
     </AnimatePresence>
@@ -534,8 +534,10 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
       {/* Mode toggle */}
       <ModeToggle />
 
-      {/* Search this area button */}
-      <SearchAreaButton mapCentre={viewport.centre} />
+      {/* Search this area button — desktop only (mobile version is inside FillStrategy) */}
+      <div className="hidden md:block">
+        <SearchAreaButton mapCentre={viewport.centre} />
+      </div>
 
       {/* Logo — desktop only */}
       <div className="hidden md:flex absolute top-3 left-3 z-[1000] items-center gap-2">
@@ -562,7 +564,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
       </button>
 
 
-      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} onRecentre={() => {
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
         setSearchOrigin(null);
         if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
       }} onEditTrip={() => setTripPlannerOpen(true)} />

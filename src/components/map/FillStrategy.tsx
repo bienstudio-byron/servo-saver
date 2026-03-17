@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search } from "lucide-react";
 import type { StationWithPrices } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
@@ -22,6 +22,7 @@ interface FillStrategyProps {
   loading?: boolean;
   onRecentre?: () => void;
   onEditTrip?: () => void;
+  mapCentre?: { lat: number; lng: number };
 }
 
 export type { TripRankedOption as RankedOption };
@@ -44,7 +45,55 @@ interface RankedOption {
   updatedAt: string;
 }
 
-export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre, onEditTrip }: FillStrategyProps) {
+function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => void; mapCentre?: { lat: number; lng: number } }) {
+  const userLocation = useFuelStore((s) => s.userLocation);
+  const searchOrigin = useFuelStore((s) => s.searchOrigin);
+  const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
+  const tripMode = useFuelStore((s) => s.tripMode);
+
+  const showSearch = tripMode === "nearby" && userLocation && mapCentre && (() => {
+    const effectiveOrigin = searchOrigin ?? userLocation;
+    return haversineDistance(effectiveOrigin.lat, effectiveOrigin.lng, mapCentre.lat, mapCentre.lng) > 2;
+  })();
+
+  return (
+    <div className="md:hidden flex items-center justify-center mb-2 px-3 relative">
+      {/* Search pill — centred */}
+      <AnimatePresence>
+        {showSearch && mapCentre && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.85, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: 8 }}
+            transition={{ type: "spring", damping: 22, stiffness: 300 }}
+            onClick={() => setSearchOrigin(mapCentre)}
+            className="inline-flex items-center gap-1 bg-[var(--card)] border border-[var(--subtle-border)] text-[var(--foreground)] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-xl hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+          >
+            <Search className="h-3 w-3" strokeWidth={2.5} />
+            Search here
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Recentre button — right, aligned to search pill height */}
+      {onRecentre && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.5 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={onRecentre}
+          className="absolute right-3 h-7 w-7 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          title="Centre on my location"
+        >
+          <LocateFixed className="h-4 w-4" strokeWidth={2} />
+        </motion.button>
+      )}
+    </div>
+  );
+}
+
+export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre, onEditTrip, mapCentre }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -600,21 +649,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-end">
-    {/* Recentre button — anchored above the sheet */}
-    {onRecentre && (
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.5 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={onRecentre}
-        className="md:hidden mb-2 mr-3 h-10 w-10 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-        title="Centre on my location"
-      >
-        <LocateFixed className="h-5 w-5" strokeWidth={2} />
-      </motion.button>
-    )}
+    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-stretch">
+    {/* Floating buttons above the sheet */}
+    <MobileFloatingButtons onRecentre={onRecentre} mapCentre={mapCentre} />
 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -642,13 +679,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   }
                 </span>
                 {searchOrigin && tripMode === "nearby" && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setSearchOrigin(null); }}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setSearchOrigin(null); }}
                     className="shrink-0 h-5 w-5 rounded-full bg-[var(--subtle)] hover:bg-[var(--subtle-hover)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                     title="Back to my location"
                   >
                     <X className="h-3 w-3" strokeWidth={2.5} />
-                  </button>
+                  </span>
                 )}
               </div>
               <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Live data via Service Victoria</div>
