@@ -66,14 +66,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     }
     if (!latest) return "";
     const d = new Date(latest);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHrs = Math.floor(diffMins / 60);
-    if (diffHrs < 24) return `${diffHrs}h ago`;
-    return `${Math.floor(diffHrs / 24)}d ago`;
+    return d.toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true });
   }, [stations]);
   const rowRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const listRef = useRef<HTMLDivElement>(null);
@@ -545,7 +538,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   : "Best deals near you"
                 }
               </span>
-              <div className="text-[9px] text-[var(--muted)]">Ranked by true cost · Updated {lastUpdated}</div>
+              <div className="text-[9px] text-[var(--muted)]">Ranked by true cost{lastUpdated && <> · Prices as of {lastUpdated}</>}</div>
             </div>
             <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
