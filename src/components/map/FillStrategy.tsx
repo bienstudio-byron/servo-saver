@@ -1,5 +1,13 @@
 "use client";
 
+const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+const TAG_DESCRIPTIONS: Record<string, string> = {
+  "Best for you": "Saves you the most after accounting for detour costs",
+  "Good deal": "Below average price and worth the trip",
+  "Nearby": "Convenient, but not the cheapest option",
+};
+
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check, Zap, Droplets, Gauge, Store, Fuel } from "lucide-react";
@@ -42,7 +50,7 @@ interface RankedOption {
   detourKm: number;
   detourMins: number;
   netSavings: number; // vs nearest station
-  tag: string; // "Best value" | "Cheapest" | "Good deal" | "Nearby"
+  tag: string; // "Best for you" | "Good deal" | "Nearby"
   isStale: boolean;
   updatedAt: string;
   source?: "official" | "community";
@@ -81,15 +89,14 @@ function SidebarBrandList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search brands..."
-            style={{ fontSize: "16px" }}
-            className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+            className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
           />
         </div>
         <div className="max-h-[200px] overflow-y-auto">
           {selectedBrands.length > 0 && !query && (
             <button
               onClick={() => onBrandsChange([])}
-              className="w-full text-left px-3 py-1.5 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+              className="w-full text-left px-3 py-1.5 text-xs font-medium text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
             >
               Clear all
             </button>
@@ -103,8 +110,8 @@ function SidebarBrandList({
                   if (isSelected) onBrandsChange(selectedBrands.filter((b) => b !== brand));
                   else onBrandsChange([...selectedBrands, brand]);
                 }}
-                className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center gap-2 ${
-                  isSelected ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold" : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+                className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors cursor-pointer flex items-center gap-2 ${
+                  isSelected ? "bg-[var(--subtle)] text-[var(--foreground)] font-medium" : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
                 }`}
               >
                 <BrandLogo brandName={brand} size="sm" />
@@ -122,142 +129,197 @@ function SidebarBrandList({
   );
 }
 
+function SidebarBrandListInline({
+  availableBrands, selectedBrands, onBrandsChange,
+}: {
+  availableBrands: string[]; selectedBrands: string[]; onBrandsChange: (brands: string[]) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
+  const filtered = query
+    ? availableBrands.filter((b) => b.toLowerCase().includes(query.toLowerCase()))
+    : availableBrands;
+
+  return (
+    <>
+      <div className="relative mb-1.5">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search brands..."
+          className="w-full bg-[var(--background)] border border-[var(--subtle-border)] rounded pl-8 pr-3 py-1.5 text-[11px] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+        />
+      </div>
+      <div className="max-h-[200px] overflow-y-auto rounded border border-[var(--subtle-border)] bg-[var(--background)]">
+        {selectedBrands.length > 0 && !query && (
+          <button
+            onClick={() => onBrandsChange([])}
+            className="w-full text-left px-3 py-1.5 text-[11px] font-mono font-medium text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]/50"
+          >
+            Clear all
+          </button>
+        )}
+        {filtered.map((brand) => {
+          const isSelected = selectedBrands.includes(brand);
+          return (
+            <button
+              key={brand}
+              onClick={() => {
+                if (isSelected) onBrandsChange(selectedBrands.filter((b) => b !== brand));
+                else onBrandsChange([...selectedBrands, brand]);
+              }}
+              className={`w-full text-left px-3 py-1.5 text-[11px] font-mono transition-colors cursor-pointer flex items-center gap-2 border-b border-[var(--subtle-border)]/30 last:border-0 ${
+                isSelected ? "bg-[var(--subtle)] text-[var(--foreground)] font-medium" : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+              }`}
+            >
+              <BrandLogo brandName={brand} size="sm" />
+              <span className="flex-1 truncate">{brand}</span>
+              {isSelected && <Check className="h-3.5 w-3.5 text-[var(--tier-cheap)] shrink-0" strokeWidth={2.5} />}
+            </button>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="px-3 py-2 text-[11px] font-mono text-[var(--muted)] text-center">No brands found</div>
+        )}
+      </div>
+    </>
+  );
+}
+
 function SidebarFilters({
   selectedFuelType, onFuelTypeChange,
   rangeKm, onRangeChange,
   selectedBrands, onBrandsChange,
-  availableBrands, mode,
+  availableBrands,
 }: {
   selectedFuelType: string; onFuelTypeChange: (id: string) => void;
   rangeKm: number; onRangeChange: (km: number) => void;
   selectedBrands: string[]; onBrandsChange: (brands: string[]) => void;
   availableBrands: string[];
-  mode: "petrol" | "ev";
 }) {
   const [expanded, setExpanded] = useState<"fuel" | "tank" | "brands" | null>(null);
 
-  const fuelOptions = mode === "ev" ? ["AC", "DC", "ULTRA"] : ["U91", "P95", "P98", "DSL", "E10", "LPG"];
-  const fuelLabel = mode === "ev"
-    ? (selectedFuelType === "ULTRA" ? "Ultra" : selectedFuelType)
-    : (selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType);
-  const fuelFilterLabel = mode === "ev" ? "Speed" : "Fuel";
-  const tankFilterLabel = mode === "ev" ? "Battery" : "Tank";
+  const fuelOptions = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
+  const fuelLabel = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType;
+  const fuelFilterLabel = "Fuel";
+  const tankFilterLabel = "Tank";
   const tankLabel = rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full";
   const brandsLabel = selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length} selected`;
 
   return (
-    <div className="hidden md:block px-4 py-3 shrink-0">
-      <div className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">Your filters</div>
-      <div className="flex gap-1.5">
+    <div className="hidden md:block shrink-0 border-b border-[var(--subtle-border)]">
+      <div className="flex px-4">
         <button
           onClick={() => setExpanded(expanded === "fuel" ? null : "fuel")}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            expanded === "fuel" ? "border-[#4285f4] text-[var(--foreground)]" : "border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          className={`px-3 py-2 text-[11px] font-medium whitespace-nowrap transition-all cursor-pointer border-b-2 -mb-px ${
+            expanded === "fuel" ? "border-[var(--foreground)] text-[var(--foreground)]" : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
-          <Droplets className="h-3 w-3" strokeWidth={2} />
-          {fuelFilterLabel} ·{fuelLabel}
+          {fuelFilterLabel} <span className="font-mono">{fuelLabel}</span>
         </button>
         <button
           onClick={() => setExpanded(expanded === "tank" ? null : "tank")}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            expanded === "tank" ? "border-[#4285f4] text-[var(--foreground)]" : "border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          className={`px-3 py-2 text-[11px] font-medium whitespace-nowrap transition-all cursor-pointer border-b-2 -mb-px ${
+            expanded === "tank" ? "border-[var(--foreground)] text-[var(--foreground)]" : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
-          <Gauge className="h-3 w-3" strokeWidth={2} />
-          {tankFilterLabel} ·{tankLabel}
+          {tankFilterLabel} <span className="font-mono">{tankLabel}</span>
         </button>
         <button
           onClick={() => setExpanded(expanded === "brands" ? null : "brands")}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            expanded === "brands" || selectedBrands.length > 0 ? "border-[#4285f4] text-[var(--foreground)]" : "border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          className={`px-3 py-2 text-[11px] font-medium whitespace-nowrap transition-all cursor-pointer border-b-2 -mb-px ${
+            expanded === "brands" || selectedBrands.length > 0 ? "border-[var(--foreground)] text-[var(--foreground)]" : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
         >
-          <Store className="h-3 w-3" strokeWidth={2} />
-          Brands ·{brandsLabel}
+          Brands <span className="font-mono">{brandsLabel}</span>
         </button>
       </div>
 
       {/* Expanded panels */}
       <AnimatePresence>
-        {expanded === "fuel" && (
+        {expanded && (
           <motion.div
+            key={expanded}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="overflow-hidden"
+            className="overflow-hidden bg-[var(--subtle)]/50"
           >
-            <div className="flex gap-1 pt-2.5">
-              {fuelOptions.map((id) => (
-                <button
-                  key={id}
-                  onClick={() => { onFuelTypeChange(id); setExpanded(null); }}
-                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
-                    selectedFuelType === id
-                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                      : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
-                  }`}
-                >
-                  {id === "DSL" ? "Diesel" : id}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {expanded === "tank" && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="overflow-hidden"
-          >
-            <div className="pt-2.5">
-              <div className="relative h-6 rounded-lg bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden">
-                <motion.div
-                  className="absolute inset-y-0 left-0 rounded-lg"
-                  animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
-                  transition={{ type: "spring", damping: 20, stiffness: 200 }}
-                  style={{
-                    background: rangeKm <= 50
-                      ? "linear-gradient(90deg, #dc2626, #ef4444)"
-                      : rangeKm <= 200
-                      ? "linear-gradient(90deg, #ea580c, #f59e0b)"
-                      : rangeKm <= 400
-                      ? "linear-gradient(90deg, #f59e0b, #84cc16)"
-                      : "linear-gradient(90deg, #22c55e, #4ade80)",
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[9px] font-bold text-white">
-                    {rangeKm <= 50 ? "Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
-                  </span>
+            <div className="px-4 py-3">
+              {expanded === "fuel" && (
+                <div className="flex gap-1">
+                  {fuelOptions.map((id) => (
+                    <button
+                      key={id}
+                      onClick={() => { onFuelTypeChange(id); setExpanded(null); }}
+                      className={`flex-1 py-1.5 rounded text-[10px] font-medium font-mono text-center transition-all cursor-pointer ${
+                        selectedFuelType === id
+                          ? "bg-[var(--foreground)] text-[var(--card)]"
+                          : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                      }`}
+                    >
+                      {id === "DSL" ? "Diesel" : id}
+                    </button>
+                  ))}
                 </div>
-                <input
-                  type="range"
-                  min={10}
-                  max={800}
-                  step={10}
-                  value={rangeKm}
-                  onChange={(e) => onRangeChange(Number(e.target.value))}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              )}
+
+              {expanded === "tank" && (
+                <>
+                  <div className="relative h-6 rounded-lg bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden">
+                    <motion.div
+                      className="absolute inset-y-0 left-0 rounded-lg"
+                      animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
+                      transition={{ type: "spring", damping: 20, stiffness: 200 }}
+                      style={{
+                        background: rangeKm <= 50
+                          ? "linear-gradient(90deg, #dc2626, #ef4444)"
+                          : rangeKm <= 200
+                          ? "linear-gradient(90deg, #ea580c, #f59e0b)"
+                          : rangeKm <= 400
+                          ? "linear-gradient(90deg, #f59e0b, #84cc16)"
+                          : "linear-gradient(90deg, #22c55e, #4ade80)",
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-[9px] font-medium text-white">
+                        {rangeKm <= 50 ? "Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={800}
+                      step={10}
+                      value={rangeKm}
+                      onChange={(e) => onRangeChange(Number(e.target.value))}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1 text-[9px] font-mono text-[var(--muted)]">
+                    <span>E</span><span>¼</span><span>½</span><span>¾</span><span>F</span>
+                  </div>
+                </>
+              )}
+
+              {expanded === "brands" && (
+                <SidebarBrandListInline
+                  availableBrands={availableBrands}
+                  selectedBrands={selectedBrands}
+                  onBrandsChange={onBrandsChange}
                 />
-              </div>
-              <div className="flex justify-between mt-1 text-[9px] text-[var(--muted)]">
-                <span>E</span><span>¼</span><span>½</span><span>¾</span><span>F</span>
-              </div>
+              )}
             </div>
           </motion.div>
-        )}
-
-        {expanded === "brands" && (
-          <SidebarBrandList
-            availableBrands={availableBrands}
-            selectedBrands={selectedBrands}
-            onBrandsChange={onBrandsChange}
-          />
         )}
       </AnimatePresence>
     </div>
@@ -288,7 +350,7 @@ function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => v
               exit={{ opacity: 0, scale: 0.85 }}
               transition={{ type: "spring", damping: 22, stiffness: 300 }}
               onClick={() => setSearchOrigin(mapCentre)}
-              className="inline-flex items-center gap-1 bg-[var(--card)] border border-[var(--subtle-border)] text-[var(--foreground)] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-xl hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer mr-auto"
+              className="inline-flex items-center gap-1 bg-[var(--card)] border border-[var(--subtle-border)] text-[var(--foreground)] px-3 py-1.5 rounded-full text-[11px] font-medium shadow-xl hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer mr-auto"
             >
               <Search className="h-3 w-3" strokeWidth={2.5} />
               Search here
@@ -315,8 +377,6 @@ function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => v
 
 export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre, onEditTrip, mapCentre }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
-  const mode = useFuelStore((s) => s.mode);
-  const setMode = useFuelStore((s) => s.setMode);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
   const tripOrigin = useFuelStore((s) => s.tripOrigin);
@@ -441,6 +501,16 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     }
   };
 
+  const getTagStyle = (price: number) => {
+    const tier = getPriceTier(price, thresholds);
+    switch (tier) {
+      case "cheap": return "text-[var(--tier-cheap)] bg-[var(--tier-cheap)]/15";
+      case "mid": return "text-[var(--tier-mid)] bg-[var(--tier-mid)]/15";
+      case "expensive": return "text-[var(--tier-exp)] bg-[var(--tier-exp)]/15";
+      default: return "text-[var(--muted)] bg-[var(--muted)]/15";
+    }
+  };
+
   // Build ranked options
   const { options } = useMemo(() => {
     if (!origin || stations.length === 0) return { options: [] as RankedOption[] };
@@ -527,8 +597,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     options = sorted.map((item, i) => {
       const tier = getPriceTier(item.price, thresholds);
       let tag = "";
-      if (i === 0 && tier !== "expensive") tag = "Best value";
-      else if (item.station.id === cheapestId && tier !== "expensive") tag = "Cheapest";
+      if (i === 0 && tier !== "expensive") tag = "Best for you";
       else if (item.price < closest.price && item.netSavings > 0 && tier !== "expensive") tag = "Good deal";
       else if (item.distance <= 2) tag = "Nearby";
       return {
@@ -779,35 +848,34 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="md" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-[var(--foreground)] truncate">{opt.station.name}</span>
-                {opt.tag && <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded-full border ${tierColor} border-current opacity-80`}>{opt.tag}</span>}
+                <span className="text-sm font-semibold text-[var(--foreground)] truncate">{titleCase(opt.station.name)}</span>
+                {opt.tag && <span className={`text-[8px] font-medium uppercase shrink-0 px-1.5 py-0.5 rounded ${getTagStyle(opt.price)}`}>{opt.tag}</span>}
               </div>
               <div className="text-[11px] text-[var(--muted)]">
-                {(opt.distance + opt.detourKm).toFixed(1)}km · {reportedStationIds.has(opt.station.id)
-                  ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
-                  : formatUpdated(opt.updatedAt, opt.source)}
-                {!opt.isStale && closestOpt && opt.netSavings > 0 && (
-                  <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
-                )}
+                {(opt.distance + opt.detourKm).toFixed(1)}km away
               </div>
             </div>
-            <div className={`text-xl font-bold font-mono shrink-0 ${tierColor}`}>
+            <div className={`text-xl font-semibold font-mono shrink-0 ${tierColor}`}>
               {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c/L</span>
             </div>
           </motion.div>
         )}
 
-        {/* Metadata summary — shown in inline expand (no header) */}
-        {!showHeader && (
-          <div className="text-[10px] text-[var(--muted)] pt-1">
-            {reportedStationIds.has(opt.station.id)
-              ? <span className="text-[var(--tier-cheap)]"><Check className="h-2.5 w-2.5 inline -mt-px" strokeWidth={2.5} /> You reported</span>
-              : formatUpdated(opt.updatedAt, opt.source)}
-            {!opt.isStale && closestOpt && opt.netSavings > 0 && (
-              <> · <span className="text-[var(--tier-cheap)]">saves ${opt.netSavings.toFixed(2)}</span></>
-            )}
+        {/* Tag explanation */}
+        {opt.tag && TAG_DESCRIPTIONS[opt.tag] && (
+          <div className={`text-[10px] px-2 py-1.5 rounded ${getTagStyle(opt.price)}`}>
+            <span className="font-medium">{opt.tag}</span> — {TAG_DESCRIPTIONS[opt.tag]}
           </div>
         )}
+
+        {/* Context pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-mono text-[var(--muted)] px-1.5 py-0.5 rounded border border-[var(--subtle-border)]">{FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType}</span>
+          <span className="text-[9px] font-mono text-[var(--muted)] px-1.5 py-0.5 rounded border border-[var(--subtle-border)]">{rangeKm <= 50 ? "Near empty" : rangeKm <= 200 ? "¼ tank" : rangeKm <= 400 ? "½ tank" : rangeKm <= 600 ? "¾ tank" : "Full tank"}</span>
+          <span className="text-[9px] font-mono text-[var(--muted)] px-1.5 py-0.5 rounded border border-[var(--subtle-border)]">{reportedStationIds.has(opt.station.id)
+            ? "You reported"
+            : formatUpdated(opt.updatedAt, opt.source)}</span>
+        </div>
 
         {/* Breakdown */}
         <motion.div
@@ -831,8 +899,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 <span className={`font-mono ${rawSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{rawSavings >= 0 ? "+" : "-"}${Math.abs(rawSavings).toFixed(2)}</span>
               </div>
               <div className="flex justify-between pt-0.5 border-t border-[var(--subtle-border)]">
-                <span className="text-[var(--foreground)] font-medium">{opt.netSavings >= 0 ? "Net saving" : "Extra cost"}</span>
-                <span className={`font-bold font-mono ${opt.netSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{opt.netSavings >= 0 ? "" : "+"}${Math.abs(opt.netSavings).toFixed(2)}</span>
+                <span className="text-[var(--foreground)] font-semibold">{opt.netSavings >= 0 ? "Net saving" : "Extra cost"}</span>
+                <span className={`font-semibold font-mono ${opt.netSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{opt.netSavings >= 0 ? "" : "+"}${Math.abs(opt.netSavings).toFixed(2)}</span>
               </div>
             </>
           ) : (
@@ -849,6 +917,19 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           )}
         </motion.div>
 
+        {/* Fill cost estimate */}
+        {fillLitres > 0 && (
+          <div className="flex items-center justify-between bg-[var(--subtle)] rounded px-2.5 py-2">
+            <div className="text-[10px] text-[var(--muted)]">
+              Fill up ~{Math.round(fillLitres)}L to full
+            </div>
+            <div className="text-sm font-semibold font-mono text-[var(--foreground)]">
+              ${((fillLitres * opt.price) / 100).toFixed(2)}
+            </div>
+          </div>
+        )}
+
+
         {/* Actions */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -860,7 +941,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             href={`https://www.google.com/maps/dir/?api=1&destination=${opt.station.latitude},${opt.station.longitude}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[var(--accent)] text-[var(--accent-contrast)] px-3 py-2 rounded-lg text-xs font-semibold hover:bg-[var(--accent-hover)] transition-colors cursor-pointer"
           >
             <Navigation className="h-3.5 w-3.5" strokeWidth={2} />
             Directions
@@ -868,14 +949,14 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           <div className="flex gap-1.5">
             <button
               onClick={() => setReportingStationId(opt.station.id)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
             >
               <TriangleAlert className="h-3.5 w-3.5" strokeWidth={2} />
               Report a price
             </button>
             <button
               onClick={() => setSelectedStation(opt.station)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-[var(--subtle)] border border-[var(--subtle-border)] text-[var(--muted)] px-3 py-2 rounded-lg text-xs font-medium hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
             >
               <Info className="h-3.5 w-3.5" strokeWidth={2} />
               Details
@@ -945,69 +1026,35 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
       className="w-full max-h-[45vh] md:max-h-none md:flex-1 rounded-t-2xl md:rounded-none border-t md:border-t-0 md:border-r border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl md:shadow-none overflow-hidden flex flex-col"
     >
-      {/* Logo + mode toggle — desktop only */}
-      <div className="hidden md:block px-4 py-4 shrink-0 border-b border-[var(--subtle-border)]">
-        <div className="flex items-center gap-2 mb-3">
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${mode === "ev" ? "bg-[#00C853]" : "bg-[#4285f4]"}`}>
-            {mode === "ev" ? <Zap className="h-4 w-4 text-white" strokeWidth={2.5} /> : <Fuel className="h-4 w-4 text-white" strokeWidth={2.5} />}
-          </div>
-          <span className="text-base font-bold text-[var(--foreground)]">{mode === "ev" ? "ChargeSaver" : "PetrolSaver"}</span>
-        </div>
-        <div className="flex rounded-lg bg-[var(--subtle)] border border-[var(--subtle-border)] p-0.5">
-          <button
-            onClick={() => setMode("petrol")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-              mode === "petrol"
-                ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <Fuel className="h-3.5 w-3.5" strokeWidth={2} />
-            Petrol
-          </button>
-          <button
-            onClick={() => setMode("ev")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-              mode === "ev"
-                ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <Zap className="h-3.5 w-3.5" strokeWidth={2} />
-            EV
-          </button>
-        </div>
+
+      {/* Logo — desktop only */}
+      <div className="hidden md:flex items-center gap-2 px-4 py-3 shrink-0 border-b border-[var(--subtle-border)]">
+        <img src="/logos/nav-icon.png" alt="PetrolSaver" className="h-6 w-6" />
+        <span className="text-sm font-bold text-[var(--foreground)]">Petrol<span className="text-[#4285f4]">Saver</span></span>
+        <span className="text-[10px] text-[var(--muted)] truncate ml-auto">
+          {locationName || ""}
+        </span>
       </div>
-      {/* Desktop filters — compact pills with click-to-expand */}
-      <SidebarFilters
-        selectedFuelType={selectedFuelType}
-        onFuelTypeChange={(id) => { rawSetFuelType(id); try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {} }}
-        rangeKm={rangeKm}
-        onRangeChange={setRangeKm}
-        selectedBrands={selectedBrands}
-        onBrandsChange={setSelectedBrands}
-        availableBrands={availableBrands}
-        mode={mode}
-      />
 
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
       {selectedOpt === null && (
         <button
           onClick={() => { if (window.innerWidth < 768) { setMinimised(!minimised); setSelectedIndex(null); } }}
-          className="shrink-0 w-full cursor-pointer md:cursor-default"
+          className="shrink-0 w-full cursor-pointer md:hidden"
         >
-          <div className="flex items-center justify-between px-4 py-3 md:py-4">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--subtle-border)]">
+            <img src="/logos/nav-icon.png" alt="PetrolSaver" className="h-6 w-6 shrink-0" />
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-sm font-bold text-[var(--foreground)] truncate flex items-center gap-1.5">
-                <Navigation className="h-3.5 w-3.5 shrink-0 text-[#4285f4] fill-[#4285f4]" strokeWidth={0} />
+              <span className="text-sm font-bold text-[var(--foreground)]">Petrol<span className="text-[#4285f4]">Saver</span></span>
+              <div className="text-[10px] text-[var(--muted)] truncate flex items-center gap-0.5">
                 <span className="truncate">
                   {tripMode === "trip" && tripDestination
                     ? `Trip to ${tripDestination.name}`
                     : searchOrigin && locationName
                     ? `Searching near ${locationName}`
                     : locationName
-                    ? `Best deals in ${locationName}`
-                    : "Best deals near you"
+                    ? locationName
+                    : "Near you"
                   }
                 </span>
                 {searchOrigin && tripMode === "nearby" && (
@@ -1015,16 +1062,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                     role="button"
                     tabIndex={0}
                     onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); setSearchOrigin(null); }}
-                    className="shrink-0 h-5 w-5 rounded-full bg-[var(--subtle)] hover:bg-[var(--subtle-hover)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                    className="shrink-0 h-4 w-4 rounded-full bg-[var(--subtle)] hover:bg-[var(--subtle-hover)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
                     title="Back to my location"
                   >
-                    <X className="h-3 w-3" strokeWidth={2.5} />
+                    <X className="h-2.5 w-2.5" strokeWidth={2.5} />
                   </span>
                 )}
               </div>
-              <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Data via Service Victoria & Transport for NSW</div>
             </div>
-            <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }} className="md:hidden">
+            <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
             </motion.div>
           </div>
@@ -1041,12 +1087,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 30 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="md:hidden flex flex-col"
+            className="md:hidden flex flex-col min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
           >
             {/* Back button */}
             <button
               onClick={() => setSelectedIndex(null)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[var(--accent-text)] cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--accent-text)] cursor-pointer shrink-0"
             >
               <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
               All stations
@@ -1070,19 +1117,19 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             <div className="flex items-center gap-3 mb-2">
               <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="lg" />
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-[var(--foreground)] text-base truncate">{options[0].station.name}</div>
+                <div className="font-semibold text-[var(--foreground)] text-base truncate">{options[0].station.name}</div>
                 <div className="text-xs text-[var(--muted)]">{(options[0].distance + options[0].detourKm).toFixed(1)}km away</div>
               </div>
               {options[0].tag && (
-                <span className={`text-[9px] font-bold uppercase shrink-0 px-2 py-1 rounded-full ${getTierColor(options[0].price)} bg-[var(--subtle)]`}>{options[0].tag}</span>
+                <span className={`text-[9px] font-medium uppercase shrink-0 px-2 py-1 rounded ${getTagStyle(options[0].price)}`}>{options[0].tag}</span>
               )}
             </div>
             <div className="flex items-end justify-between">
-              <div className={`text-3xl font-bold font-mono ${options[0].isStale ? "text-[var(--muted)] opacity-50" : getTierColor(options[0].price)}`}>
+              <div className={`text-2xl font-semibold font-mono ${options[0].isStale ? "text-[var(--muted)] opacity-50" : getTierColor(options[0].price)}`}>
                 {options[0].price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c</span>
               </div>
               {!options[0].isStale && closestOpt && options[0].netSavings > 0 && (
-                <span className="text-xs font-semibold text-[var(--tier-cheap)]">
+                <span className="text-xs font-medium text-[var(--tier-cheap)]">
                   Save ${options[0].netSavings.toFixed(2)} vs closest
                 </span>
               )}
@@ -1114,31 +1161,31 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   <div
                     ref={(el: HTMLDivElement | null) => setRowRef(i, el)}
                     key={opt.station.id}
-                    className={`${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
+                    className={`${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""} ${isFirst ? "border-b border-[var(--subtle-border)]" : "border-b border-[var(--subtle-border)]/50"}`}
                   >
                     <button
                       onClick={() => handleRowClick(i, opt)}
-                      className={`w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer ${isFirst ? "px-4 py-4" : "px-4 py-3 flex items-center gap-3"}`}
+                      className={`w-full text-left transition-colors cursor-pointer ${isFirst ? "px-4 py-3" : "px-4 py-2.5 flex items-center gap-3"} ${(isExpanded || isActive) ? "" : "hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)]"}`}
                     >
                       {isFirst ? (
                         <>
                           {/* Featured station */}
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3 mb-1.5">
                             <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="lg" />
                             <div className="min-w-0 flex-1">
-                              <div className="font-bold text-[var(--foreground)] text-base truncate">{opt.station.name}</div>
+                              <div className="font-semibold text-[var(--foreground)] text-base truncate">{opt.station.name}</div>
                               <div className="text-xs text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km away</div>
                             </div>
                             {opt.tag && (
-                              <span className={`text-[9px] font-bold uppercase shrink-0 px-2 py-1 rounded-full ${tierColor} bg-[var(--subtle)]`}>{opt.tag}</span>
+                              <span className={`text-[9px] font-medium uppercase shrink-0 px-2 py-1 rounded ${getTagStyle(opt.price)}`}>{opt.tag}</span>
                             )}
                           </div>
                           <div className="flex items-end justify-between">
-                            <div className={`text-3xl font-bold font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
+                            <div className={`text-2xl font-semibold font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
                               {opt.price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c</span>
                             </div>
                             {!opt.isStale && closestOpt && opt.netSavings > 0 && (
-                              <span className="text-xs font-semibold text-[var(--tier-cheap)]">
+                              <span className="text-xs font-medium text-[var(--tier-cheap)]">
                                 Save ${opt.netSavings.toFixed(2)} vs closest
                               </span>
                             )}
@@ -1153,11 +1200,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                       ) : (
                         <>
                           {/* List row */}
-                          <span className="text-xs font-mono text-[var(--muted)] w-4 text-right shrink-0">{i + 1}</span>
+                          <span className="text-[10px] font-mono text-[var(--muted)] w-4 text-right shrink-0">{i + 1}</span>
                           <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="md" />
                           <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-[var(--foreground)] text-sm truncate">{opt.station.name}</div>
-                            <div className="text-xs text-[var(--muted)] mt-0.5">
+                            <div className="font-medium text-[var(--foreground)] text-xs truncate">{opt.station.name}</div>
+                            <div className="text-[10px] text-[var(--muted)] mt-0.5">
                               {opt.isStale ? (
                                 <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
                                   <TriangleAlert className="h-3 w-3 inline shrink-0" strokeWidth={2} />
@@ -1169,11 +1216,11 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                             </div>
                           </div>
                           <div className="text-right shrink-0">
-                            <div className={`font-bold font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-sm`}>
+                            <div className={`font-medium font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-sm`}>
                               {opt.price.toFixed(1)}c
                             </div>
                             {opt.tag && (
-                              <span className="text-[8px] font-bold uppercase text-[var(--muted)]">{opt.tag}</span>
+                              <span className={`text-[8px] font-medium uppercase ${getTagStyle(opt.price)} px-1.5 py-0.5 rounded`}>{opt.tag}</span>
                             )}
                           </div>
                         </>
@@ -1202,7 +1249,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               {tripMode === "nearby" && !showAllNearby && options.length > 5 && (
                 <button
                   onClick={() => setShowAllNearby(true)}
-                  className="w-full py-3 text-xs text-[var(--accent-text)] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer"
+                  className="w-full py-3 text-xs text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors cursor-pointer"
                 >
                   Show all {options.length} stations
                 </button>
@@ -1211,7 +1258,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               {tripMode === "trip" && !showAllTrip && options.length > 5 && (
                 <button
                   onClick={() => { setShowAllTrip(true); setRecommendedStations(options.map((o) => o.station)); }}
-                  className="w-full py-3 text-xs text-[var(--accent-text)] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer"
+                  className="w-full py-3 text-xs text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors cursor-pointer"
                 >
                   Show all {options.length} stations
                 </button>
@@ -1228,20 +1275,20 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       </div>
 
       {/* Support + Footer */}
-      <div className={`shrink-0 border-t border-[var(--subtle-border)] ${minimised && selectedOpt === null ? "hidden md:block" : ""}`}>
+      <div className="shrink-0 border-t border-[var(--subtle-border)]">
         <a
           href="https://buymeacoffee.com/petrolsaver"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-3 py-3 text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+          className="flex items-center justify-center gap-2 px-3 py-3 text-[11px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
         >
           <Heart className="h-3.5 w-3.5" strokeWidth={2} />
           <span>Keep PetrolSaver free — <span className="font-semibold text-[var(--foreground)]">buy us a coffee</span></span>
         </a>
         <div className="px-3 pb-2 flex items-center justify-center gap-1.5">
-          <a href="/how-it-works" className="text-[9px] text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
-          <a href="/terms" className="text-[9px] text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
-          <a href="/privacy" className="text-[9px] text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
+          <a href="/how-it-works" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
+          <a href="/terms" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
+          <a href="/privacy" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
         </div>
       </div>
     </motion.div>

@@ -2,10 +2,10 @@
 // Logos are stored in /public/logos/
 const BRAND_LOGOS: Record<string, string> = {
   // Major brands
-  "7-Eleven": "/logos/7-eleven.png",
-  "BP": "/logos/bp.png",
-  "BP Bowser Bean": "/logos/bp.png",
-  "Bowser Bean": "/logos/bp.png",
+  "7-Eleven": "/logos/7-eleven.svg",
+  "BP": "/logos/bp.svg",
+  "BP Bowser Bean": "/logos/bp.svg",
+  "Bowser Bean": "/logos/bp.svg",
   "Shell": "/logos/shell.png",
   "Shell Bowser Bean": "/logos/shell.png",
   "Ampol": "/logos/ampol.png",

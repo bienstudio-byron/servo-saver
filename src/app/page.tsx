@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, startTransition } from "react";
+import { useEffect, useState, useMemo, useCallback, startTransition } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import FuelMap from "@/components/map/FuelMap";
@@ -25,7 +25,7 @@ export default function HomePage() {
   const [showAlerts, setShowAlerts] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
-  const mode = useFuelStore((s) => s.mode);
+
   const setRangeKm = useFuelStore((s) => s.setRangeKm);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
 
@@ -51,18 +51,15 @@ export default function HomePage() {
     setMounted(true);
   }, [setSelectedFuelType]);
 
-  useEffect(() => {
-    setLoading(true);
+  const fetchStations = useCallback((isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     setError(null);
-    const stationsUrl = mode === "ev" ? "/api/ev/stations" : "/api/fuel/stations";
     Promise.all([
-      fetch(stationsUrl).then((r) => {
+      fetch("/api/fuel/stations").then((r) => {
         if (!r.ok) throw new Error("Failed to fetch stations");
         return r.json();
       }),
-      mode === "petrol"
-        ? fetch("/api/community-price/all").then((r) => r.json()).catch(() => ({ prices: [] }))
-        : Promise.resolve({ prices: [] }),
+      fetch("/api/community-price/all").then((r) => r.json()).catch(() => ({ prices: [] })),
     ])
       .then(([stationData, communityData]) => {
         let merged: StationWithPrices[] = stationData.stations;
@@ -81,7 +78,6 @@ export default function HomePage() {
             if (!reports) return station;
             const updatedPrices = station.prices.map((p) => {
               const report = reports.find((r) => r.fuelType === p.fuelType);
-              // Use community price if it's newer than the official update
               if (report && new Date(report.reportedAt) > new Date(p.updatedAt)) {
                 return { ...p, price: report.price, updatedAt: report.reportedAt, source: "community" as const, isStale: false };
               }
@@ -91,8 +87,6 @@ export default function HomePage() {
           });
         }
 
-        // Use startTransition to avoid blocking the main thread while React
-        // processes ~4,000 stations — prevents frame drops on mobile
         startTransition(() => {
           setStations(merged);
           setAllStations(merged);
@@ -100,22 +94,40 @@ export default function HomePage() {
         });
 
         // If ?station=ID in URL, fly to that station and open modal
-        const params = new URLSearchParams(window.location.search);
-        const stationParam = params.get("station");
-        if (stationParam) {
-          const target = merged.find((s: { id: string }) => s.id === stationParam);
-          if (target) {
-            setSelectedStation(target);
-            setFlyToTarget({ lat: target.latitude, lng: target.longitude, zoom: 15 });
+        if (!isRefresh) {
+          const params = new URLSearchParams(window.location.search);
+          const stationParam = params.get("station");
+          if (stationParam) {
+            const target = merged.find((s: { id: string }) => s.id === stationParam);
+            if (target) {
+              setSelectedStation(target);
+              setFlyToTarget({ lat: target.latitude, lng: target.longitude, zoom: 15 });
+            }
+            window.history.replaceState({}, "", "/");
           }
-          window.history.replaceState({}, "", "/");
         }
       })
       .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
-  }, [mode]);
+  }, []);
+
+  // Initial fetch
+  useEffect(() => { fetchStations(); }, [fetchStations]);
+
+  // Refetch when tab becomes visible (if data is >15min old)
+  useEffect(() => {
+    let lastFetch = Date.now();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && Date.now() - lastFetch > 15 * 60 * 1000) {
+        lastFetch = Date.now();
+        fetchStations(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [fetchStations]);
 
   // Auto-show alert signup after 15s if not already signed up or dismissed
   useEffect(() => {

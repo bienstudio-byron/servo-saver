@@ -88,7 +88,7 @@
   --color-accent-hover: var(--accent-hover);
   --color-muted: var(--muted);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 
@@ -101,6 +101,13 @@ body {
 .leaflet-container {
   width: 100%;
   height: 100%;
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -16; }
+}
+.animate-dash {
+  animation: dash-flow 0.6s linear infinite;
 }
 
 .fuel-pill {

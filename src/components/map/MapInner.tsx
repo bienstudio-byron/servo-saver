@@ -524,7 +524,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
                   lineJoin: "round",
                 }}
               />
-              {/* Main dashed line */}
+              {/* Main dashed line — animated */}
               <Polyline
                 positions={points}
                 pathOptions={{
@@ -534,6 +534,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
                   dashArray: "8, 8",
                   lineCap: "round",
                   lineJoin: "round",
+                  className: "animate-dash",
                 }}
               />
             </>

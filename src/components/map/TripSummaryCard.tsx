@@ -38,6 +38,14 @@ const DEFAULT_TANK_SIZE = 55;
 const MAX_RANGE_KM = 800;
 const ROAD_FACTOR = 1.35;
 
+const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+const TAG_DESCRIPTIONS: Record<string, string> = {
+  "Best for you": "Saves you the most after accounting for detour costs",
+  "Good deal": "Below average price and worth the trip",
+  "Nearby": "Convenient, but not the cheapest option",
+};
+
 export default function TripSummaryCard({ options, closestOpt, onEditTrip, selectedIdx, onSelectIdx }: TripSummaryCardProps) {
   const tripDestination = useFuelStore((s) => s.tripDestination);
   const tripOrigin = useFuelStore((s) => s.tripOrigin);
@@ -73,6 +81,16 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
       case "mid": return "text-[var(--tier-mid)]";
       case "expensive": return "text-[var(--tier-exp)]";
       default: return "text-[var(--muted)]";
+    }
+  };
+
+  const getTagStyle = (price: number) => {
+    const tier = getPriceTier(price, thresholds);
+    switch (tier) {
+      case "cheap": return "text-[var(--tier-cheap)] bg-[var(--tier-cheap)]/15";
+      case "mid": return "text-[var(--tier-mid)] bg-[var(--tier-mid)]/15";
+      case "expensive": return "text-[var(--tier-exp)] bg-[var(--tier-exp)]/15";
+      default: return "text-[var(--muted)] bg-[var(--muted)]/15";
     }
   };
 
@@ -150,13 +168,13 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
           <div className="rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] px-3 py-2.5 text-[11px] text-[var(--foreground)] leading-relaxed">
             {saving > 0 ? (
               <>
-                Stop at <span className="font-bold">{selected.station.name}</span> at <span className="font-bold font-mono">{selected.price.toFixed(1)}c/L</span>.
+                Stop at <span className="font-bold">{titleCase(selected.station.name)}</span> at <span className="font-bold font-mono">{selected.price.toFixed(1)}c/L</span>.
                 {" "}You&apos;ll save <span className="font-bold font-mono text-[var(--tier-cheap)]">${saving.toFixed(2)}</span> vs the closest station
                 {selected.detourKm >= 0.5 && <>, even with the {selected.detourKm.toFixed(1)}km detour</>}.
               </>
             ) : (
               <>
-                Stop at <span className="font-bold">{selected.station.name}</span> at <span className="font-bold font-mono">{selected.price.toFixed(1)}c/L</span>.
+                Stop at <span className="font-bold">{titleCase(selected.station.name)}</span> at <span className="font-bold font-mono">{selected.price.toFixed(1)}c/L</span>.
                 {" "}Best option{selected.detourKm < 0.5 ? " — no detour needed" : " on your route"}.
               </>
             )}
@@ -179,9 +197,9 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                 <BrandLogo brandName={selected.station.brand?.name ?? "?"} size="lg" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-[var(--foreground)] text-sm truncate">{selected.station.name}</span>
+                    <span className="font-semibold text-[var(--foreground)] text-sm truncate">{titleCase(selected.station.name)}</span>
                     {selected.tag && (
-                      <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded-full border ${getTierColor(selected.price)} border-current opacity-80`}>
+                      <span className={`text-[8px] font-medium uppercase shrink-0 px-1.5 py-0.5 rounded ${getTagStyle(selected.price)}`}>
                         {selected.tag}
                       </span>
                     )}
@@ -190,10 +208,29 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                     {(selected.distance + selected.detourKm).toFixed(1)}km · {formatUpdated(selected.updatedAt, selected.source)}
                   </div>
                 </div>
-                <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(selected.price)}`}>
+                <div className={`text-xl font-semibold font-mono shrink-0 ${getTierColor(selected.price)}`}>
                   {selected.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
                 </div>
               </div>
+
+              {/* Tag explanation */}
+              {selected.tag && TAG_DESCRIPTIONS[selected.tag] && (
+                <div className={`text-[10px] px-2 py-1.5 rounded mt-2 ${getTagStyle(selected.price)}`}>
+                  <span className="font-medium">{selected.tag}</span> — {TAG_DESCRIPTIONS[selected.tag]}
+                </div>
+              )}
+
+              {/* Fill cost estimate */}
+              {litresFillingUp > 0 && (
+                <div className="flex items-center justify-between bg-[var(--subtle)] rounded px-2.5 py-2 mt-2">
+                  <div className="text-[10px] text-[var(--muted)]">
+                    Fill up ~{Math.round(litresFillingUp)}L to full
+                  </div>
+                  <div className="text-sm font-semibold font-mono text-[var(--foreground)]">
+                    ${fillCost.toFixed(2)}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-col gap-1.5 mt-3">
@@ -262,9 +299,9 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                         <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="sm" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium truncate text-[var(--foreground)] text-xs">{opt.station.name}</span>
+                            <span className="font-medium truncate text-[var(--foreground)] text-xs">{titleCase(opt.station.name)}</span>
                             {isRecommended && selectedIdx !== 0 && (
-                              <span className="text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] text-[var(--tier-cheap)]">Best</span>
+                              <span className="text-[8px] font-medium uppercase shrink-0 px-1.5 py-0.5 rounded text-[var(--tier-cheap)] bg-[var(--tier-cheap)]/15">Best</span>
                             )}
                           </div>
                           <div className="text-[10px] text-[var(--muted)]">
@@ -292,11 +329,16 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
             href="https://buymeacoffee.com/petrolsaver"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 px-3 py-3 text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 px-3 py-3 text-[11px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
           >
             <Heart className="h-3.5 w-3.5" strokeWidth={2} />
             <span>Keep PetrolSaver free — <span className="font-semibold text-[var(--foreground)]">buy us a coffee</span></span>
           </a>
+          <div className="px-3 pb-2 flex items-center justify-center gap-1.5">
+            <a href="/how-it-works" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
+            <a href="/terms" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
+            <a href="/privacy" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
+          </div>
         </div>
       </motion.div>
     </div>

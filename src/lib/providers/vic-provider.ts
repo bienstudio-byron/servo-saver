@@ -40,7 +40,7 @@ async function apiFetch<T>(path: string): Promise<T> {
       "x-consumer-id": CONSUMER_ID,
       "x-transactionid": uuidv4(),
     },
-    next: { revalidate: 3600 },
+    cache: "no-store",
   });
 
   if (!res.ok) {

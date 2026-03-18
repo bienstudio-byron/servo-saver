@@ -191,7 +191,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
   return (
     <div ref={panelRef} className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-1.5rem)] md:translate-x-0 md:left-3 md:right-3 md:w-auto">
       {/* Search bar */}
-      <div className="md:w-[360px]">
+      <div className="md:w-[460px]">
       {!tripPlannerOpen ? (
         <button
           onClick={handleSearchBarClick}
@@ -207,7 +207,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
               {isTripActive ? (
                 <span className="text-[var(--foreground)] font-medium">{tripDestination.name}</span>
               ) : (
-                <span className="text-[var(--muted)]">Plan a trip...</span>
+                <span className="text-[var(--muted)] font-medium">Plan a trip...</span>
               )}
             </div>
             {isTripActive && (
@@ -389,7 +389,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
                       setSelectedFuelType(id);
                       try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {}
                     }}
-                    className={`flex-1 py-1 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
+                    className={`flex-1 py-1 rounded-lg text-[10px] font-bold font-mono text-center transition-all cursor-pointer ${
                       selectedFuelType === id
                         ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
                         : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -433,7 +433,9 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
 
       </div>
 
-      {/* Filter chips — mobile only */}
+      <div className="h-1 md:h-1.5" />
+
+      {/* Filter chips */}
       {!tripPlannerOpen && !isTripActive && (
         <MobileFilterChips
           selectedFuelType={selectedFuelType}
@@ -505,7 +507,7 @@ function MobileFilterChips({
     }`;
 
   return (
-    <div ref={wrapperRef} className="md:hidden mt-2">
+    <div ref={wrapperRef}>
       {/* Pills row */}
       <div className="flex gap-1.5">
         <button onClick={() => setOpen(open === "fuel" ? null : "fuel")} className={chipClass(open === "fuel", false)}>
@@ -534,7 +536,7 @@ function MobileFilterChips({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.15 }}
-            className="overflow-hidden mt-2 rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl"
+            className="overflow-hidden mt-2 rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl md:max-w-[460px]"
           >
             {open === "fuel" && (
               <div>
@@ -544,7 +546,7 @@ function MobileFilterChips({
                     <button
                       key={id}
                       onClick={() => { setSelectedFuelType(id); setOpen(null); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
+                      className={`w-full text-left px-4 py-2.5 text-xs font-mono transition-colors cursor-pointer ${
                         selectedFuelType === id
                           ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
                           : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
@@ -603,8 +605,7 @@ function MobileFilterChips({
                       value={brandQuery}
                       onChange={(e) => setBrandQuery(e.target.value)}
                       placeholder="Search brands..."
-                      style={{ fontSize: "16px" }}
-                      className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+                      className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
                     />
                   </div>
                 </div>
@@ -612,7 +613,7 @@ function MobileFilterChips({
                   {selectedBrands.length > 0 && !brandQuery && (
                     <button
                       onClick={() => setSelectedBrands([])}
-                      className="w-full text-left px-4 py-2 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
+                      className="w-full text-left px-4 py-2 text-xs font-semibold font-mono text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
                     >
                       Clear all
                     </button>
@@ -623,7 +624,7 @@ function MobileFilterChips({
                       <button
                         key={brand}
                         onClick={() => toggleBrand(brand)}
-                        className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2.5 ${
+                        className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors cursor-pointer flex items-center gap-2.5 ${
                           isSelected
                             ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
                             : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
@@ -708,8 +709,7 @@ function PlannerBrandFilter({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search brands..."
-              style={{ fontSize: "16px" }}
-              className="w-full bg-[var(--background)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-8 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+              className="w-full bg-[var(--background)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-8 py-1.5 text-[11px] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
             />
             <button
               onClick={() => { setExpanded(false); setQuery(""); }}
@@ -725,7 +725,7 @@ function PlannerBrandFilter({
                 <button
                   key={brand}
                   onClick={() => toggleBrand(brand)}
-                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center gap-2 ${
+                  className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors cursor-pointer flex items-center gap-2 ${
                     isSelected
                       ? "bg-[var(--background)] text-[var(--foreground)] font-semibold"
                       : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
@@ -841,8 +841,7 @@ function BrandChipDropdown({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search brands..."
-                  style={{ fontSize: "16px" }}
-                  className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+                  className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
                 />
               </div>
             </div>
@@ -850,7 +849,7 @@ function BrandChipDropdown({
               {selectedBrands.length > 0 && !query && (
                 <button
                   onClick={() => setSelectedBrands([])}
-                  className="w-full text-left px-4 py-2 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
+                  className="w-full text-left px-4 py-2 text-xs font-semibold font-mono text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
                 >
                   Clear all
                 </button>
@@ -861,7 +860,7 @@ function BrandChipDropdown({
                   <button
                     key={brand}
                     onClick={() => toggleBrand(brand)}
-                    className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2.5 ${
+                    className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors cursor-pointer flex items-center gap-2.5 ${
                       isSelected
                         ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
                         : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
