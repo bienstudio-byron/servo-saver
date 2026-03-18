@@ -44,10 +44,6 @@ export default function HomePage() {
       return;
     }
 
-    // Only show onboarding once per session
-    if (!sessionStorage.getItem("petrolsaver-onboarded")) {
-      setShowPicker(true);
-    }
     setMounted(true);
   }, [setSelectedFuelType]);
 
@@ -208,10 +204,6 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      {/* Onboarding */}
-      {showPicker && (
-        <FuelPickerOverlay onComplete={handleOnboardingComplete} />
-      )}
 
       {/* Alert signup */}
       <AnimatePresence>

@@ -868,67 +868,58 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           </div>
         )}
 
-        {/* Context pills */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[9px] font-mono text-[var(--muted)] px-1.5 py-0.5 rounded border border-[var(--subtle-border)]">{FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType}</span>
-          <span className="text-[9px] font-mono text-[var(--muted)] px-1.5 py-0.5 rounded border border-[var(--subtle-border)]">{rangeKm <= 50 ? "Near empty" : rangeKm <= 200 ? "¼ tank" : rangeKm <= 400 ? "½ tank" : rangeKm <= 600 ? "¾ tank" : "Full tank"}</span>
-          <span className="text-[9px] font-mono text-[var(--muted)] px-1.5 py-0.5 rounded border border-[var(--subtle-border)]">{reportedStationIds.has(opt.station.id)
-            ? "You reported"
-            : formatUpdated(opt.updatedAt, opt.source)}</span>
-        </div>
-
-        {/* Breakdown */}
+        {/* Breakdown table */}
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="space-y-0.5 text-[10px]"
+          className="text-[10px] rounded border border-[var(--subtle-border)] overflow-hidden"
         >
           {opt.detourKm > 0 ? (
             <>
-              <div className="flex justify-between">
+              <div className="flex justify-between px-2.5 py-1.5">
                 <span className="text-[var(--muted)]">Detour</span>
                 <span className="text-[var(--foreground)] font-mono">+{opt.detourKm.toFixed(1)}km · ~{Math.round((opt.detourKm / AVG_CITY_SPEED) * 60)}min</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)]/50">
                 <span className="text-[var(--muted)]">Fuel for detour</span>
                 <span className="text-[var(--tier-exp)] font-mono">-${detourFuelCost.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)]/50">
                 <span className="text-[var(--muted)]">Price savings</span>
                 <span className={`font-mono ${rawSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{rawSavings >= 0 ? "+" : "-"}${Math.abs(rawSavings).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between pt-0.5 border-t border-[var(--subtle-border)]">
-                <span className="text-[var(--foreground)] font-semibold">{opt.netSavings >= 0 ? "Net saving" : "Extra cost"}</span>
-                <span className={`font-semibold font-mono ${opt.netSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{opt.netSavings >= 0 ? "" : "+"}${Math.abs(opt.netSavings).toFixed(2)}</span>
+              <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)] bg-[var(--subtle)]/50">
+                <span className="text-[var(--foreground)] font-medium">{opt.netSavings >= 0 ? "Net saving" : "Extra cost"}</span>
+                <span className={`font-medium font-mono ${opt.netSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{opt.netSavings >= 0 ? "" : "+"}${Math.abs(opt.netSavings).toFixed(2)}</span>
               </div>
             </>
           ) : (
             <>
-              <div className="flex justify-between">
+              <div className="flex justify-between px-2.5 py-1.5">
                 <span className="text-[var(--muted)]">Distance</span>
                 <span className="text-[var(--foreground)] font-mono">{opt.distance.toFixed(1)}km · ~{Math.round((opt.distance / AVG_CITY_SPEED) * 60)}min</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)]/50">
                 <span className="text-[var(--muted)]">No detour needed</span>
                 <span className="text-[var(--tier-cheap)] font-mono">$0.00</span>
               </div>
             </>
           )}
+          {fillLitres > 0 && (
+            <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)] bg-[var(--card)]">
+              <span className="text-[var(--muted)]">Fill ~{Math.round(fillLitres)}L to full</span>
+              <span className="font-medium font-mono text-[var(--foreground)]">${((fillLitres * opt.price) / 100).toFixed(2)}</span>
+            </div>
+          )}
         </motion.div>
 
-        {/* Fill cost estimate */}
-        {fillLitres > 0 && (
-          <div className="flex items-center justify-between bg-[var(--subtle)] rounded px-2.5 py-2">
-            <div className="text-[10px] text-[var(--muted)]">
-              Fill up ~{Math.round(fillLitres)}L to full
-            </div>
-            <div className="text-sm font-semibold font-mono text-[var(--foreground)]">
-              ${((fillLitres * opt.price) / 100).toFixed(2)}
-            </div>
-          </div>
-        )}
-
+        {/* Data freshness */}
+        <div className="text-[9px] text-[var(--muted)]">
+          {reportedStationIds.has(opt.station.id)
+            ? <span className="text-[var(--tier-cheap)]">Price reported by you</span>
+            : formatUpdated(opt.updatedAt, opt.source)}
+        </div>
 
         {/* Actions */}
         <motion.div

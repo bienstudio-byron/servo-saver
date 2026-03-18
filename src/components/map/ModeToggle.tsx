@@ -191,7 +191,12 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
   return (
     <div ref={panelRef} className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-1.5rem)] md:translate-x-0 md:left-3 md:right-3 md:w-auto">
       {/* Search bar */}
-      <div className="md:w-[460px]">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, type: "spring", damping: 20 }}
+        className="md:w-[460px]"
+      >
       {!tripPlannerOpen ? (
         <button
           onClick={handleSearchBarClick}
@@ -431,7 +436,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
         </motion.div>
       )}
 
-      </div>
+      </motion.div>
 
       <div className="h-1 md:h-1.5" />
 
@@ -497,6 +502,24 @@ function MobileFilterChips({
     ? availableBrands.filter((b) => b.toLowerCase().includes(brandQuery.toLowerCase()))
     : availableBrands;
 
+  const [hasInteracted, setHasInteracted] = useState(() => {
+    try { return !!localStorage.getItem("petrolsaver-filters-used"); } catch { return false; }
+  });
+  const [showNudge, setShowNudge] = useState(false);
+
+  // Nudge after 4s if user has never interacted with filters
+  useEffect(() => {
+    if (hasInteracted) { setShowNudge(false); return; }
+    const timer = setTimeout(() => setShowNudge(true), 4000);
+    return () => clearTimeout(timer);
+  }, [hasInteracted]);
+
+  const handleOpen = (key: "fuel" | "tank" | "brands") => {
+    setHasInteracted(true);
+    try { localStorage.setItem("petrolsaver-filters-used", "1"); } catch {}
+    setOpen(open === key ? null : key);
+  };
+
   const chipClass = (isOpen: boolean, isActive: boolean) =>
     `flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border shadow-xl text-[11px] font-semibold font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
       isOpen
@@ -510,22 +533,41 @@ function MobileFilterChips({
     <div ref={wrapperRef}>
       {/* Pills row */}
       <div className="flex gap-1.5">
-        <button onClick={() => setOpen(open === "fuel" ? null : "fuel")} className={chipClass(open === "fuel", false)}>
+        <motion.button
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, type: "spring", damping: 20 }}
+          onClick={() => handleOpen("fuel")}
+          className={`${chipClass(open === "fuel", false)} ${showNudge && !open ? "animate-pill-nudge" : ""}`}
+        >
           <Droplets className="h-3.5 w-3.5" strokeWidth={2} />
           Fuel ·{fuelLabel}
           <ChevronDown className={`h-3 w-3 transition-transform ${open === "fuel" ? "rotate-180" : ""}`} strokeWidth={2} />
-        </button>
-        <button onClick={() => setOpen(open === "tank" ? null : "tank")} className={chipClass(open === "tank", false)}>
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, type: "spring", damping: 20 }}
+          onClick={() => handleOpen("tank")}
+          className={chipClass(open === "tank", false)}
+        >
           <Gauge className="h-3.5 w-3.5" strokeWidth={2} />
           Tank ·{tankLabel}
           <ChevronDown className={`h-3 w-3 transition-transform ${open === "tank" ? "rotate-180" : ""}`} strokeWidth={2} />
-        </button>
-        <button onClick={() => setOpen(open === "brands" ? null : "brands")} className={chipClass(open === "brands", selectedBrands.length > 0)}>
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.4, type: "spring", damping: 20 }}
+          onClick={() => handleOpen("brands")}
+          className={chipClass(open === "brands", selectedBrands.length > 0)}
+        >
           <Store className="h-3.5 w-3.5" strokeWidth={2} />
           Brands ·{brandsLabel}
           <ChevronDown className={`h-3 w-3 transition-transform ${open === "brands" ? "rotate-180" : ""}`} strokeWidth={2} />
-        </button>
+        </motion.button>
       </div>
+
 
       {/* Dropdown panel — renders inline below pills */}
       <AnimatePresence>
