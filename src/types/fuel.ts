@@ -16,7 +16,7 @@ export interface FuelStation {
   address: string;
   latitude: number;
   longitude: number;
-  state?: "VIC" | "NSW";
+  state?: string;
 }
 
 export interface FuelBrand {
@@ -34,6 +34,11 @@ export interface FuelType {
 export interface StationWithPrices extends FuelStation {
   brand: FuelBrand | null;
   prices: FuelPrice[];
+  connections?: {
+    type: string;
+    powerKW: number;
+    quantity: number;
+  }[];
 }
 
 // Raw API response: /fuel/prices
