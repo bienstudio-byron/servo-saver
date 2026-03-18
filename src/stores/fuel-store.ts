@@ -2,7 +2,11 @@ import { create } from "zustand";
 import { DEFAULT_FUEL_TYPE } from "@/lib/constants";
 import type { StationWithPrices } from "@/types/fuel";
 
+export type AppMode = "petrol" | "ev";
+
 interface FuelStore {
+  mode: AppMode;
+  setMode: (mode: AppMode) => void;
   selectedFuelType: string;
   setSelectedFuelType: (type: string) => void;
   selectedBrands: string[];
@@ -42,6 +46,13 @@ interface FuelStore {
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
+  mode: "petrol" as AppMode,
+  setMode: (mode) => set({
+    mode,
+    selectedFuelType: mode === "ev" ? "DC" : DEFAULT_FUEL_TYPE,
+    selectedBrands: [],
+    allStations: [],
+  }),
   selectedFuelType: DEFAULT_FUEL_TYPE,
   setSelectedFuelType: (type) => set({ selectedFuelType: type }),
   selectedBrands: [],

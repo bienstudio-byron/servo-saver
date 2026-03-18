@@ -25,6 +25,7 @@ export default function HomePage() {
   const [showAlerts, setShowAlerts] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
+  const mode = useFuelStore((s) => s.mode);
   const setRangeKm = useFuelStore((s) => s.setRangeKm);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
 
@@ -51,12 +52,17 @@ export default function HomePage() {
   }, [setSelectedFuelType]);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+    const stationsUrl = mode === "ev" ? "/api/ev/stations" : "/api/fuel/stations";
     Promise.all([
-      fetch("/api/fuel/stations").then((r) => {
+      fetch(stationsUrl).then((r) => {
         if (!r.ok) throw new Error("Failed to fetch stations");
         return r.json();
       }),
-      fetch("/api/community-price/all").then((r) => r.json()).catch(() => ({ prices: [] })),
+      mode === "petrol"
+        ? fetch("/api/community-price/all").then((r) => r.json()).catch(() => ({ prices: [] }))
+        : Promise.resolve({ prices: [] }),
     ])
       .then(([stationData, communityData]) => {
         let merged: StationWithPrices[] = stationData.stations;
@@ -109,7 +115,7 @@ export default function HomePage() {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [mode]);
 
   // Auto-show alert signup after 15s if not already signed up or dismissed
   useEffect(() => {

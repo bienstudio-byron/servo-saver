@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check, Zap, Droplets, Gauge, Store } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check, Zap, Droplets, Gauge, Store, Fuel } from "lucide-react";
 import { AnimatePresence as AP } from "framer-motion";
 import InlineReportForm from "@/components/shared/InlineReportForm";
 import type { StationWithPrices } from "@/types/fuel";
@@ -126,16 +126,22 @@ function SidebarFilters({
   selectedFuelType, onFuelTypeChange,
   rangeKm, onRangeChange,
   selectedBrands, onBrandsChange,
-  availableBrands,
+  availableBrands, mode,
 }: {
   selectedFuelType: string; onFuelTypeChange: (id: string) => void;
   rangeKm: number; onRangeChange: (km: number) => void;
   selectedBrands: string[]; onBrandsChange: (brands: string[]) => void;
   availableBrands: string[];
+  mode: "petrol" | "ev";
 }) {
   const [expanded, setExpanded] = useState<"fuel" | "tank" | "brands" | null>(null);
 
-  const fuelLabel = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType;
+  const fuelOptions = mode === "ev" ? ["AC", "DC", "ULTRA"] : ["U91", "P95", "P98", "DSL", "E10", "LPG"];
+  const fuelLabel = mode === "ev"
+    ? (selectedFuelType === "ULTRA" ? "Ultra" : selectedFuelType)
+    : (selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType);
+  const fuelFilterLabel = mode === "ev" ? "Speed" : "Fuel";
+  const tankFilterLabel = mode === "ev" ? "Battery" : "Tank";
   const tankLabel = rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full";
   const brandsLabel = selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length} selected`;
 
@@ -150,7 +156,7 @@ function SidebarFilters({
           }`}
         >
           <Droplets className="h-3 w-3" strokeWidth={2} />
-          Fuel ·{fuelLabel}
+          {fuelFilterLabel} ·{fuelLabel}
         </button>
         <button
           onClick={() => setExpanded(expanded === "tank" ? null : "tank")}
@@ -159,7 +165,7 @@ function SidebarFilters({
           }`}
         >
           <Gauge className="h-3 w-3" strokeWidth={2} />
-          Tank ·{tankLabel}
+          {tankFilterLabel} ·{tankLabel}
         </button>
         <button
           onClick={() => setExpanded(expanded === "brands" ? null : "brands")}
@@ -183,7 +189,7 @@ function SidebarFilters({
             className="overflow-hidden"
           >
             <div className="flex gap-1 pt-2.5">
-              {["U91", "P95", "P98", "DSL", "E10", "LPG"].map((id) => (
+              {fuelOptions.map((id) => (
                 <button
                   key={id}
                   onClick={() => { onFuelTypeChange(id); setExpanded(null); }}
@@ -309,6 +315,8 @@ function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => v
 
 export default function FillStrategy({ stations, selectedFuelType, loading, onRecentre, onEditTrip, mapCentre }: FillStrategyProps) {
   const userLocation = useFuelStore((s) => s.userLocation);
+  const mode = useFuelStore((s) => s.mode);
+  const setMode = useFuelStore((s) => s.setMode);
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
   const tripOrigin = useFuelStore((s) => s.tripOrigin);
@@ -937,12 +945,38 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
       className="w-full max-h-[45vh] md:max-h-none md:flex-1 rounded-t-2xl md:rounded-none border-t md:border-t-0 md:border-r border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl md:shadow-none overflow-hidden flex flex-col"
     >
-      {/* Logo header — desktop only */}
-      <div className="hidden md:flex items-center gap-2 px-4 py-4 shrink-0 border-b border-[var(--subtle-border)]">
-        <div className="h-8 w-8 rounded-full bg-[#4285f4] flex items-center justify-center">
-          <Zap className="h-4 w-4 text-white" strokeWidth={2.5} />
+      {/* Logo + mode toggle — desktop only */}
+      <div className="hidden md:block px-4 py-4 shrink-0 border-b border-[var(--subtle-border)]">
+        <div className="flex items-center gap-2 mb-3">
+          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${mode === "ev" ? "bg-[#00C853]" : "bg-[#4285f4]"}`}>
+            {mode === "ev" ? <Zap className="h-4 w-4 text-white" strokeWidth={2.5} /> : <Fuel className="h-4 w-4 text-white" strokeWidth={2.5} />}
+          </div>
+          <span className="text-base font-bold text-[var(--foreground)]">{mode === "ev" ? "ChargeSaver" : "PetrolSaver"}</span>
         </div>
-        <span className="text-base font-bold text-[var(--foreground)]">PetrolSaver</span>
+        <div className="flex rounded-lg bg-[var(--subtle)] border border-[var(--subtle-border)] p-0.5">
+          <button
+            onClick={() => setMode("petrol")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+              mode === "petrol"
+                ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
+                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            <Fuel className="h-3.5 w-3.5" strokeWidth={2} />
+            Petrol
+          </button>
+          <button
+            onClick={() => setMode("ev")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+              mode === "ev"
+                ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
+                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            <Zap className="h-3.5 w-3.5" strokeWidth={2} />
+            EV
+          </button>
+        </div>
       </div>
       {/* Desktop filters — compact pills with click-to-expand */}
       <SidebarFilters
@@ -953,6 +987,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         selectedBrands={selectedBrands}
         onBrandsChange={setSelectedBrands}
         availableBrands={availableBrands}
+        mode={mode}
       />
 
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
