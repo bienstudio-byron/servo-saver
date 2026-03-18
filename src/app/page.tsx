@@ -125,16 +125,16 @@ export default function HomePage() {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [fetchStations]);
 
-  // Auto-show alert signup after 15s if not already signed up or dismissed
-  useEffect(() => {
-    const alreadySignedUp = localStorage.getItem("petrolsaver-alert-signed-up");
-    const alreadyDismissed = sessionStorage.getItem("petrolsaver-alert-dismissed");
-    if (alreadySignedUp || alreadyDismissed) return;
-    const timer = setTimeout(() => {
-      setShowAlerts(true);
-    }, 15000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Alert signup disabled for launch
+  // useEffect(() => {
+  //   const alreadySignedUp = localStorage.getItem("petrolsaver-alert-signed-up");
+  //   const alreadyDismissed = sessionStorage.getItem("petrolsaver-alert-dismissed");
+  //   if (alreadySignedUp || alreadyDismissed) return;
+  //   const timer = setTimeout(() => {
+  //     setShowAlerts(true);
+  //   }, 15000);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   const filteredStations = useMemo(
     () => stations.filter((s) => s.prices.some((p) => p.fuelType === selectedFuelType)),

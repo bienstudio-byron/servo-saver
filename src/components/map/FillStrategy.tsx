@@ -1265,18 +1265,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           )}
       </div>
 
-      {/* Support + Footer */}
+      {/* Footer */}
       <div className="shrink-0 border-t border-[var(--subtle-border)]">
-        <a
-          href="https://buymeacoffee.com/petrolsaver"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-3 py-3 text-[11px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
-        >
-          <Heart className="h-3.5 w-3.5" strokeWidth={2} />
-          <span>Keep PetrolSaver free — <span className="font-semibold text-[var(--foreground)]">buy us a coffee</span></span>
-        </a>
-        <div className="px-3 pb-2 flex items-center justify-center gap-1.5">
+        <div className="px-3 py-2 flex items-center justify-center gap-1.5">
           <a href="/how-it-works" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
           <a href="/terms" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
           <a href="/privacy" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
