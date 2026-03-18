@@ -8,6 +8,7 @@ import StationModal from "@/components/shared/StationModal";
 import FuelPickerOverlay from "@/components/shared/FuelPickerOverlay";
 import AdSlot from "@/components/shared/AdSlot";
 import AlertSignup from "@/components/shared/AlertSignup";
+import InsightBanner from "@/components/shared/InsightBanner";
 import { useFuelStore } from "@/stores/fuel-store";
 import { PriceThresholdsProvider } from "@/stores/price-context";
 import type { StationWithPrices } from "@/types/fuel";
@@ -163,6 +164,8 @@ export default function HomePage() {
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
       {/* Everything is fixed — nothing in document flow */}
       <div className="fixed inset-0 flex flex-col" style={{ zIndex: 0 }}>
+        {/* Insight ticker banner */}
+        <InsightBanner />
         {/* Map fills available space */}
         <div className="relative flex-1 min-h-0">
           <FuelMap

@@ -55,19 +55,19 @@ function SuburbSection({ title, suburbs, urlPrefix }: { title: string; suburbs: 
 
   return (
     <div className="mb-12">
-      <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+      <h2 className="text-xl font-bold text-[var(--foreground)] mb-4 flex items-center gap-2">
         {title}
-        <span className="text-xs font-normal text-[#5f6368]">({suburbs.length} suburbs)</span>
+        <span className="text-xs font-normal text-[var(--muted)]">({suburbs.length} suburbs)</span>
       </h2>
 
       {/* Letter quick nav */}
-      <div className="pb-4 border-b border-white/5 mb-4">
+      <div className="pb-4 border-b border-[var(--subtle-border)] mb-4">
         <div className="flex flex-wrap gap-1">
           {[...grouped.keys()].map((letter) => (
             <a
               key={`${title}-${letter}`}
               href={`#${title}-${letter}`}
-              className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-[#dadce0] hover:bg-[#4285f4] hover:text-white transition-all"
+              className="w-8 h-8 rounded-lg bg-[var(--subtle)] flex items-center justify-center text-xs font-bold text-[var(--foreground)] hover:bg-[#4285f4] hover:text-white transition-all"
             >
               {letter}
             </a>
@@ -77,7 +77,7 @@ function SuburbSection({ title, suburbs, urlPrefix }: { title: string; suburbs: 
 
       {[...grouped.entries()].map(([letter, subs]) => (
         <div key={`${title}-${letter}`} id={`${title}-${letter}`} className="mb-8">
-          <h3 className="text-lg font-bold text-white mb-3 sticky top-0 bg-[#1a1a1a] py-2 z-10 border-b border-white/5">
+          <h3 className="text-lg font-bold text-[var(--foreground)] mb-3 sticky top-0 bg-[var(--background)] py-2 z-10 border-b border-[var(--subtle-border)]">
             {letter}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
@@ -85,13 +85,13 @@ function SuburbSection({ title, suburbs, urlPrefix }: { title: string; suburbs: 
               <a
                 key={sub.slug}
                 href={`${urlPrefix}${sub.slug}`}
-                className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-white/5 transition-colors group"
+                className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-[var(--subtle)] transition-colors group"
               >
                 <div>
-                  <div className="text-sm text-[#dadce0] group-hover:text-white transition-colors">
+                  <div className="text-sm text-[var(--foreground)] group-hover:text-[var(--foreground)] transition-colors">
                     {sub.name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")}
                   </div>
-                  <div className="text-[10px] text-[#5f6368]">
+                  <div className="text-[10px] text-[var(--muted)]">
                     {sub.count} station{sub.count !== 1 ? "s" : ""}
                   </div>
                 </div>
@@ -116,16 +116,16 @@ export default async function PricesIndexPage() {
   const totalSuburbs = vicSuburbs.length + nswSuburbs.length;
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-[var(--background)]">
       <SubpageHeader />
 
       {/* Hero */}
-      <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a]">
+      <div className="bg-gradient-to-b from-[var(--card)] to-[var(--background)]">
         <div className="max-w-4xl mx-auto px-4 py-8 md:py-10">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--foreground)] mb-2">
             Fuel Prices by Suburb
           </h1>
-          <p className="text-[#9aa0a6] text-sm md:text-base mb-5">
+          <p className="text-[var(--muted)] text-sm md:text-base mb-5">
             Browse fuel prices across {totalSuburbs} suburbs in Victoria and New South Wales.
           </p>
           <a
@@ -156,13 +156,13 @@ export default async function PricesIndexPage() {
         )}
 
         {/* Attribution */}
-        <div className="mt-8 pb-8 text-center text-[10px] text-[#5f6368]">
+        <div className="mt-8 pb-8 text-center text-[10px] text-[var(--muted)]">
           Data from{" "}
-          <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.service.vic.gov.au" className="text-[var(--accent-text)]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>
           {" and "}
-          <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.transport.nsw.gov.au" className="text-[var(--accent-text)]" target="_blank" rel="noopener noreferrer">
             Transport for NSW
           </a>
         </div>

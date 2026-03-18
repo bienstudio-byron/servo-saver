@@ -433,26 +433,118 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
 
       </div>
 
-      {/* Filter chips + theme toggle — below search on mobile, top-right on desktop */}
+      {/* Filter chips — mobile only */}
       {!tripPlannerOpen && !isTripActive && (
-        <div className="flex gap-1.5 mt-2 md:absolute md:top-0 md:right-0 md:mt-0">
-          <ChipDropdown
-            icon={<Droplets className="h-3.5 w-3.5" strokeWidth={2} />}
-            label={`Fuel ·${selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType}`}
+        <MobileFilterChips
+          selectedFuelType={selectedFuelType}
+          setSelectedFuelType={(id) => { setSelectedFuelType(id); try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {} }}
+          rangeKm={rangeKm}
+          setRangeKm={setRangeKm}
+          availableBrands={availableBrands}
+          selectedBrands={selectedBrands}
+          setSelectedBrands={setSelectedBrands}
+          toggleBrand={toggleBrand}
+        />
+      )}
+
+      {/* Theme toggle + locate — desktop only, top-right */}
+      <div className="hidden md:flex gap-1.5 absolute top-0 right-0">
+        {themeToggle}
+      </div>
+    </div>
+  );
+}
+
+/* --- Mobile filter chips with inline dropdowns --- */
+
+function MobileFilterChips({
+  selectedFuelType, setSelectedFuelType,
+  rangeKm, setRangeKm,
+  availableBrands, selectedBrands, setSelectedBrands, toggleBrand,
+}: {
+  selectedFuelType: string; setSelectedFuelType: (id: string) => void;
+  rangeKm: number; setRangeKm: (km: number) => void;
+  availableBrands: string[]; selectedBrands: string[]; setSelectedBrands: (b: string[]) => void; toggleBrand: (b: string) => void;
+}) {
+  const [open, setOpen] = useState<"fuel" | "tank" | "brands" | null>(null);
+  const [brandQuery, setBrandQuery] = useState("");
+  const brandInputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(null);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  useEffect(() => {
+    if (open === "brands") {
+      setBrandQuery("");
+      setTimeout(() => brandInputRef.current?.focus(), 50);
+    }
+  }, [open]);
+
+  const fuelLabel = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType;
+  const tankLabel = rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full";
+  const brandsLabel = selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length}`;
+
+  const filteredBrands = brandQuery
+    ? availableBrands.filter((b) => b.toLowerCase().includes(brandQuery.toLowerCase()))
+    : availableBrands;
+
+  const chipClass = (isOpen: boolean, isActive: boolean) =>
+    `flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border shadow-xl text-[11px] font-semibold font-mono whitespace-nowrap transition-colors cursor-pointer shrink-0 ${
+      isOpen
+        ? "bg-[var(--foreground)] text-[var(--card)] border-[var(--foreground)]"
+        : isActive
+        ? "bg-[var(--card)] border-[#4285f4] text-[var(--foreground)]"
+        : "bg-[var(--card)] border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+    }`;
+
+  return (
+    <div ref={wrapperRef} className="md:hidden mt-2">
+      {/* Pills row */}
+      <div className="flex gap-1.5">
+        <button onClick={() => setOpen(open === "fuel" ? null : "fuel")} className={chipClass(open === "fuel", false)}>
+          <Droplets className="h-3.5 w-3.5" strokeWidth={2} />
+          Fuel ·{fuelLabel}
+          <ChevronDown className={`h-3 w-3 transition-transform ${open === "fuel" ? "rotate-180" : ""}`} strokeWidth={2} />
+        </button>
+        <button onClick={() => setOpen(open === "tank" ? null : "tank")} className={chipClass(open === "tank", false)}>
+          <Gauge className="h-3.5 w-3.5" strokeWidth={2} />
+          Tank ·{tankLabel}
+          <ChevronDown className={`h-3 w-3 transition-transform ${open === "tank" ? "rotate-180" : ""}`} strokeWidth={2} />
+        </button>
+        <button onClick={() => setOpen(open === "brands" ? null : "brands")} className={chipClass(open === "brands", selectedBrands.length > 0)}>
+          <Store className="h-3.5 w-3.5" strokeWidth={2} />
+          Brands ·{brandsLabel}
+          <ChevronDown className={`h-3 w-3 transition-transform ${open === "brands" ? "rotate-180" : ""}`} strokeWidth={2} />
+        </button>
+      </div>
+
+      {/* Dropdown panel — renders inline below pills */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key={open}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden mt-2 rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl"
           >
-            {(close) => (
-              <>
+            {open === "fuel" && (
+              <div>
                 {FUEL_OPTIONS.concat(["PDSL"]).map((id) => {
                   const label = id === "DSL" ? "Diesel" : id === "PDSL" ? "Premium Diesel" : (FUEL_TYPE_LABELS[id] ?? id);
                   return (
                     <button
                       key={id}
-                      onClick={() => {
-                        setSelectedFuelType(id);
-                        try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {}
-                        close();
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                      onClick={() => { setSelectedFuelType(id); setOpen(null); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer ${
                         selectedFuelType === id
                           ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
                           : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
@@ -462,28 +554,28 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
                     </button>
                   );
                 })}
-              </>
+              </div>
             )}
-          </ChipDropdown>
 
-          <ChipDropdown
-            icon={<Gauge className="h-3.5 w-3.5" strokeWidth={2} />}
-            label={`Tank ·${rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full"}`}
-          >
-            {() => (
+            {open === "tank" && (
               <div className="p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider">Fuel range</span>
+                  <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider">Fuel level</span>
                   <span className="text-xs font-bold font-mono text-[var(--foreground)]">~{rangeKm}km</span>
                 </div>
-                <div className="relative h-6 rounded-full bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden">
+                <div className="relative h-6 rounded-lg bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden">
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full transition-all"
+                    className="absolute inset-y-0 left-0 rounded-lg transition-all"
                     style={{
                       width: `${Math.min(100, (rangeKm / 800) * 100)}%`,
                       background: rangeKm <= 50 ? "#dc2626" : rangeKm <= 200 ? "#ea580c" : rangeKm <= 400 ? "#f59e0b" : "#22c55e",
                     }}
                   />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-white">
+                      {rangeKm <= 50 ? "Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
+                    </span>
+                  </div>
                   <input
                     type="range"
                     min={10}
@@ -499,17 +591,59 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
                 </div>
               </div>
             )}
-          </ChipDropdown>
 
-          <BrandChipDropdown
-            availableBrands={availableBrands}
-            selectedBrands={selectedBrands}
-            setSelectedBrands={setSelectedBrands}
-            toggleBrand={toggleBrand}
-          />
-          {themeToggle}
-        </div>
-      )}
+            {open === "brands" && (
+              <div>
+                <div className="px-2.5 pt-2.5 pb-1.5">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />
+                    <input
+                      ref={brandInputRef}
+                      type="text"
+                      value={brandQuery}
+                      onChange={(e) => setBrandQuery(e.target.value)}
+                      placeholder="Search brands..."
+                      style={{ fontSize: "16px" }}
+                      className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[200px] overflow-y-auto">
+                  {selectedBrands.length > 0 && !brandQuery && (
+                    <button
+                      onClick={() => setSelectedBrands([])}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer border-b border-[var(--subtle-border)]"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                  {filteredBrands.map((brand) => {
+                    const isSelected = selectedBrands.includes(brand);
+                    return (
+                      <button
+                        key={brand}
+                        onClick={() => toggleBrand(brand)}
+                        className={`w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer flex items-center gap-2.5 ${
+                          isSelected
+                            ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
+                            : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+                        }`}
+                      >
+                        <BrandLogo brandName={brand} size="sm" />
+                        <span className="flex-1">{brand}</span>
+                        {isSelected && <Check className="h-3.5 w-3.5 text-[var(--tier-cheap)]" strokeWidth={2.5} />}
+                      </button>
+                    );
+                  })}
+                  {filteredBrands.length === 0 && (
+                    <div className="px-4 py-3 text-xs text-[var(--muted)] text-center">No brands found</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -620,16 +754,20 @@ function BrandChipDropdown({
   selectedBrands,
   setSelectedBrands,
   toggleBrand,
+  containerRef,
 }: {
   availableBrands: string[];
   selectedBrands: string[];
   setSelectedBrands: (brands: string[]) => void;
   toggleBrand: (brand: string) => void;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 250 });
 
   useEffect(() => {
     if (!open) return;
@@ -647,16 +785,36 @@ function BrandChipDropdown({
     }
   }, [open]);
 
+  const handleOpen = () => {
+    const btn = btnRef.current;
+    const container = containerRef?.current;
+    if (btn) {
+      const bRect = btn.getBoundingClientRect();
+      const cRect = container?.getBoundingClientRect();
+      setPos({
+        top: bRect.bottom + 4,
+        left: cRect ? cRect.left : bRect.left,
+        width: cRect ? cRect.width : Math.min(300, window.innerWidth - 24),
+      });
+    }
+    setOpen(!open);
+  };
+
   const filtered = query
     ? availableBrands.filter((b) => b.toLowerCase().includes(query.toLowerCase()))
     : availableBrands;
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="shrink-0">
       <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl text-[11px] font-semibold font-mono transition-colors cursor-pointer ${
-          open || selectedBrands.length > 0 ? "text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+        ref={btnRef}
+        onClick={handleOpen}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border shadow-xl text-[11px] font-semibold font-mono whitespace-nowrap transition-colors cursor-pointer ${
+          open
+            ? "bg-[var(--foreground)] text-[var(--card)] border-[var(--foreground)]"
+            : selectedBrands.length > 0
+            ? "bg-[var(--card)] border-[#4285f4] text-[var(--foreground)]"
+            : "bg-[var(--card)] border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
         }`}
       >
         <Store className="h-3.5 w-3.5" strokeWidth={2} />
@@ -671,7 +829,8 @@ function BrandChipDropdown({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.1 }}
-            className="absolute top-full right-0 mt-2 w-[min(250px,calc(100vw-2rem))] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
+            className="fixed rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-[1100]"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
           >
             <div className="px-2.5 pt-2.5 pb-1.5">
               <div className="relative">
@@ -732,14 +891,18 @@ function ChipDropdown({
   label,
   active,
   children,
+  containerRef,
 }: {
   icon: React.ReactNode;
   label: string;
   active?: boolean;
   children: (close: () => void) => React.ReactNode;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 250 });
 
   useEffect(() => {
     if (!open) return;
@@ -750,12 +913,32 @@ function ChipDropdown({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  const handleOpen = () => {
+    const btn = btnRef.current;
+    const container = containerRef?.current;
+    if (btn) {
+      const bRect = btn.getBoundingClientRect();
+      const cRect = container?.getBoundingClientRect();
+      setPos({
+        top: bRect.bottom + 4,
+        left: cRect ? cRect.left : bRect.left,
+        width: cRect ? cRect.width : Math.min(300, window.innerWidth - 24),
+      });
+    }
+    setOpen(!open);
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="shrink-0">
       <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl text-[11px] font-semibold font-mono transition-colors cursor-pointer ${
-          open || active ? "text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+        ref={btnRef}
+        onClick={handleOpen}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border shadow-xl text-[11px] font-semibold font-mono whitespace-nowrap transition-colors cursor-pointer ${
+          open
+            ? "bg-[var(--foreground)] text-[var(--card)] border-[var(--foreground)]"
+            : active
+            ? "bg-[var(--card)] border-[#4285f4] text-[var(--foreground)]"
+            : "bg-[var(--card)] border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
         }`}
       >
         {icon}
@@ -770,7 +953,8 @@ function ChipDropdown({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.1 }}
-            className="absolute top-full right-0 mt-2 w-[min(250px,calc(100vw-2rem))] rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-10"
+            className="fixed rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] shadow-2xl overflow-hidden z-[1100]"
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
           >
             {children(() => setOpen(false))}
           </motion.div>

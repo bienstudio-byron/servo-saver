@@ -50,10 +50,10 @@ export default async function StationPage({ params }: Props) {
 
   if (!station) {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-lg font-semibold text-white mb-2">Station not found</h1>
-          <a href="/" className="text-[#8ab4f8] text-sm hover:text-[#aecbfa]">&larr; Back to map</a>
+          <h1 className="text-lg font-semibold text-[var(--foreground)] mb-2">Station not found</h1>
+          <a href="/" className="text-[var(--accent-text)] text-sm hover:text-[var(--foreground)]">&larr; Back to map</a>
         </div>
       </div>
     );
@@ -89,25 +89,25 @@ export default async function StationPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-[var(--background)]">
       <SubpageHeader />
 
       {/* Hero */}
-      <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a]">
+      <div className="bg-gradient-to-b from-[var(--card)] to-[var(--background)]">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-3">
             {station.brand && <BrandLogo brandName={station.brand.name} size="lg" />}
             <div>
-              <h1 className="text-2xl font-bold text-white">{station.name}</h1>
+              <h1 className="text-2xl font-bold text-[var(--foreground)]">{station.name}</h1>
               {station.brand && (
-                <p className="text-sm text-[#9aa0a6]">
+                <p className="text-sm text-[var(--muted)]">
                   {station.brand.name} &middot; <span className="capitalize">{station.brand.type}</span>
                 </p>
               )}
             </div>
           </div>
 
-          <p className="text-sm text-[#9aa0a6] mb-4">{station.address}</p>
+          <p className="text-sm text-[var(--muted)] mb-4">{station.address}</p>
 
           <div className="flex gap-2">
             <a
@@ -123,7 +123,7 @@ export default async function StationPage({ params }: Props) {
               href={`https://www.google.com/maps/dir/?api=1&destination=${station.latitude},${station.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-white/[0.08] text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-white/15 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[var(--subtle)] text-[var(--foreground)] px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
             >
               Get Directions
             </a>
@@ -139,20 +139,20 @@ export default async function StationPage({ params }: Props) {
 
         {/* Fuel prices with ranks */}
         <div className="mb-8">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Current Prices</h2>
+          <h2 className="text-sm font-bold text-[var(--foreground)] uppercase tracking-wider mb-3">Current Prices</h2>
           <div className="grid gap-3 md:grid-cols-2">
             {ranks.map((r) => {
               const diff = r.average - r.price;
               const isCheaper = diff > 0;
               return (
-                <div key={r.fuelType} className="rounded-xl border border-white/10 bg-[#242424] p-4">
+                <div key={r.fuelType} className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">{r.label}</span>
-                    <span className="text-[10px] text-[#5f6368]">#{r.rank} of {r.total}</span>
+                    <span className="text-xs font-bold text-[var(--foreground)] uppercase tracking-wider">{r.label}</span>
+                    <span className="text-[10px] text-[var(--muted)]">#{r.rank} of {r.total}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold font-mono text-white">
-                      {r.price.toFixed(1)}<span className="text-sm text-[#5f6368]">c/L</span>
+                    <div className="text-2xl font-bold font-mono text-[var(--foreground)]">
+                      {r.price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c/L</span>
                     </div>
                     <div className={`text-sm font-bold font-mono ${isCheaper ? "text-emerald-400" : "text-red-400"}`}>
                       {isCheaper ? "-" : "+"}{Math.abs(diff).toFixed(1)}c vs avg
@@ -166,29 +166,29 @@ export default async function StationPage({ params }: Props) {
 
         {/* Price history — client component */}
         <div className="mb-8">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Price History</h2>
+          <h2 className="text-sm font-bold text-[var(--foreground)] uppercase tracking-wider mb-3">Price History</h2>
           <StationPageClient stationId={station.id} prices={station.prices} />
         </div>
 
         {/* Nearby stations */}
         <div className="mb-8">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Nearby Stations</h2>
-          <div className="rounded-xl border border-white/10 bg-[#242424] overflow-hidden">
+          <h2 className="text-sm font-bold text-[var(--foreground)] uppercase tracking-wider mb-3">Nearby Stations</h2>
+          <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] overflow-hidden">
             {nearby.map((s, i) => {
               const u91 = s.prices.find((p) => p.fuelType === "U91");
               return (
                 <a
                   key={s.id}
                   href={`/station/${encodeURIComponent(s.id)}`}
-                  className={`flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors ${i > 0 ? "border-t border-white/5" : ""}`}
+                  className={`flex items-center gap-3 px-4 py-3 hover:bg-[var(--subtle)] transition-colors ${i > 0 ? "border-t border-[var(--subtle-border)]" : ""}`}
                 >
                   <BrandLogo brandName={s.brand?.name ?? "?"} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm text-white truncate">{s.name}</div>
-                    <div className="text-[10px] text-[#5f6368]">{s.distance.toFixed(1)}km away</div>
+                    <div className="text-sm text-[var(--foreground)] truncate">{s.name}</div>
+                    <div className="text-[10px] text-[var(--muted)]">{s.distance.toFixed(1)}km away</div>
                   </div>
                   {u91 && (
-                    <span className="text-sm font-bold font-mono text-white">{u91.price.toFixed(1)}c</span>
+                    <span className="text-sm font-bold font-mono text-[var(--foreground)]">{u91.price.toFixed(1)}c</span>
                   )}
                 </a>
               );
@@ -197,19 +197,19 @@ export default async function StationPage({ params }: Props) {
         </div>
 
         {/* SEO content */}
-        <div className="border-t border-white/5 pt-6 mb-6 space-y-4">
+        <div className="border-t border-[var(--subtle-border)] pt-6 mb-6 space-y-4">
           <div>
-            <h2 className="text-base font-bold text-white mb-2">
+            <h2 className="text-base font-bold text-[var(--foreground)] mb-2">
               {station.name} Petrol Prices Today
             </h2>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
               Looking for cheap fuel at {station.name}? This {station.brand?.name ?? ""} servo is located
               at {station.address} and currently sells{" "}
               {ranks.map((r, i) => (
                 <span key={r.fuelType}>
                   {i > 0 && i < ranks.length - 1 && ", "}
                   {i === ranks.length - 1 && ranks.length > 1 && " and "}
-                  {r.label} at <strong className="text-white">{r.price.toFixed(1)}c/L</strong>
+                  {r.label} at <strong className="text-[var(--foreground)]">{r.price.toFixed(1)}c/L</strong>
                 </span>
               ))}.
               {ranks[0] && ranks[0].rank <= Math.ceil(ranks[0].total * 0.1) && (
@@ -219,10 +219,10 @@ export default async function StationPage({ params }: Props) {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">
+            <h3 className="text-sm font-bold text-[var(--foreground)] mb-1">
               Is {station.name} Cheap Compared to {suburb}?
             </h3>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
               {ranks[0] && ranks[0].average > ranks[0].price ? (
                 <>
                   Yes — {station.name} is currently <strong className="text-emerald-400">
@@ -234,7 +234,7 @@ export default async function StationPage({ params }: Props) {
                 <>
                   {station.name} is currently {(ranks[0].price - ranks[0].average).toFixed(1)}c/L
                   above the state average for {ranks[0].label}. Check{" "}
-                  <a href={suburbUrl} className="text-[#8ab4f8] hover:text-[#aecbfa]">
+                  <a href={suburbUrl} className="text-[var(--accent-text)] hover:text-[var(--foreground)]">
                     other stations in {suburb}
                   </a>{" "}
                   for a better deal.
@@ -244,21 +244,21 @@ export default async function StationPage({ params }: Props) {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">
+            <h3 className="text-sm font-bold text-[var(--foreground)] mb-1">
               Cheapest Fuel Near {suburb}
             </h3>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
               Compare petrol, diesel, and LPG prices at {nearby.length} nearby stations
               in {suburb} and surrounding suburbs. Use the{" "}
-              <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">PetrolSaver map</a> to
+              <a href="/" className="text-[var(--accent-text)] hover:text-[var(--foreground)]">PetrolSaver map</a> to
               find the cheapest servo near you — our smart recommendation engine factors in
               the cost of driving to each station, so you know exactly how much you&apos;ll
               actually save. Browse all{" "}
-              <a href={suburbUrl} className="text-[#8ab4f8] hover:text-[#aecbfa]">
+              <a href={suburbUrl} className="text-[var(--accent-text)] hover:text-[var(--foreground)]">
                 fuel prices in {suburb}
               </a>{" "}
               or explore{" "}
-              <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+              <a href="/prices" className="text-[var(--accent-text)] hover:text-[var(--foreground)]">
                 fuel prices by suburb
               </a>{" "}
               across VIC & NSW.
@@ -272,13 +272,13 @@ export default async function StationPage({ params }: Props) {
         </div>
 
         {/* Attribution */}
-        <div className="pb-8 text-center text-[10px] text-[#5f6368]">
+        <div className="pb-8 text-center text-[10px] text-[var(--muted)]">
           Data from{" "}
-          <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.service.vic.gov.au" className="text-[var(--accent-text)]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>
           {" and "}
-          <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.transport.nsw.gov.au" className="text-[var(--accent-text)]" target="_blank" rel="noopener noreferrer">
             Transport for NSW
           </a>
         </div>

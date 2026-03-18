@@ -37,7 +37,7 @@ export default function SuburbPageClient({ stations }: Props) {
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   id === fuelType
                     ? "bg-[#4285f4] text-white shadow-lg shadow-[#4285f4]/30"
-                    : "bg-white/[0.08] text-[#dadce0] hover:bg-white/15 hover:text-white"
+                    : "bg-[var(--subtle)] text-[var(--muted)] hover:bg-[var(--subtle-hover)] hover:text-[var(--foreground)]"
                 }`}
               >
                 {short}
@@ -46,22 +46,22 @@ export default function SuburbPageClient({ stations }: Props) {
           })}
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-[#242424] overflow-hidden">
+      <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] overflow-hidden">
         {sorted.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-[#9aa0a6]">
+          <div className="px-4 py-8 text-center text-sm text-[var(--muted)]">
             No stations sell {FUEL_TYPE_LABELS[fuelType] ?? fuelType} in this suburb.
           </div>
         ) : (
           sorted.map(({ station, price }, i) => {
             const isExpanded = expandedIndex === i;
             return (
-              <div key={station.id} className={`${i > 0 ? "border-t border-white/5" : ""} ${isExpanded ? "bg-white/5" : ""}`}>
+              <div key={station.id} className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${isExpanded ? "bg-[var(--subtle)]" : ""}`}>
                 <button
                   onClick={() => setExpandedIndex(isExpanded ? null : i)}
-                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5 text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--subtle-hover)] text-left cursor-pointer"
                 >
                   <span className={`text-xs font-bold w-5 text-center shrink-0 ${
-                    i === 0 ? "text-emerald-400" : "text-[#5f6368]"
+                    i === 0 ? "text-emerald-400" : "text-[var(--muted)]"
                   }`}>
                     {i + 1}
                   </span>
@@ -70,21 +70,21 @@ export default function SuburbPageClient({ stations }: Props) {
                     <a
                       href={`/station/${encodeURIComponent(station.id)}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-sm font-medium text-white truncate block hover:text-[#8ab4f8] transition-colors"
+                      className="text-sm font-medium text-[var(--foreground)] truncate block hover:text-[var(--accent-text)] transition-colors"
                     >
                       {station.name}
                     </a>
-                    <div className="text-[11px] text-[#9aa0a6] truncate">
+                    <div className="text-[11px] text-[var(--muted)] truncate">
                       {station.brand?.name ?? "Unknown"} &middot; {station.address}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className={`text-sm font-bold font-mono ${
-                      i === 0 ? "text-emerald-400" : "text-white"
+                      i === 0 ? "text-emerald-400" : "text-[var(--foreground)]"
                     }`}>
                       {price.toFixed(1)}c
                     </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 text-[#5f6368] transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 text-[var(--muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -101,23 +101,23 @@ export default function SuburbPageClient({ stations }: Props) {
                     >
                       <div className="px-4 pb-3 space-y-3">
                         {/* Price history chart */}
-                        <div className="rounded-lg bg-white/[0.03] p-3">
+                        <div className="rounded-lg bg-[var(--subtle)] p-3">
                           <PriceHistory stationId={station.id} fuelType={fuelType} />
                         </div>
 
                         {/* All fuel prices at this station */}
                         <div>
-                          <div className="text-[10px] text-[#5f6368] uppercase tracking-wider mb-1.5">All fuel types</div>
+                          <div className="text-[10px] text-[var(--muted)] uppercase tracking-wider mb-1.5">All fuel types</div>
                           <div className="grid grid-cols-2 gap-1.5">
                             {station.prices.map((p) => (
                               <div
                                 key={p.fuelType}
                                 className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 ${
-                                  p.fuelType === fuelType ? "bg-[#4285f4]/10" : "bg-white/[0.03]"
+                                  p.fuelType === fuelType ? "bg-[#4285f4]/10" : "bg-[var(--subtle)]"
                                 }`}
                               >
-                                <span className="text-[10px] text-[#9aa0a6]">{FUEL_TYPE_LABELS[p.fuelType] ?? p.fuelType}</span>
-                                <span className="text-xs font-mono font-bold text-white">{p.price.toFixed(1)}c</span>
+                                <span className="text-[10px] text-[var(--muted)]">{FUEL_TYPE_LABELS[p.fuelType] ?? p.fuelType}</span>
+                                <span className="text-xs font-mono font-bold text-[var(--foreground)]">{p.price.toFixed(1)}c</span>
                               </div>
                             ))}
                           </div>

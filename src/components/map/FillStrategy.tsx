@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check, Zap } from "lucide-react";
+import { Info, RefreshCw, ChevronDown, Navigation, ArrowLeft, LocateFixed, Heart, TriangleAlert, X, Search, Send, Check, Zap, Droplets, Gauge, Store } from "lucide-react";
 import { AnimatePresence as AP } from "framer-motion";
 import InlineReportForm from "@/components/shared/InlineReportForm";
 import type { StationWithPrices } from "@/types/fuel";
@@ -48,6 +48,216 @@ interface RankedOption {
   source?: "official" | "community";
 }
 
+function SidebarBrandList({
+  availableBrands, selectedBrands, onBrandsChange,
+}: {
+  availableBrands: string[]; selectedBrands: string[]; onBrandsChange: (brands: string[]) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
+  const filtered = query
+    ? availableBrands.filter((b) => b.toLowerCase().includes(query.toLowerCase()))
+    : availableBrands;
+
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="overflow-hidden"
+    >
+      <div className="pt-2.5">
+        <div className="relative mb-1.5">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search brands..."
+            style={{ fontSize: "16px" }}
+            className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-xs text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors"
+          />
+        </div>
+        <div className="max-h-[200px] overflow-y-auto">
+          {selectedBrands.length > 0 && !query && (
+            <button
+              onClick={() => onBrandsChange([])}
+              className="w-full text-left px-3 py-1.5 text-xs font-semibold text-[var(--accent-text)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+            >
+              Clear all
+            </button>
+          )}
+          {filtered.map((brand) => {
+            const isSelected = selectedBrands.includes(brand);
+            return (
+              <button
+                key={brand}
+                onClick={() => {
+                  if (isSelected) onBrandsChange(selectedBrands.filter((b) => b !== brand));
+                  else onBrandsChange([...selectedBrands, brand]);
+                }}
+                className={`w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center gap-2 ${
+                  isSelected ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold" : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+                }`}
+              >
+                <BrandLogo brandName={brand} size="sm" />
+                <span className="flex-1 truncate">{brand}</span>
+                {isSelected && <Check className="h-3.5 w-3.5 text-[var(--tier-cheap)] shrink-0" strokeWidth={2.5} />}
+              </button>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="px-3 py-2 text-xs text-[var(--muted)] text-center">No brands found</div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function SidebarFilters({
+  selectedFuelType, onFuelTypeChange,
+  rangeKm, onRangeChange,
+  selectedBrands, onBrandsChange,
+  availableBrands,
+}: {
+  selectedFuelType: string; onFuelTypeChange: (id: string) => void;
+  rangeKm: number; onRangeChange: (km: number) => void;
+  selectedBrands: string[]; onBrandsChange: (brands: string[]) => void;
+  availableBrands: string[];
+}) {
+  const [expanded, setExpanded] = useState<"fuel" | "tank" | "brands" | null>(null);
+
+  const fuelLabel = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType;
+  const tankLabel = rangeKm <= 50 ? "Empty" : rangeKm <= 200 ? "¼" : rangeKm <= 400 ? "½" : rangeKm <= 600 ? "¾" : "Full";
+  const brandsLabel = selectedBrands.length === 0 ? "All" : selectedBrands.length === 1 ? selectedBrands[0] : `${selectedBrands.length} selected`;
+
+  return (
+    <div className="hidden md:block px-4 py-3 shrink-0">
+      <div className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">Your filters</div>
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => setExpanded(expanded === "fuel" ? null : "fuel")}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            expanded === "fuel" ? "border-[#4285f4] text-[var(--foreground)]" : "border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <Droplets className="h-3 w-3" strokeWidth={2} />
+          Fuel ·{fuelLabel}
+        </button>
+        <button
+          onClick={() => setExpanded(expanded === "tank" ? null : "tank")}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            expanded === "tank" ? "border-[#4285f4] text-[var(--foreground)]" : "border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <Gauge className="h-3 w-3" strokeWidth={2} />
+          Tank ·{tankLabel}
+        </button>
+        <button
+          onClick={() => setExpanded(expanded === "brands" ? null : "brands")}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            expanded === "brands" || selectedBrands.length > 0 ? "border-[#4285f4] text-[var(--foreground)]" : "border-[var(--subtle-border)] text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <Store className="h-3 w-3" strokeWidth={2} />
+          Brands ·{brandsLabel}
+        </button>
+      </div>
+
+      {/* Expanded panels */}
+      <AnimatePresence>
+        {expanded === "fuel" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="flex gap-1 pt-2.5">
+              {["U91", "P95", "P98", "DSL", "E10", "LPG"].map((id) => (
+                <button
+                  key={id}
+                  onClick={() => { onFuelTypeChange(id); setExpanded(null); }}
+                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
+                    selectedFuelType === id
+                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                      : "bg-[var(--subtle)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                  }`}
+                >
+                  {id === "DSL" ? "Diesel" : id}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {expanded === "tank" && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2.5">
+              <div className="relative h-6 rounded-lg bg-[var(--background)] border border-[var(--subtle-border)] overflow-hidden">
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-lg"
+                  animate={{ width: `${Math.min(100, (rangeKm / 800) * 100)}%` }}
+                  transition={{ type: "spring", damping: 20, stiffness: 200 }}
+                  style={{
+                    background: rangeKm <= 50
+                      ? "linear-gradient(90deg, #dc2626, #ef4444)"
+                      : rangeKm <= 200
+                      ? "linear-gradient(90deg, #ea580c, #f59e0b)"
+                      : rangeKm <= 400
+                      ? "linear-gradient(90deg, #f59e0b, #84cc16)"
+                      : "linear-gradient(90deg, #22c55e, #4ade80)",
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[9px] font-bold text-white">
+                    {rangeKm <= 50 ? "Almost empty" : rangeKm <= 200 ? "Getting low" : rangeKm <= 400 ? "Half tank" : "Plenty of fuel"}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={800}
+                  step={10}
+                  value={rangeKm}
+                  onChange={(e) => onRangeChange(Number(e.target.value))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+              <div className="flex justify-between mt-1 text-[9px] text-[var(--muted)]">
+                <span>E</span><span>¼</span><span>½</span><span>¾</span><span>F</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {expanded === "brands" && (
+          <SidebarBrandList
+            availableBrands={availableBrands}
+            selectedBrands={selectedBrands}
+            onBrandsChange={onBrandsChange}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => void; mapCentre?: { lat: number; lng: number } }) {
   const userLocation = useFuelStore((s) => s.userLocation);
   const searchOrigin = useFuelStore((s) => s.searchOrigin);
@@ -60,39 +270,40 @@ function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => v
   })();
 
   return (
-    <div className="md:hidden flex items-center justify-center mb-2 px-3 relative">
-      {/* Search pill — centred */}
-      <AnimatePresence>
-        {showSearch && mapCentre && (
+    <>
+      {/* Search pill — centred above sheet */}
+      {/* Floating buttons row — sits in flow above sheet, moves with it */}
+      <div className="md:hidden flex items-center justify-end gap-2 px-3 mb-2 shrink-0">
+        <AnimatePresence>
+          {showSearch && mapCentre && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ type: "spring", damping: 22, stiffness: 300 }}
+              onClick={() => setSearchOrigin(mapCentre)}
+              className="inline-flex items-center gap-1 bg-[var(--card)] border border-[var(--subtle-border)] text-[var(--foreground)] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-xl hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer mr-auto"
+            >
+              <Search className="h-3 w-3" strokeWidth={2.5} />
+              Search here
+            </motion.button>
+          )}
+        </AnimatePresence>
+        {onRecentre && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.85, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: 8 }}
-            transition={{ type: "spring", damping: 22, stiffness: 300 }}
-            onClick={() => setSearchOrigin(mapCentre)}
-            className="inline-flex items-center gap-1 bg-[var(--card)] border border-[var(--subtle-border)] text-[var(--foreground)] px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-xl hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.5 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onRecentre}
+            className="h-9 w-9 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+            title="Centre on my location"
           >
-            <Search className="h-3 w-3" strokeWidth={2.5} />
-            Search here
+            <LocateFixed className="h-4 w-4" strokeWidth={2} />
           </motion.button>
         )}
-      </AnimatePresence>
-
-      {/* Recentre button — right, aligned to search pill height */}
-      {onRecentre && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", damping: 20, stiffness: 300, delay: 0.5 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onRecentre}
-          className="absolute right-3 h-7 w-7 rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-          title="Centre on my location"
-        >
-          <LocateFixed className="h-4 w-4" strokeWidth={2} />
-        </motion.button>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -108,6 +319,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
   const setFitBoundsTarget = useFuelStore((s) => s.setFitBoundsTarget);
   const selectedBrands = useFuelStore((s) => s.selectedBrands);
+  const setSelectedBrands = useFuelStore((s) => s.setSelectedBrands);
+  const setRangeKm = useFuelStore((s) => s.setRangeKm);
   const pinClickedStationId = useFuelStore((s) => s.pinClickedStationId);
   const setPinClickedStationId = useFuelStore((s) => s.setPinClickedStationId);
   const rawSetFuelType = useFuelStore((s) => s.setSelectedFuelType);
@@ -115,6 +328,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const searchOrigin = useFuelStore((s) => s.searchOrigin);
   const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
   const origin = (tripMode === "trip" && tripOrigin) ? { lat: tripOrigin.lat, lng: tripOrigin.lng } : (searchOrigin ?? userLocation);
+
+  // Available brands for filter
+  const availableBrands = useMemo(() => {
+    const brands = new Set<string>();
+    stations.forEach((s) => { if (s.brand?.name) brands.add(s.brand.name); });
+    return [...brands].sort();
+  }, [stations]);
   const [showFuelPicker, setShowFuelPicker] = useState(false);
   const [locationName, setLocationName] = useState<string | null>(null);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null); // desktop inline expand
@@ -123,6 +343,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [reportingStationId, setReportingStationId] = useState<string | null>(null);
   const [reportedStationIds, setReportedStationIds] = useState<Set<string>>(new Set());
   const [showAllTrip, setShowAllTrip] = useState(false);
+  const [showAllNearby, setShowAllNearby] = useState(false);
   const lastUpdated = useMemo(() => {
     if (stations.length === 0) return "";
     let latest = "";
@@ -374,6 +595,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   // Store recommended stations and fit map to show them
   useEffect(() => {
     setShowAllTrip(false);
+    setShowAllNearby(false);
     setExpandedIndex(null);
     setSelectedIndex(null);
     setTripSelectedIdx(0);
@@ -468,7 +690,10 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           });
         }
       } else {
-        // Nearby mode
+        // Nearby mode — expand list if station is beyond top 5
+        if (idx >= 5 && !showAllNearby) {
+          setShowAllNearby(true);
+        }
         const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
         if (isMobile) {
           setSelectedIndex(idx);
@@ -478,15 +703,16 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           setExpandedIndex(idx);
           setSelectedIndex(null);
           setMinimised(false);
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              const row = rowRefs.current.get(idx);
-              if (row) {
-                row.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }, 50);
-          });
         }
+        // Scroll to the station after render
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const row = rowRefs.current.get(idx);
+            if (row) {
+              row.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          }, 100);
+        });
         if (origin) {
           setFitBoundsTarget({
             points: [
@@ -701,7 +927,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:relative md:w-full md:h-full flex flex-col items-stretch">
+    <div className="absolute bottom-0 left-0 right-0 z-[1000] max-h-[100dvh] md:relative md:w-full md:h-full md:max-h-none flex flex-col items-stretch">
     {/* Floating buttons above the sheet */}
     <MobileFloatingButtons onRecentre={onRecentre} mapCentre={mapCentre} />
 
@@ -718,13 +944,24 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
         </div>
         <span className="text-base font-bold text-[var(--foreground)]">PetrolSaver</span>
       </div>
+      {/* Desktop filters — compact pills with click-to-expand */}
+      <SidebarFilters
+        selectedFuelType={selectedFuelType}
+        onFuelTypeChange={(id) => { rawSetFuelType(id); try { localStorage.setItem("petrolsaver-fuel-chosen", id); } catch {} }}
+        rangeKm={rangeKm}
+        onRangeChange={setRangeKm}
+        selectedBrands={selectedBrands}
+        onBrandsChange={setSelectedBrands}
+        availableBrands={availableBrands}
+      />
+
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
       {selectedOpt === null && (
         <button
-          onClick={() => { setMinimised(!minimised); setSelectedIndex(null); }}
-          className="shrink-0 w-full cursor-pointer"
+          onClick={() => { if (window.innerWidth < 768) { setMinimised(!minimised); setSelectedIndex(null); } }}
+          className="shrink-0 w-full cursor-pointer md:cursor-default"
         >
-          <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center justify-between px-4 py-3 md:py-4">
             <div className="min-w-0 flex-1 text-left">
               <div className="text-sm font-bold text-[var(--foreground)] truncate flex items-center gap-1.5">
                 <Navigation className="h-3.5 w-3.5 shrink-0 text-[#4285f4] fill-[#4285f4]" strokeWidth={0} />
@@ -752,37 +989,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
               </div>
               <div className="text-[9px] text-[var(--muted)] truncate">Ranked by true cost · Data via Service Victoria & Transport for NSW</div>
             </div>
-            <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <motion.div animate={{ rotate: minimised ? 180 : 0 }} transition={{ duration: 0.2 }} className="md:hidden">
               <ChevronDown className="h-4 w-4 text-[var(--muted)]" strokeWidth={2} />
             </motion.div>
           </div>
         </button>
       )}
 
-      {/* Area insight ticker */}
-      {selectedOpt === null && insightStats.length > 0 && (
-        <div className="px-3 py-2 border-b border-[var(--subtle-border)]">
-          <div className="flex items-center gap-2 text-[11px] text-[var(--foreground)]">
-            <span className="relative flex h-1.5 w-1.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--foreground)] opacity-50" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--foreground)]" />
-            </span>
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={insightIndex}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.25 }}
-                dangerouslySetInnerHTML={{
-                  __html: (insightStats[insightIndex % insightStats.length] || "")
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-                }}
-              />
-            </AnimatePresence>
-          </div>
-        </div>
-      )}
 
       {/* === MOBILE: Station card view === */}
       <AnimatePresence mode="wait">
@@ -817,28 +1030,28 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             exit={{ opacity: 0, y: 10 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             onClick={() => setSelectedIndex(0)}
-            className="md:hidden px-3 py-3 cursor-pointer"
+            className="md:hidden px-4 py-4 cursor-pointer"
           >
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-3 mb-2">
               <BrandLogo brandName={options[0].station.brand?.name ?? "?"} size="lg" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-[var(--foreground)] text-sm truncate">{options[0].station.name}</span>
-                  {options[0].tag && (
-                    <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${getTierColor(options[0].price)}`}>{options[0].tag}</span>
-                  )}
-                </div>
-                <div className="text-[10px] text-[var(--muted)]">{(options[0].distance + options[0].detourKm).toFixed(1)}km</div>
+                <div className="font-bold text-[var(--foreground)] text-base truncate">{options[0].station.name}</div>
+                <div className="text-xs text-[var(--muted)]">{(options[0].distance + options[0].detourKm).toFixed(1)}km away</div>
               </div>
-              <div className={`text-xl font-bold font-mono shrink-0 ${getTierColor(options[0].price)}`}>
-                {options[0].price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
-              </div>
+              {options[0].tag && (
+                <span className={`text-[9px] font-bold uppercase shrink-0 px-2 py-1 rounded-full ${getTierColor(options[0].price)} bg-[var(--subtle)]`}>{options[0].tag}</span>
+              )}
             </div>
-            {closestOpt && options[0].netSavings > 0 && (
-              <div className="text-[11px] text-[var(--tier-cheap)] font-medium">
-                Saves ${options[0].netSavings.toFixed(2)} per fill vs closest station
+            <div className="flex items-end justify-between">
+              <div className={`text-3xl font-bold font-mono ${options[0].isStale ? "text-[var(--muted)] opacity-50" : getTierColor(options[0].price)}`}>
+                {options[0].price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c</span>
               </div>
-            )}
+              {!options[0].isStale && closestOpt && options[0].netSavings > 0 && (
+                <span className="text-xs font-semibold text-[var(--tier-cheap)]">
+                  Save ${options[0].netSavings.toFixed(2)} vs closest
+                </span>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -856,7 +1069,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
             </div>
           ) : (
             <div>
-              {(tripMode === "trip" && !showAllTrip ? options.slice(0, 5) : options).map((opt, i) => {
+              {(showAllTrip || tripMode === "nearby" ? options : options.slice(0, 5)).slice(0, showAllNearby ? undefined : 5).map((opt, i) => {
                 const tierColor = getTierColor(opt.price);
                 const isFirst = i === 0;
                 const isExpanded = expandedIndex === i;
@@ -866,31 +1079,37 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                   <div
                     ref={(el: HTMLDivElement | null) => setRowRef(i, el)}
                     key={opt.station.id}
-                    className={`${i > 0 ? "border-t border-[var(--subtle-border)]" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
+                    className={`${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""}`}
                   >
                     <button
                       onClick={() => handleRowClick(i, opt)}
-                      className={`w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer ${isFirst ? "px-3 py-3" : "px-3 py-1.5 flex items-center gap-2"}`}
+                      className={`w-full text-left transition-colors hover:bg-[var(--subtle-hover)] active:bg-[var(--subtle)] cursor-pointer ${isFirst ? "px-4 py-4" : "px-4 py-3 flex items-center gap-3"}`}
                     >
                       {isFirst ? (
                         <>
-                          <div className="flex items-center gap-2.5 mb-1.5">
+                          {/* Featured station */}
+                          <div className="flex items-center gap-3 mb-2">
                             <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="lg" />
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-semibold text-[var(--foreground)] text-sm truncate">{opt.station.name}</span>
-                                {opt.tag && (
-                                  <span className={`text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 ${tierColor}`}>{opt.tag}</span>
-                                )}
-                              </div>
-                              <div className="text-[10px] text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km away</div>
+                              <div className="font-bold text-[var(--foreground)] text-base truncate">{opt.station.name}</div>
+                              <div className="text-xs text-[var(--muted)]">{(opt.distance + opt.detourKm).toFixed(1)}km away</div>
                             </div>
-                            <div className={`text-xl font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
-                              {opt.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
+                            {opt.tag && (
+                              <span className={`text-[9px] font-bold uppercase shrink-0 px-2 py-1 rounded-full ${tierColor} bg-[var(--subtle)]`}>{opt.tag}</span>
+                            )}
+                          </div>
+                          <div className="flex items-end justify-between">
+                            <div className={`text-3xl font-bold font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor}`}>
+                              {opt.price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c</span>
                             </div>
+                            {!opt.isStale && closestOpt && opt.netSavings > 0 && (
+                              <span className="text-xs font-semibold text-[var(--tier-cheap)]">
+                                Save ${opt.netSavings.toFixed(2)} vs closest
+                              </span>
+                            )}
                           </div>
                           {opt.isStale && (
-                            <div className="flex items-center gap-1 text-[10px] text-[var(--tier-mid)] mb-0.5">
+                            <div className="flex items-center gap-1 text-[11px] text-[var(--tier-mid)] mt-2">
                               <TriangleAlert className="h-3 w-3 shrink-0" strokeWidth={2} />
                               Price may be outdated
                             </div>
@@ -898,19 +1117,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                         </>
                       ) : (
                         <>
-                          <span className="text-[10px] font-mono text-[var(--muted)] w-3 text-right shrink-0">{i + 1}</span>
-                          <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="sm" />
+                          {/* List row */}
+                          <span className="text-xs font-mono text-[var(--muted)] w-4 text-right shrink-0">{i + 1}</span>
+                          <BrandLogo brandName={opt.station.brand?.name ?? "?"} size="md" />
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium truncate text-[var(--foreground)] text-xs">{opt.station.name}</span>
-                              {opt.tag && (
-                                <span className="text-[8px] font-bold uppercase shrink-0 px-1.5 py-0.5 rounded bg-[var(--subtle)] opacity-80 text-[var(--muted)]">{opt.tag}</span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-[var(--muted)]">
+                            <div className="font-semibold text-[var(--foreground)] text-sm truncate">{opt.station.name}</div>
+                            <div className="text-xs text-[var(--muted)] mt-0.5">
                               {opt.isStale ? (
                                 <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
-                                  <TriangleAlert className="h-2.5 w-2.5 inline shrink-0" strokeWidth={2} />
+                                  <TriangleAlert className="h-3 w-3 inline shrink-0" strokeWidth={2} />
                                   Price may be outdated
                                 </span>
                               ) : (
@@ -918,14 +1133,19 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                               )}
                             </div>
                           </div>
-                          <div className={`font-bold font-mono shrink-0 ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-xs`}>
-                            {opt.price.toFixed(1)}c
+                          <div className="text-right shrink-0">
+                            <div className={`font-bold font-mono ${opt.isStale ? "text-[var(--muted)] opacity-50" : tierColor} text-sm`}>
+                              {opt.price.toFixed(1)}c
+                            </div>
+                            {opt.tag && (
+                              <span className="text-[8px] font-bold uppercase text-[var(--muted)]">{opt.tag}</span>
+                            )}
                           </div>
                         </>
                       )}
                     </button>
 
-                    {/* Desktop only: inline expand */}
+                    {/* Desktop: inline expand */}
                     <AnimatePresence>
                       {isExpanded && (
                         <motion.div
@@ -933,7 +1153,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.15 }}
-                          className="overflow-hidden hidden md:block pl-[36px]"
+                          className="overflow-hidden hidden md:block px-4 pb-3"
                         >
                           {renderStationCard(opt, false)}
                         </motion.div>
@@ -943,17 +1163,27 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 );
               })}
 
+              {/* Show more / Show all */}
+              {tripMode === "nearby" && !showAllNearby && options.length > 5 && (
+                <button
+                  onClick={() => setShowAllNearby(true)}
+                  className="w-full py-3 text-xs text-[var(--accent-text)] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer"
+                >
+                  Show all {options.length} stations
+                </button>
+              )}
+
               {tripMode === "trip" && !showAllTrip && options.length > 5 && (
                 <button
                   onClick={() => { setShowAllTrip(true); setRecommendedStations(options.map((o) => o.station)); }}
-                  className="w-full py-2 text-[11px] text-[var(--accent-text)] hover:text-[var(--foreground)] font-medium transition-colors border-t border-[var(--subtle-border)]"
+                  className="w-full py-3 text-xs text-[var(--accent-text)] hover:text-[var(--foreground)] font-semibold transition-colors cursor-pointer"
                 >
                   Show all {options.length} stations
                 </button>
               )}
 
               {options[0]?.distance > 5 && tripMode === "nearby" && (
-                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-3 pb-3 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
+                <button onClick={refreshLocation} className="w-full flex items-center justify-center gap-1.5 px-4 pb-3 text-[11px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
                   <RefreshCw className="h-3 w-3" strokeWidth={2} />
                   Doesn&apos;t look right? Refresh location
                 </button>

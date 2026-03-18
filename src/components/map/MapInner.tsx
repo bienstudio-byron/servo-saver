@@ -21,7 +21,7 @@ import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Search } from "lucide-react";
+import { Moon, Sun, Search, LocateFixed } from "lucide-react";
 import { haversineDistance } from "@/lib/geo";
 import LocationButton from "./LocationButton";
 import ModeToggle from "./ModeToggle";
@@ -544,18 +544,30 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
       {/* Mode toggle + filter chips + theme toggle */}
       <ModeToggle
         themeToggle={
-          <button
-            onClick={toggleTheme}
-            className="hidden md:flex rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {theme === "dark" ? (
-              <Moon className="h-3.5 w-3.5" strokeWidth={2} />
-            ) : (
-              <Sun className="h-3.5 w-3.5" strokeWidth={2} />
-            )}
-            {currentTime && <span className="text-[11px] font-semibold font-mono">{currentTime}</span>}
-          </button>
+          <>
+            <button
+              onClick={() => {
+                setSearchOrigin(null);
+                if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
+              }}
+              className="hidden md:flex rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title="Centre on my location"
+            >
+              <LocateFixed className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="hidden md:flex rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <Moon className="h-3.5 w-3.5" strokeWidth={2} />
+              ) : (
+                <Sun className="h-3.5 w-3.5" strokeWidth={2} />
+              )}
+              {currentTime && <span className="text-[11px] font-semibold font-mono">{currentTime}</span>}
+            </button>
+          </>
         }
       />
 

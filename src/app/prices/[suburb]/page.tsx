@@ -98,16 +98,16 @@ export default async function SuburbPage({ params }: Props) {
   const cheapestU91 = fuelSummaries.find((f) => f.fuelType === "U91")?.cheapest;
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-[var(--background)]">
       <SubpageHeader />
 
       {/* Hero */}
-      <div className="bg-gradient-to-b from-[#242424] to-[#1a1a1a]">
+      <div className="bg-gradient-to-b from-[var(--card)] to-[var(--background)]">
         <div className="max-w-4xl mx-auto px-4 py-8 md:py-10">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--foreground)] mb-2">
             Fuel Prices in {display}
           </h1>
-          <p className="text-[#9aa0a6] text-sm md:text-base mb-5">
+          <p className="text-[var(--muted)] text-sm md:text-base mb-5">
             Compare prices at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display}.
             {cheapestU91 && (
               <> Cheapest Unleaded 91 is <span className="text-emerald-400 font-semibold">{cheapestU91.price.toFixed(1)}c/L</span> at {cheapestU91.name}.</>
@@ -140,22 +140,22 @@ export default async function SuburbPage({ params }: Props) {
             const diff = fuel.stateAverage - fuel.average;
             const isCheaper = diff > 0;
             return (
-              <div key={fuel.fuelType} className="rounded-xl border border-white/10 bg-[#242424] p-4 min-w-[260px] md:min-w-0 snap-start shrink-0 md:shrink">
+              <div key={fuel.fuelType} className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-4 min-w-[260px] md:min-w-0 snap-start shrink-0 md:shrink">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-bold text-white uppercase tracking-wider">{fuel.label}</h2>
-                  <span className="text-[10px] text-[#5f6368]">{fuel.stationCount} station{fuel.stationCount !== 1 ? "s" : ""}</span>
+                  <h2 className="text-sm font-bold text-[var(--foreground)] uppercase tracking-wider">{fuel.label}</h2>
+                  <span className="text-[10px] text-[var(--muted)]">{fuel.stationCount} station{fuel.stationCount !== 1 ? "s" : ""}</span>
                 </div>
                 {fuel.cheapest && (
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <div className="text-[10px] text-[#5f6368] mb-0.5">Cheapest</div>
+                      <div className="text-[10px] text-[var(--muted)] mb-0.5">Cheapest</div>
                       <div className="text-2xl font-bold font-mono text-emerald-400">
-                        {fuel.cheapest.price.toFixed(1)}<span className="text-sm text-[#5f6368]">c/L</span>
+                        {fuel.cheapest.price.toFixed(1)}<span className="text-sm text-[var(--muted)]">c/L</span>
                       </div>
-                      <div className="text-[11px] text-[#9aa0a6] mt-0.5">{fuel.cheapest.name}</div>
+                      <div className="text-[11px] text-[var(--muted)] mt-0.5">{fuel.cheapest.name}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] text-[#5f6368] mb-0.5">vs State Avg</div>
+                      <div className="text-[10px] text-[var(--muted)] mb-0.5">vs State Avg</div>
                       <div className={`text-lg font-bold font-mono ${isCheaper ? "text-emerald-400" : "text-red-400"}`}>
                         {isCheaper ? "-" : "+"}{Math.abs(diff).toFixed(1)}c
                       </div>
@@ -163,13 +163,13 @@ export default async function SuburbPage({ params }: Props) {
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <div className="flex-1 rounded-lg bg-white/5 px-2.5 py-1.5 text-center">
-                    <div className="text-[9px] text-[#5f6368]">Suburb Avg</div>
-                    <div className="text-xs font-bold text-white font-mono">{fuel.average.toFixed(1)}c</div>
+                  <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2.5 py-1.5 text-center">
+                    <div className="text-[9px] text-[var(--muted)]">Suburb Avg</div>
+                    <div className="text-xs font-bold text-[var(--foreground)] font-mono">{fuel.average.toFixed(1)}c</div>
                   </div>
-                  <div className="flex-1 rounded-lg bg-white/5 px-2.5 py-1.5 text-center">
-                    <div className="text-[9px] text-[#5f6368]">State Avg</div>
-                    <div className="text-xs font-bold text-white font-mono">{fuel.stateAverage.toFixed(1)}c</div>
+                  <div className="flex-1 rounded-lg bg-[var(--subtle)] px-2.5 py-1.5 text-center">
+                    <div className="text-[9px] text-[var(--muted)]">State Avg</div>
+                    <div className="text-xs font-bold text-[var(--foreground)] font-mono">{fuel.stateAverage.toFixed(1)}c</div>
                   </div>
                 </div>
               </div>
@@ -179,19 +179,19 @@ export default async function SuburbPage({ params }: Props) {
 
         {/* All stations */}
         <div className="mb-8">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-bold text-[var(--foreground)] uppercase tracking-wider mb-3">
             All Stations in {display}
           </h2>
           <SuburbPageClient stations={suburbStations} />
         </div>
 
         {/* SEO content */}
-        <div className="border-t border-white/5 pt-6 mb-6 space-y-4">
+        <div className="border-t border-[var(--subtle-border)] pt-6 mb-6 space-y-4">
           <div>
-            <h2 className="text-base font-bold text-white mb-2">
+            <h2 className="text-base font-bold text-[var(--foreground)] mb-2">
               Cheapest Petrol in {display} Today
             </h2>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
               Looking for cheap fuel in {display}? PetrolSaver compares petrol prices
               at {totalStations} fuel station{totalStations !== 1 ? "s" : ""} in {display} —
               updated every 24 hours from government data.
@@ -204,31 +204,31 @@ export default async function SuburbPage({ params }: Props) {
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">
+            <h3 className="text-sm font-bold text-[var(--foreground)] mb-1">
               How to Find the Best Fuel Prices Near {display}
             </h3>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
-              Use the <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">PetrolSaver map</a> to
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
+              Use the <a href="/" className="text-[var(--accent-text)] hover:text-[var(--foreground)]">PetrolSaver map</a> to
               find the cheapest servo near you. Unlike other fuel comparison apps, PetrolSaver calculates
-              the <strong className="text-white">true cost</strong> of filling up — factoring in the fuel
+              the <strong className="text-[var(--foreground)]">true cost</strong> of filling up — factoring in the fuel
               you&apos;d burn driving to a cheaper station, so you know if the trip is actually worth it.
               Filter by Unleaded 91, Premium 95, Premium 98, Diesel, E10, or LPG.
             </p>
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-white mb-1">
+            <h3 className="text-sm font-bold text-[var(--foreground)] mb-1">
               {display} Fuel Price Comparison
             </h3>
-            <p className="text-sm text-[#9aa0a6] leading-relaxed">
+            <p className="text-sm text-[var(--muted)] leading-relaxed">
               The table above shows all {totalStations} petrol stations in {display} ranked by price,
               cheapest first. Click any station to see its price history, all fuel types, and how it
               compares to the state average. You can also{" "}
-              <a href="/prices" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+              <a href="/prices" className="text-[var(--accent-text)] hover:text-[var(--foreground)]">
                 browse fuel prices by suburb
               </a>{" "}
               across VIC & NSW, or check the latest prices on our{" "}
-              <a href="/" className="text-[#8ab4f8] hover:text-[#aecbfa]">
+              <a href="/" className="text-[var(--accent-text)] hover:text-[var(--foreground)]">
                 interactive fuel price map
               </a>.
             </p>
@@ -241,13 +241,13 @@ export default async function SuburbPage({ params }: Props) {
         </div>
 
         {/* Attribution */}
-        <div className="pb-8 text-center text-[10px] text-[#5f6368]">
+        <div className="pb-8 text-center text-[10px] text-[var(--muted)]">
           Data from{" "}
-          <a href="https://www.service.vic.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.service.vic.gov.au" className="text-[var(--accent-text)]" target="_blank" rel="noopener noreferrer">
             Service Victoria
           </a>
           {" and "}
-          <a href="https://www.transport.nsw.gov.au" className="text-[#8ab4f8]" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.transport.nsw.gov.au" className="text-[var(--accent-text)]" target="_blank" rel="noopener noreferrer">
             Transport for NSW
           </a>
         </div>
