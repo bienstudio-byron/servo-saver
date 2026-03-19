@@ -524,8 +524,8 @@ function MobileFilterChips({
 
   return (
     <div ref={wrapperRef}>
-      {/* Pills row */}
-      <div className="flex gap-1.5">
+      {/* Pills row — scrollable on mobile */}
+      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
         <motion.button
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
