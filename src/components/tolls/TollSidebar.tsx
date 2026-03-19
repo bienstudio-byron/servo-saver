@@ -261,8 +261,8 @@ export default function TollSidebar() {
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
       className="w-full md:flex-1 md:rounded-none border-r border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl overflow-hidden flex flex-col"
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 shrink-0 border-b border-[var(--subtle-border)]">
+      {/* Header — desktop only (mobile uses tab bar) */}
+      <div className="hidden md:flex items-center gap-2 px-4 py-3 shrink-0 border-b border-[var(--subtle-border)]">
         <img src="/logos/nav-icon.png" alt="" className="h-6 w-6" />
         <span className="text-sm font-bold text-[var(--foreground)]">Toll<span className="text-[#4285f4]">Saver</span></span>
         <span className="text-[10px] text-[var(--muted)] truncate ml-auto">{locationName || ""}</span>

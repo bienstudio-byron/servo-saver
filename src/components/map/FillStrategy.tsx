@@ -1041,10 +1041,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           className="shrink-0 w-full cursor-pointer md:hidden"
         >
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[var(--subtle-border)]">
-            <img src="/logos/nav-icon.png" alt="PetrolSaver" className="h-6 w-6 shrink-0" />
             <div className="min-w-0 flex-1 text-left">
-              <span className="text-sm font-bold text-[var(--foreground)]">Petrol<span className="text-[#4285f4]">Saver</span></span>
-              <div className="text-[10px] text-[var(--muted)] truncate flex items-center gap-0.5">
+              <div className="text-[11px] text-[var(--muted)] truncate flex items-center gap-0.5">
                 <span className="truncate">
                   {tripMode === "trip" && tripDestination
                     ? `Trip to ${tripDestination.name}`

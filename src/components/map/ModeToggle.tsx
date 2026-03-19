@@ -507,7 +507,7 @@ function MobileFilterChips({
     return () => clearTimeout(timer);
   }, [hasInteracted]);
 
-  const handleOpen = (key: "fuel" | "tank" | "brands") => {
+  const handleOpen = (key: "fuel" | "tank" | "brands" | "time") => {
     setHasInteracted(true);
     try { localStorage.setItem("petrolsaver-filters-used", "1"); } catch {}
     setOpen(open === key ? null : key);
