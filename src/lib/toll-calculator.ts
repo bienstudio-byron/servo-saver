@@ -6,12 +6,6 @@ import {
   TollSegment,
 } from "@/types/toll";
 
-const CONSUMPTION_MULTIPLIER = { toll: 0.9, free: 1.2 } as const;
-const TRAFFIC_MULTIPLIERS = {
-  peak: { free: 1.6, toll: 1.15 },
-  offPeak: { free: 1.0, toll: 1.0 },
-  weekend: { free: 1.0, toll: 1.0 },
-} as const;
 const WEEKS_PER_YEAR = 52;
 
 export function getCurrentTimePeriod(): "peak" | "offPeak" | "weekend" {
@@ -23,41 +17,37 @@ export function getCurrentTimePeriod(): "peak" | "offPeak" | "weekend" {
   return "offPeak";
 }
 
-function adjustDuration(
-  baseDuration: number,
-  period: "peak" | "offPeak" | "weekend",
-  routeType: "toll" | "free"
-): number {
-  const multipliers = TRAFFIC_MULTIPLIERS[period];
-  return Math.round(baseDuration * multipliers[routeType]);
-}
-
+/**
+ * Fuel cost: simple and honest.
+ * distance × consumption × price. No route-type multiplier.
+ * The distance difference between routes IS the cost difference.
+ */
 function calculateFuelCost(
   distanceKm: number,
   consumptionL100: number,
-  fuelPriceCents: number,
-  routeType: "toll" | "free"
+  fuelPriceCents: number
 ): number {
-  const multiplier = CONSUMPTION_MULTIPLIER[routeType];
-  const litres = (distanceKm / 100) * consumptionL100 * multiplier;
+  const litres = (distanceKm / 100) * consumptionL100;
   return (litres * fuelPriceCents) / 100;
 }
 
+/**
+ * Travel time: use ORS duration directly.
+ * ORS already factors in road types and speed limits.
+ * No artificial multipliers — we show the routing engine's estimate as-is.
+ */
 export function calculateRouteCost(
   route: RouteData,
   tollCents: number,
   settings: UserSettings
 ): RouteCost {
-  const routeType = route.isTollRoute ? "toll" : "free";
-  const adjustedDuration = adjustDuration(route.duration, settings.timePeriod, routeType);
   const fuelCost = calculateFuelCost(
     route.distance,
     settings.fuelConsumption,
-    settings.fuelPriceCentsPerLitre,
-    routeType
+    settings.fuelPriceCentsPerLitre
   );
   const tollCost = tollCents / 100;
-  const timeCost = (adjustedDuration / 60) * settings.timeValuePerHour;
+  const timeCost = (route.duration / 60) * settings.timeValuePerHour;
   const totalCost = fuelCost + tollCost + timeCost;
 
   return {
@@ -65,7 +55,7 @@ export function calculateRouteCost(
     tollCost: Math.round(tollCost * 100) / 100,
     timeCost: Math.round(timeCost * 100) / 100,
     totalCost: Math.round(totalCost * 100) / 100,
-    adjustedDuration,
+    adjustedDuration: route.duration,
   };
 }
 
@@ -76,16 +66,12 @@ export function compareRoutes(
   settings: UserSettings,
   tollSource: "tfnsw-live" | "static" = "static"
 ): ComparisonResult {
-  const hasTolls = tollSegments.length > 0;
   const totalTollCents = tollSegments.reduce(
-    (sum, seg) => sum + seg.pricing[settings.timePeriod],
+    (sum, seg) => sum + (seg.pricing[settings.timePeriod] ?? seg.pricing.peak ?? 0),
     0
   );
 
-  // When no tolls detected, treat both as the same route type (no consumption bias)
-  const effectiveTollRoute = hasTolls ? tollRoute : { ...tollRoute, isTollRoute: false };
-
-  const tollCost = calculateRouteCost(effectiveTollRoute, totalTollCents, settings);
+  const tollCost = calculateRouteCost(tollRoute, totalTollCents, settings);
   const freeCost = calculateRouteCost(freeRoute, 0, settings);
   const savings = tollCost.totalCost - freeCost.totalCost;
   const timeDifference = freeCost.adjustedDuration - tollCost.adjustedDuration;
