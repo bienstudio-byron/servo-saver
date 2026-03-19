@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@bienstudio/ui"],
+  /* config options here */
 };
 
 export default nextConfig;

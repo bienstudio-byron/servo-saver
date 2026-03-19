@@ -1,7 +1,4 @@
 @import "tailwindcss";
-@import "@bienstudio/ui/globals.css";
-
-@source "../../../node_modules/@bienstudio/ui/src/**/*.{ts,tsx}";
 
 /* Dark theme (default) */
 :root, .dark {
