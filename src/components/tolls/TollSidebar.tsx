@@ -431,7 +431,7 @@ export default function TollSidebar() {
                   )}
                 </SettingsChip>
 
-                <SettingsChip label="" value={`${tollFuelType} ${settings.fuelPriceCentsPerLitre}c`} active={!!fuelData}>
+                <SettingsChip label={fuelData ? "\u{26A1}" : ""} value={`${tollFuelType} ${settings.fuelPriceCentsPerLitre}c`} active={!!fuelData}>
                   {(close) => (
                     <div className="p-1">
                       {FUEL_TYPES.map((type) => {
@@ -512,7 +512,7 @@ export default function TollSidebar() {
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${comparison.freeCost.adjustedDuration} min`} sub={timeDiffAbs > 0 && freeIsBetter ? `+${timeDiffAbs} min vs toll` : undefined} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label="Fuel" value={`$${comparison.freeCost.fuelCost.toFixed(2)}`} sub={`${comparison.freeRoute.distance}km × ${vehicle.consumption}L × 1.2 suburban`} />
+                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label="Fuel" value={`$${comparison.freeCost.fuelCost.toFixed(2)}`} sub={`${comparison.freeRoute.distance}km × ${vehicle.consumption}L × ${settings.fuelPriceCentsPerLitre}c/L × 1.2 suburban`} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<DollarSign className="h-3 w-3" strokeWidth={2} />} label="Tolls" value="$0.00" color="text-[var(--tier-cheap)]" />
                       {settings.timeValuePerHour > 0 && (<><div className="border-t border-[var(--subtle-border)]/50" /><Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time cost" value={`$${comparison.freeCost.timeCost.toFixed(2)}`} sub={`${comparison.freeCost.adjustedDuration}min × $${settings.timeValuePerHour}/hr`} /></>)}
@@ -530,7 +530,7 @@ export default function TollSidebar() {
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${comparison.tollCost.adjustedDuration} min`} sub={timeDiffAbs > 0 && !freeIsBetter ? `${timeDiffAbs} min faster` : undefined} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label="Fuel" value={`$${comparison.tollCost.fuelCost.toFixed(2)}`} sub={`${comparison.tollRoute.distance}km × ${vehicle.consumption}L × 0.9 highway`} />
+                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label="Fuel" value={`$${comparison.tollCost.fuelCost.toFixed(2)}`} sub={`${comparison.tollRoute.distance}km × ${vehicle.consumption}L × ${settings.fuelPriceCentsPerLitre}c/L × 0.9 highway`} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<TriangleAlert className="h-3 w-3" strokeWidth={2} />} label="Tolls" value={`$${comparison.tollCost.tollCost.toFixed(2)}`} color="text-[var(--tier-exp)]" />
                       {settings.timeValuePerHour > 0 && (<><div className="border-t border-[var(--subtle-border)]/50" /><Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time cost" value={`$${comparison.tollCost.timeCost.toFixed(2)}`} sub={`${comparison.tollCost.adjustedDuration}min × $${settings.timeValuePerHour}/hr`} /></>)}
@@ -555,9 +555,19 @@ export default function TollSidebar() {
 
                     {/* Toll breakdown + source */}
                     <TollBreakdown segments={comparison.tollBreakdown} timePeriod={settings.timePeriod} />
-                    <div className="text-[9px] text-[var(--muted)] flex items-center gap-1">
-                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${comparison.tollSource === "tfnsw-live" ? "bg-[var(--tier-cheap)]" : "bg-[var(--tier-mid)]"}`} />
-                      {comparison.tollSource === "tfnsw-live" ? "Live pricing via Transport for NSW" : "Static pricing · Verified Mar 2026"}
+
+                    {/* Data sources */}
+                    <div className="flex flex-col gap-1 text-[9px] text-[var(--muted)]">
+                      {fuelData && (
+                        <div className="flex items-center gap-1">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--tier-cheap)]" />
+                          Fuel price: live {tollFuelType} avg near you via PetrolSaver ({fuelData.avg.toFixed(1)}c/L)
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${comparison.tollSource === "tfnsw-live" ? "bg-[var(--tier-cheap)]" : "bg-[var(--tier-mid)]"}`} />
+                        {comparison.tollSource === "tfnsw-live" ? "Tolls: live via Transport for NSW" : "Tolls: static pricing · Verified Mar 2026"}
+                      </div>
                     </div>
                   </>
                 )}
