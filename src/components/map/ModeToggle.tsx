@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, X, Droplets, Gauge, ChevronDown, Store, Check, MapPin, Pencil } from "lucide-react";
+import { Search, X, Droplets, Gauge, ChevronDown, Store, Check, MapPin, Pencil, Clock } from "lucide-react";
 import { useFuelStore } from "@/stores/fuel-store";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 import BrandLogo from "@/components/shared/BrandLogo";
@@ -464,7 +464,9 @@ function MobileFilterChips({
   rangeKm: number; setRangeKm: (km: number) => void;
   availableBrands: string[]; selectedBrands: string[]; setSelectedBrands: (b: string[]) => void; toggleBrand: (b: string) => void;
 }) {
-  const [open, setOpen] = useState<"fuel" | "tank" | "brands" | null>(null);
+  const [open, setOpen] = useState<"fuel" | "tank" | "brands" | "time" | null>(null);
+  const timeValuePerHour = useFuelStore((s) => s.timeValuePerHour);
+  const setTimeValuePerHour = useFuelStore((s) => s.setTimeValuePerHour);
   const [brandQuery, setBrandQuery] = useState("");
   const brandInputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -556,6 +558,17 @@ function MobileFilterChips({
           <Store className="h-3.5 w-3.5" strokeWidth={2} />
           Brands ·{brandsLabel}
           <ChevronDown className={`h-3 w-3 transition-transform ${open === "brands" ? "rotate-180" : ""}`} strokeWidth={2} />
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.6, type: "spring", damping: 20 }}
+          onClick={() => handleOpen("time")}
+          className={chipClass(open === "time", timeValuePerHour > 0)}
+        >
+          <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+          Time ·{timeValuePerHour === 0 ? "off" : `$${timeValuePerHour}/hr`}
+          <ChevronDown className={`h-3 w-3 transition-transform ${open === "time" ? "rotate-180" : ""}`} strokeWidth={2} />
         </motion.button>
       </div>
 
@@ -673,6 +686,27 @@ function MobileFilterChips({
                     <div className="px-4 py-3 text-xs text-[var(--muted)] text-center">No brands found</div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {open === "time" && (
+              <div>
+                <div className="px-4 py-2.5 text-[10px] text-[var(--muted)] border-b border-[var(--subtle-border)]">
+                  What&apos;s your time worth? Factors detour time into station recommendations.
+                </div>
+                {[0, 20, 30, 40, 50, 75, 100].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => { setTimeValuePerHour(n); setOpen(null); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors cursor-pointer ${
+                      timeValuePerHour === n
+                        ? "bg-[var(--subtle)] text-[var(--foreground)] font-semibold"
+                        : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"
+                    }`}
+                  >
+                    {n === 0 ? "Ignore time cost" : `$${n}/hr`}
+                  </button>
+                ))}
               </div>
             )}
           </motion.div>

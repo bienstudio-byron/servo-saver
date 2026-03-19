@@ -396,6 +396,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const searchOrigin = useFuelStore((s) => s.searchOrigin);
   const setSearchOrigin = useFuelStore((s) => s.setSearchOrigin);
   const origin = (tripMode === "trip" && tripOrigin) ? { lat: tripOrigin.lat, lng: tripOrigin.lng } : (searchOrigin ?? userLocation);
+  const timeValuePerHour = useFuelStore((s) => s.timeValuePerHour);
 
   // Available brands for filter
   const availableBrands = useMemo(() => {
@@ -575,15 +576,16 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       return Math.max(0, station.distance - closest.distance) * 2;
     };
 
-    // Calculate true cost for each candidate: price + detour fuel cost
+    // Calculate true cost for each candidate: price + detour fuel cost + time cost
     const withTrueCost = candidates.map((c) => {
       const detourKm = calcDetour(c);
       const detourMins = Math.round((detourKm / AVG_CITY_SPEED) * 60);
       const fuelCost = ((detourKm / 100) * DEFAULT_CONSUMPTION * c.price) / 100;
-      const savings = ((closest.price - c.price) * litresFillingUp) / 100 - fuelCost;
-      // True cost per litre: price + detour fuel cost spread across litres filling
+      const timeCost = (detourMins / 60) * timeValuePerHour;
+      const savings = ((closest.price - c.price) * litresFillingUp) / 100 - fuelCost - timeCost;
+      // True cost per litre: price + (detour fuel + time cost) spread across litres filling
       const trueCostPerLitre = litresFillingUp > 0
-        ? c.price + (fuelCost / litresFillingUp) * 100
+        ? c.price + ((fuelCost + timeCost) / litresFillingUp) * 100
         : c.price;
       return { ...c, detourKm, detourMins, netSavings: savings, trueCostPerLitre };
     });
@@ -884,6 +886,12 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 <span className="text-[var(--muted)]">Fuel for detour</span>
                 <span className="text-[var(--tier-exp)] font-mono">-${detourFuelCost.toFixed(2)}</span>
               </div>
+              {timeValuePerHour > 0 && opt.detourMins > 0 && (
+                <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)]/50">
+                  <span className="text-[var(--muted)]">Time cost ({opt.detourMins}min × ${timeValuePerHour}/hr)</span>
+                  <span className="text-[var(--tier-exp)] font-mono">-${((opt.detourMins / 60) * timeValuePerHour).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between px-2.5 py-1.5 border-t border-[var(--subtle-border)]/50">
                 <span className="text-[var(--muted)]">Price savings</span>
                 <span className={`font-mono ${rawSavings >= 0 ? "text-[var(--tier-cheap)]" : "text-[var(--tier-exp)]"}`}>{rawSavings >= 0 ? "+" : "-"}${Math.abs(rawSavings).toFixed(2)}</span>

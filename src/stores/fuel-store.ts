@@ -43,6 +43,8 @@ interface FuelStore {
   setTripPlannerOpen: (open: boolean) => void;
   tripOrigin: { lat: number; lng: number; name: string } | null;
   setTripOrigin: (origin: { lat: number; lng: number; name: string } | null) => void;
+  timeValuePerHour: number;
+  setTimeValuePerHour: (value: number) => void;
 }
 
 export const useFuelStore = create<FuelStore>((set) => ({
@@ -91,4 +93,6 @@ export const useFuelStore = create<FuelStore>((set) => ({
   setTripPlannerOpen: (open) => set({ tripPlannerOpen: open }),
   tripOrigin: null,
   setTripOrigin: (origin) => set({ tripOrigin: origin }),
+  timeValuePerHour: 0,
+  setTimeValuePerHour: (value) => set({ timeValuePerHour: value }),
 }));
