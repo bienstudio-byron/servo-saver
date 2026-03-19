@@ -1,0 +1,32 @@
+{
+  "id": "gateway-motorway",
+  "name": "Gateway Motorway",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "gw-murarrie1", "name": "Gateway Motorway, Murarrie toll point (northbound)", "position": { "lat": -27.4509945, "lng": 153.1041082 } },
+    { "id": "gw-murarrie2", "name": "Gateway Motorway, Murarrie toll point (southbound)", "position": { "lat": -27.4511815, "lng": 153.1047569 } },
+    { "id": "gw-kuraby1", "name": "Gateway Motorway South, Kuraby toll point", "position": { "lat": -27.6081702, "lng": 153.0821211 } },
+    { "id": "gw-kuraby2", "name": "Gateway Motorway South, Kuraby toll point", "position": { "lat": -27.6086368, "lng": 153.0820440 } },
+    { "id": "gw-compton1", "name": "Gateway Motorway South, Compton Rd toll point", "position": { "lat": -27.6150639, "lng": 153.0792297 } },
+    { "id": "gw-compton2", "name": "Gateway Motorway South, Compton Rd toll point", "position": { "lat": -27.6156908, "lng": 153.0785171 } }
+  ],
+  "segments": [
+    {
+      "id": "gw-north",
+      "name": "Gateway Motorway North (Murarrie toll point)",
+      "entryGantry": "gw-murarrie1",
+      "exitGantry": "gw-murarrie2",
+      "pricing": { "peak": 578, "offPeak": 578, "weekend": 578 },
+      "notes": "Flat toll $5.78 per toll point. Tolls adjusted 1 July annually (CPI)."
+    },
+    {
+      "id": "gw-south-kuraby",
+      "name": "Gateway Motorway South (Kuraby/Compton Rd toll point)",
+      "entryGantry": "gw-kuraby1",
+      "exitGantry": "gw-compton1",
+      "pricing": { "peak": 341, "offPeak": 341, "weekend": 341 },
+      "notes": "Flat toll $3.41 per toll point."
+    }
+  ]
+}

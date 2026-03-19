@@ -1,0 +1,60 @@
+{
+  "id": "westconnex-m8",
+  "name": "WestConnex M8 / M5 East",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "tp31a", "name": "M8, St Peters interchange", "ref": "TP31A", "position": { "lat": -33.8754645, "lng": 151.1341391 } },
+    { "id": "tp31b", "name": "M8, St Peters interchange", "ref": "TP31B", "position": { "lat": -33.8755010, "lng": 151.1344275 } },
+    { "id": "tp33a", "name": "M8 tunnel (Arncliffe)", "ref": "TP33A", "position": { "lat": -33.8771928, "lng": 151.1651537 } },
+    { "id": "tp33b", "name": "M8 tunnel (Arncliffe)", "ref": "TP33B", "position": { "lat": -33.8792109, "lng": 151.1624029 } },
+    { "id": "tp37a", "name": "M8, Arncliffe interchange", "ref": "TP37A", "position": { "lat": -33.8800905, "lng": 151.1634973 } },
+    { "id": "tp37b", "name": "M8, Arncliffe interchange", "ref": "TP37B", "position": { "lat": -33.8770130, "lng": 151.1642483 } },
+    { "id": "tp39a", "name": "M8, near Bexley Rd", "ref": "TP39A", "position": { "lat": -33.9133215, "lng": 151.1805742 } },
+    { "id": "tp39b", "name": "M8, near Bexley Rd", "ref": "TP39B", "position": { "lat": -33.9132057, "lng": 151.1802520 } },
+    { "id": "tp41a", "name": "M8, Beverly Hills", "ref": "TP41A", "position": { "lat": -33.9158072, "lng": 151.1750571 } },
+    { "id": "tp41b", "name": "M8, Beverly Hills", "ref": "TP41B", "position": { "lat": -33.9160977, "lng": 151.1753342 } },
+    { "id": "tp42a", "name": "M8, King Georges Rd interchange", "ref": "TP42A", "position": { "lat": -33.9384386, "lng": 151.1539118 } },
+    { "id": "tp42b", "name": "M8, King Georges Rd interchange", "ref": "TP42B", "position": { "lat": -33.9371557, "lng": 151.1524056 } },
+    { "id": "tp42c", "name": "M8, King Georges Rd interchange", "ref": "TP42C", "position": { "lat": -33.9384954, "lng": 151.1538491 } },
+    { "id": "tp42d", "name": "M8, King Georges Rd interchange", "ref": "TP42D", "position": { "lat": -33.9374260, "lng": 151.1522167 } },
+    { "id": "tp43", "name": "M5 East, near King Georges Rd", "ref": "TP43", "position": { "lat": -33.9361440, "lng": 151.1494205 } },
+    { "id": "tp44a", "name": "M5 East tunnel (Bexley North)", "ref": "TP44A", "position": { "lat": -33.9362243, "lng": 151.1093092 } },
+    { "id": "tp44b", "name": "M5 East tunnel (Bexley North)", "ref": "TP-44-B", "position": { "lat": -33.9364752, "lng": 151.1093445 } },
+    { "id": "tp45a", "name": "M5 East tunnel (Kingsgrove)", "ref": "TP45A", "position": { "lat": -33.9374236, "lng": 151.1028246 } },
+    { "id": "tp45b", "name": "M5 East tunnel (Kingsgrove)", "ref": "TP45B", "position": { "lat": -33.9376274, "lng": 151.1028281 } },
+    { "id": "tp46a", "name": "M5 East, Kingsgrove Rd interchange", "ref": "TP46A", "position": { "lat": -33.9428824, "lng": 151.0780923 } },
+    { "id": "tp46b", "name": "M5 East, Kingsgrove Rd interchange", "ref": "TP46B", "position": { "lat": -33.9426835, "lng": 151.0779347 } },
+    { "id": "tp46c", "name": "M5 East, Kingsgrove Rd interchange", "ref": "TP46C", "position": { "lat": -33.9429582, "lng": 151.0781219 } },
+    { "id": "tp46d", "name": "M5 East, Kingsgrove Rd interchange", "ref": "TP46D", "position": { "lat": -33.9432053, "lng": 151.0781935 } }
+  ],
+  "segments": [
+    {
+      "id": "m8-full",
+      "name": "M8 (St Peters to Beverly Hills)",
+      "entryGantry": "tp31a",
+      "exitGantry": "tp42a",
+      "distanceBased": true,
+      "pricing": { "peak": 915, "offPeak": 915, "weekend": 915, "flagFall": 180, "perKmRate": 67, "maxToll": 915 },
+      "notes": "Distance-based: $1.80 flag fall + $0.6667/km, max $9.15 for cars."
+    },
+    {
+      "id": "m5e-full",
+      "name": "M5 East (Beverly Hills to Kingsgrove)",
+      "entryGantry": "tp43",
+      "exitGantry": "tp46a",
+      "distanceBased": true,
+      "pricing": { "peak": 915, "offPeak": 915, "weekend": 915, "flagFall": 180, "perKmRate": 67, "maxToll": 915 },
+      "notes": "Distance-based: $1.80 flag fall + $0.6667/km, max $9.15 for cars."
+    },
+    {
+      "id": "wcx-extended",
+      "name": "WestConnex Extended Trip (16+ km across M4/M4-M5/M8)",
+      "entryGantry": "tp01a",
+      "exitGantry": "tp46a",
+      "distanceBased": true,
+      "pricing": { "peak": 1274, "offPeak": 1274, "weekend": 1274, "flagFall": 180, "perKmRate": 67, "maxToll": 1274 },
+      "notes": "Extended multi-stage WestConnex trip cap: $1.80 + $0.6667/km, capped at $12.74 for 16+ km."
+    }
+  ]
+}

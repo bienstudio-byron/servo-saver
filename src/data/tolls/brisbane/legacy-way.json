@@ -1,0 +1,20 @@
+{
+  "id": "legacy-way",
+  "name": "Legacy Way",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "lw-west1", "name": "Legacy Way Tunnel, west portal toll point (Toowong)", "position": { "lat": -27.4805734, "lng": 152.9735926 } },
+    { "id": "lw-west2", "name": "Legacy Way Tunnel, west portal toll point (Toowong)", "position": { "lat": -27.4805040, "lng": 152.9735490 } }
+  ],
+  "segments": [
+    {
+      "id": "lw-full",
+      "name": "Legacy Way (full length)",
+      "entryGantry": "lw-west1",
+      "exitGantry": "lw-west2",
+      "pricing": { "peak": 700, "offPeak": 700, "weekend": 700 },
+      "notes": "Flat toll $7.00 for cars. Tolls adjusted 1 July annually (CPI). 4.6km tunnel connecting Western Freeway to Inner City Bypass."
+    }
+  ]
+}

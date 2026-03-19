@@ -437,8 +437,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   useEffect(() => {
     if (!origin) return;
     fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${origin.lat}&lon=${origin.lng}`,
-      { headers: { "User-Agent": "PetrolSaver/1.0" } }
+      `/api/geocode?mode=reverse&lat=${origin.lat}&lng=${origin.lng}`
     )
       .then((r) => r.json())
       .then((data) => {

@@ -9,6 +9,8 @@ import FuelPickerOverlay from "@/components/shared/FuelPickerOverlay";
 import AdSlot from "@/components/shared/AdSlot";
 import AlertSignup from "@/components/shared/AlertSignup";
 import InsightBanner from "@/components/shared/InsightBanner";
+import ModeTabBar from "@/components/shared/ModeTabBar";
+import TollMode from "@/components/tolls/TollMode";
 import { useFuelStore } from "@/stores/fuel-store";
 import { PriceThresholdsProvider } from "@/stores/price-context";
 import type { StationWithPrices } from "@/types/fuel";
@@ -24,7 +26,7 @@ export default function HomePage() {
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAlerts, setShowAlerts] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations } = useFuelStore();
+  const { selectedFuelType, setSelectedFuelType, selectedStation, setSelectedStation, setAllStations, mode } = useFuelStore();
 
   const setRangeKm = useFuelStore((s) => s.setRangeKm);
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
@@ -178,22 +180,27 @@ export default function HomePage() {
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
       {/* Everything is fixed — nothing in document flow */}
       <div className="fixed inset-0 flex flex-col" style={{ zIndex: 0 }}>
-        {/* Insight ticker banner */}
-        <InsightBanner />
-        {/* Map fills available space */}
+        {/* Mode tab bar */}
+        <ModeTabBar />
+        {/* Insight ticker banner — fuel mode only */}
+        {mode !== "tolls" && <InsightBanner />}
+        {/* Main content */}
         <div className="relative flex-1 min-h-0">
-          <FuelMap
-            stations={mounted ? filteredStations : []}
-            selectedFuelType={selectedFuelType}
-            loading={loading || !mounted}
-          />
+          {mode === "tolls" ? (
+            <TollMode />
+          ) : (
+            <FuelMap
+              stations={mounted ? filteredStations : []}
+              selectedFuelType={selectedFuelType}
+              loading={loading || !mounted}
+            />
+          )}
         </div>
-
       </div>
 
-      {/* Station modal */}
+      {/* Station modal — fuel mode only */}
       <AnimatePresence>
-        {selectedStation && (
+        {mode !== "tolls" && selectedStation && (
           <StationModal
             station={selectedStation}
             allStations={stations}

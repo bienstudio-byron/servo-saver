@@ -1,0 +1,35 @@
+{
+  "id": "westconnex-m4",
+  "name": "WestConnex M4",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "tp01a", "name": "M4 WestConnex, Church St entry (Parramatta)", "ref": "TP01A", "position": { "lat": -33.8271161, "lng": 151.0033485 } },
+    { "id": "tp01b", "name": "M4 WestConnex, Church St entry (Parramatta)", "ref": "TP01B", "position": { "lat": -33.8272200, "lng": 151.0033746 } },
+    { "id": "tp02a", "name": "M4 WestConnex, near James Ruse Dr", "ref": "TP02A", "position": { "lat": -33.8287384, "lng": 151.0202001 } },
+    { "id": "tp02b", "name": "M4 WestConnex, near James Ruse Dr", "ref": "TP02B", "position": { "lat": -33.8287781, "lng": 151.0202720 } },
+    { "id": "tp03", "name": "M4 WestConnex, near Silverwater Rd", "ref": "TP03", "position": { "lat": -33.8310247, "lng": 151.0209682 } },
+    { "id": "tp04", "name": "M4 WestConnex, near Hill Rd (Homebush)", "ref": "TP04", "position": { "lat": -33.8317550, "lng": 151.0204574 } },
+    { "id": "tp05", "name": "M4 WestConnex, Concord Rd (Strathfield)", "ref": "TP05", "position": { "lat": -33.8416140, "lng": 151.0423084 } },
+    { "id": "tp06", "name": "M4 WestConnex, Concord Rd (Strathfield)", "ref": "TP06", "position": { "lat": -33.8419829, "lng": 151.0418254 } },
+    { "id": "tp07", "name": "M4 WestConnex, Parramatta Rd (Homebush)", "ref": "TP07", "position": { "lat": -33.8428595, "lng": 151.0449711 } },
+    { "id": "tp08", "name": "M4 WestConnex, Parramatta Rd (Homebush)", "ref": "TP08", "position": { "lat": -33.8438601, "lng": 151.0453791 } },
+    { "id": "tp09", "name": "M4 WestConnex tunnel, near Underwood Rd", "ref": "TP09", "position": { "lat": -33.8489764, "lng": 151.0531246 } },
+    { "id": "tp10", "name": "M4 WestConnex tunnel", "ref": "TP10", "position": { "lat": -33.8513011, "lng": 151.0564362 } },
+    { "id": "tp11", "name": "M4 WestConnex tunnel", "ref": "TP11", "position": { "lat": -33.8511659, "lng": 151.0546963 } },
+    { "id": "tp12", "name": "M4 WestConnex tunnel, near Wattle St", "ref": "TP12", "position": { "lat": -33.8562821, "lng": 151.0689108 } },
+    { "id": "tp13", "name": "M4 WestConnex tunnel, near Wattle St", "ref": "TP13", "position": { "lat": -33.8568505, "lng": 151.0678851 } },
+    { "id": "tp14b", "name": "M4 WestConnex tunnel, near Wattle St", "ref": "TP14B", "position": { "lat": -33.8567116, "lng": 151.0679947 } }
+  ],
+  "segments": [
+    {
+      "id": "m4-full",
+      "name": "M4 WestConnex (Parramatta to Haberfield)",
+      "entryGantry": "tp01a",
+      "exitGantry": "tp14b",
+      "distanceBased": true,
+      "pricing": { "peak": 1079, "offPeak": 1079, "weekend": 1079, "flagFall": 180, "perKmRate": 67, "maxToll": 1079 },
+      "notes": "Distance-based: $1.80 flag fall + $0.6667/km, max $10.79 for cars. No time-of-day variation."
+    }
+  ]
+}

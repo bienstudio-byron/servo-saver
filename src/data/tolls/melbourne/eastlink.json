@@ -1,0 +1,43 @@
+{
+  "id": "eastlink",
+  "name": "EastLink",
+  "operator": "ConnectEast",
+  "gantries": [
+    { "id": "el-g1", "name": "Ringwood Bypass, near Springvale Rd (Donvale)", "position": { "lat": -37.8002871, "lng": 145.1902587 } },
+    { "id": "el-g2", "name": "EastLink, near Maroondah Hwy (Ringwood North)", "position": { "lat": -37.8239964, "lng": 145.2174882 } },
+    { "id": "el-g3", "name": "EastLink, near Canterbury Rd (Heathmont)", "position": { "lat": -37.83938, "lng": 145.2177258 } },
+    { "id": "el-g4", "name": "EastLink, near Boronia Rd (Boronia)", "position": { "lat": -37.8546847, "lng": 145.214117 } },
+    { "id": "el-g5", "name": "EastLink, near Burwood Hwy (Wantirna South)", "position": { "lat": -37.8690109, "lng": 145.2113819 } },
+    { "id": "el-g6", "name": "EastLink, near High St Rd (Scoresby)", "position": { "lat": -37.8865663, "lng": 145.2148897 } },
+    { "id": "el-g7", "name": "EastLink, near Ferntree Gully Rd (Rowville)", "position": { "lat": -37.9121579, "lng": 145.2161026 } },
+    { "id": "el-g8", "name": "EastLink, near Wellington Rd (Mulgrave)", "position": { "lat": -37.9314591, "lng": 145.2099698 } },
+    { "id": "el-g9", "name": "EastLink, near Police Rd (Endeavour Hills)", "position": { "lat": -37.9615327, "lng": 145.1986634 } },
+    { "id": "el-g10", "name": "EastLink, near Princes Hwy (Dandenong)", "position": { "lat": -37.9855964, "lng": 145.1931014 } },
+    { "id": "el-g11", "name": "EastLink, near Thompsons Rd (Lyndhurst)", "position": { "lat": -38.005737, "lng": 145.190092 } },
+    { "id": "el-g12", "name": "EastLink, near Cranbourne-Frankston Rd (Langwarrin)", "position": { "lat": -38.0544136, "lng": 145.1848269 } },
+    { "id": "el-g13", "name": "EastLink, near Baxter-Tooradin Rd (Baxter)", "position": { "lat": -38.086968, "lng": 145.1675177 } }
+  ],
+  "segments": [
+    {
+      "id": "el-ringwood-scoresby",
+      "name": "Ringwood → Scoresby",
+      "entryGantry": "el-g1",
+      "exitGantry": "el-g6",
+      "pricing": { "peak": 410, "offPeak": 310, "weekend": 250 }
+    },
+    {
+      "id": "el-scoresby-dandenong",
+      "name": "Scoresby → Dandenong",
+      "entryGantry": "el-g6",
+      "exitGantry": "el-g10",
+      "pricing": { "peak": 370, "offPeak": 280, "weekend": 220 }
+    },
+    {
+      "id": "el-dandenong-frankston",
+      "name": "Dandenong → Frankston",
+      "entryGantry": "el-g10",
+      "exitGantry": "el-g13",
+      "pricing": { "peak": 530, "offPeak": 400, "weekend": 310 }
+    }
+  ]
+}

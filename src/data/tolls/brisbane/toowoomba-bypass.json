@@ -1,0 +1,19 @@
+{
+  "id": "toowoomba-bypass",
+  "name": "Toowoomba Bypass",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "tb-g1", "name": "Toowoomba Bypass toll point (eastbound)", "position": { "lat": -27.6005100, "lng": 153.0054072 } }
+  ],
+  "segments": [
+    {
+      "id": "tb-full",
+      "name": "Toowoomba Bypass",
+      "entryGantry": "tb-g1",
+      "exitGantry": "tb-g1",
+      "pricing": { "peak": 288, "offPeak": 288, "weekend": 288 },
+      "notes": "Flat toll $2.88 for cars. Tolls adjusted 1 July annually (CPI)."
+    }
+  ]
+}

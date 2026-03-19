@@ -1,0 +1,32 @@
+{
+  "id": "harbour-bridge-tunnel",
+  "name": "Sydney Harbour Bridge & Tunnel",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "shb-g1", "name": "Sydney Harbour Bridge, southbound (Milsons Point)", "position": { "lat": -33.8401288, "lng": 151.2105288 } },
+    { "id": "shb-g2", "name": "Sydney Harbour Bridge, southbound lanes (Dawes Point)", "position": { "lat": -33.8424516, "lng": 151.2113596 } },
+    { "id": "sht-g1", "name": "Sydney Harbour Tunnel, southbound entry (Milsons Point)", "position": { "lat": -33.8365951, "lng": 151.2109323 } },
+    { "id": "sht-g2", "name": "Sydney Harbour Tunnel, southbound (Macquarie St end)", "position": { "lat": -33.8453446, "lng": 151.2121933 } }
+  ],
+  "segments": [
+    {
+      "id": "shb-south",
+      "name": "Harbour Bridge Southbound",
+      "direction": "southbound",
+      "entryGantry": "shb-g1",
+      "exitGantry": "shb-g2",
+      "pricing": { "peak": 441, "offPeak": 330, "weekend": 330, "night": 276 },
+      "notes": "Southbound only. Peak: 6:30-9:30am & 4-7pm weekdays. Off-peak: 9:30am-4pm weekdays & 8am-8pm weekends. Night: 7pm-6:30am weekdays & 8pm-8am weekends."
+    },
+    {
+      "id": "sht-south",
+      "name": "Harbour Tunnel Southbound",
+      "direction": "southbound",
+      "entryGantry": "sht-g1",
+      "exitGantry": "sht-g2",
+      "pricing": { "peak": 441, "offPeak": 330, "weekend": 330, "night": 276 },
+      "notes": "Southbound only. Same time-of-day pricing as bridge."
+    }
+  ]
+}

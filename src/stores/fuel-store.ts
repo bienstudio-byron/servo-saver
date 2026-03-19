@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { DEFAULT_FUEL_TYPE } from "@/lib/constants";
 import type { StationWithPrices } from "@/types/fuel";
 
-export type AppMode = "petrol" | "ev";
+export type AppMode = "petrol" | "ev" | "tolls";
 
 interface FuelStore {
   mode: AppMode;
@@ -47,12 +47,14 @@ interface FuelStore {
 
 export const useFuelStore = create<FuelStore>((set) => ({
   mode: "petrol" as AppMode,
-  setMode: (mode) => set({
+  setMode: (mode) => set((state) => ({
     mode,
-    selectedFuelType: mode === "ev" ? "DC" : DEFAULT_FUEL_TYPE,
-    selectedBrands: [],
-    allStations: [],
-  }),
+    // Only reset fuel-specific state when switching between petrol/ev, not tolls
+    ...(mode === "tolls" ? {} : {
+      selectedFuelType: mode === "ev" ? "DC" : DEFAULT_FUEL_TYPE,
+      selectedBrands: [],
+    }),
+  })),
   selectedFuelType: DEFAULT_FUEL_TYPE,
   setSelectedFuelType: (type) => set({ selectedFuelType: type }),
   selectedBrands: [],

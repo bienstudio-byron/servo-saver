@@ -1,0 +1,44 @@
+{
+  "id": "logan-motorway",
+  "name": "Logan Motorway",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "lm-heathwood1", "name": "Logan Motorway, Heathwood toll point (westbound)", "position": { "lat": -27.6378705, "lng": 152.9780700 } },
+    { "id": "lm-heathwood2", "name": "Logan Motorway, Heathwood toll point (eastbound)", "position": { "lat": -27.6379976, "lng": 152.9779447 } },
+    { "id": "lm-heathwood3", "name": "Logan Motorway, Heathwood toll point", "position": { "lat": -27.6425672, "lng": 152.9866407 } },
+    { "id": "lm-heathwood4", "name": "Logan Motorway, Heathwood toll point", "position": { "lat": -27.6404724, "lng": 152.9867121 } },
+    { "id": "lm-paradise1", "name": "Logan Motorway, Paradise Rd toll point", "position": { "lat": -27.6418139, "lng": 153.0129936 } },
+    { "id": "lm-paradise2", "name": "Logan Motorway, Paradise Rd toll point", "position": { "lat": -27.6426520, "lng": 153.0144501 } },
+    { "id": "lm-loganlea1", "name": "Logan Motorway, Loganlea toll point", "position": { "lat": -27.6665044, "lng": 153.1502639 } },
+    { "id": "lm-loganlea2", "name": "Logan Motorway, Loganlea toll point", "position": { "lat": -27.6666827, "lng": 153.1502417 } },
+    { "id": "lm-loganlea-rd1", "name": "Logan Motorway, Loganlea Rd toll point", "position": { "lat": -27.6657337, "lng": 153.1389851 } },
+    { "id": "lm-loganlea-rd2", "name": "Logan Motorway, Loganlea Rd toll point", "position": { "lat": -27.6651797, "lng": 153.1416038 } }
+  ],
+  "segments": [
+    {
+      "id": "lm-heathwood",
+      "name": "Logan Motorway (Heathwood toll point)",
+      "entryGantry": "lm-heathwood1",
+      "exitGantry": "lm-heathwood2",
+      "pricing": { "peak": 361, "offPeak": 361, "weekend": 361 },
+      "notes": "Flat toll $3.61 per toll point."
+    },
+    {
+      "id": "lm-paradise",
+      "name": "Logan Motorway (Paradise Rd toll point)",
+      "entryGantry": "lm-paradise1",
+      "exitGantry": "lm-paradise2",
+      "pricing": { "peak": 361, "offPeak": 361, "weekend": 361 },
+      "notes": "Flat toll $3.61 per toll point."
+    },
+    {
+      "id": "lm-loganlea",
+      "name": "Logan Motorway (Loganlea toll point)",
+      "entryGantry": "lm-loganlea1",
+      "exitGantry": "lm-loganlea2",
+      "pricing": { "peak": 219, "offPeak": 219, "weekend": 219 },
+      "notes": "Flat toll $2.19 per toll point."
+    }
+  ]
+}

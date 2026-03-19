@@ -1,0 +1,29 @@
+{
+  "id": "cross-city-tunnel",
+  "name": "Cross City Tunnel",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "cct-001", "name": "Cross City Tunnel, east portal (Darlinghurst)", "ref": "CCT-001", "position": { "lat": -33.8741244, "lng": 151.2105663 } },
+    { "id": "cct-002", "name": "Cross City Tunnel, west portal (Darling Harbour)", "ref": "CCT-002", "position": { "lat": -33.8733053, "lng": 151.2096432 } },
+    { "id": "cct-003", "name": "Cross City Tunnel, Sir John Young Cres entry", "ref": "CCT-003", "position": { "lat": -33.8705337, "lng": 151.2174777 } }
+  ],
+  "segments": [
+    {
+      "id": "cct-main",
+      "name": "Cross City Tunnel (main)",
+      "entryGantry": "cct-001",
+      "exitGantry": "cct-002",
+      "pricing": { "peak": 727, "offPeak": 727, "weekend": 727 },
+      "notes": "Fixed toll $7.27, no time-of-day variation."
+    },
+    {
+      "id": "cct-sjy",
+      "name": "Sir John Young Crescent entry",
+      "entryGantry": "cct-003",
+      "exitGantry": "cct-002",
+      "pricing": { "peak": 343, "offPeak": 343, "weekend": 343 },
+      "notes": "Reduced rate entry from Sir John Young Crescent $3.43."
+    }
+  ]
+}

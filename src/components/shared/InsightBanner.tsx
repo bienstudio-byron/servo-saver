@@ -43,8 +43,8 @@ export default function InsightBanner() {
     setLocationName(null);
     const controller = new AbortController();
     fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${origin.lat}&lon=${origin.lng}`,
-      { headers: { "User-Agent": "PetrolSaver/1.0" }, signal: controller.signal }
+      `/api/geocode?mode=reverse&lat=${origin.lat}&lng=${origin.lng}`,
+      { signal: controller.signal }
     )
       .then((r) => r.json())
       .then((data) => {

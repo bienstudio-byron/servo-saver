@@ -1,0 +1,20 @@
+{
+  "id": "go-between-bridge",
+  "name": "Go Between Bridge",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "gbb-g1", "name": "Go Between Bridge toll point (Milton)", "position": { "lat": -27.4712472, "lng": 153.0134745 } },
+    { "id": "gbb-g2", "name": "Go Between Bridge toll point (South Brisbane)", "position": { "lat": -27.4711313, "lng": 153.0136170 } }
+  ],
+  "segments": [
+    {
+      "id": "gbb-full",
+      "name": "Go Between Bridge",
+      "entryGantry": "gbb-g1",
+      "exitGantry": "gbb-g2",
+      "pricing": { "peak": 405, "offPeak": 405, "weekend": 405 },
+      "notes": "Flat toll $4.05 for cars. Tolls adjusted 1 July annually (CPI). Connects Milton and South Brisbane."
+    }
+  ]
+}

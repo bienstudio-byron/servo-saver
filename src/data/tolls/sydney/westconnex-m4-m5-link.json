@@ -1,0 +1,29 @@
+{
+  "id": "westconnex-m4-m5-link",
+  "name": "WestConnex M4-M5 Link",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "tp21", "name": "M4-M5 Link, near Haberfield", "ref": "TP21", "position": { "lat": -33.8570479, "lng": 151.0732125 } },
+    { "id": "tp22", "name": "M4-M5 Link tunnel", "ref": "TP22", "position": { "lat": -33.8580243, "lng": 151.0724261 } },
+    { "id": "tp23a", "name": "M4-M5 Link tunnel (Ashfield)", "ref": "TP23A", "position": { "lat": -33.8632058, "lng": 151.0848967 } },
+    { "id": "tp23b", "name": "M4-M5 Link tunnel (Ashfield)", "ref": "TP23B", "position": { "lat": -33.8632862, "lng": 151.0848522 } },
+    { "id": "tp24a", "name": "M4-M5 Link tunnel (Ashfield)", "ref": "TP24A", "position": { "lat": -33.8640289, "lng": 151.0943514 } },
+    { "id": "tp24b", "name": "M4-M5 Link tunnel (Ashfield)", "ref": "TP24B", "position": { "lat": -33.8642093, "lng": 151.0941556 } },
+    { "id": "tp25a", "name": "M4-M5 Link, St Peters interchange", "ref": "TP25A", "position": { "lat": -33.8752917, "lng": 151.1341094 } },
+    { "id": "tp25b", "name": "M4-M5 Link, St Peters interchange", "ref": "TP25B", "position": { "lat": -33.8754397, "lng": 151.1346574 } },
+    { "id": "tp26a", "name": "M4-M5 Link, Rozelle interchange", "ref": "TP26A", "position": { "lat": -33.8806892, "lng": 151.1319136 } },
+    { "id": "tp26b", "name": "M4-M5 Link, Rozelle interchange", "ref": "TP26B", "position": { "lat": -33.8807700, "lng": 151.1317496 } }
+  ],
+  "segments": [
+    {
+      "id": "m4m5-full",
+      "name": "M4-M5 Link (full length)",
+      "entryGantry": "tp21",
+      "exitGantry": "tp25a",
+      "distanceBased": true,
+      "pricing": { "peak": 648, "offPeak": 648, "weekend": 648, "flagFall": 180, "perKmRate": 67, "maxToll": 648 },
+      "notes": "Distance-based: $1.80 flag fall + $0.6669/km, max $6.48 for cars. No time-of-day variation."
+    }
+  ]
+}

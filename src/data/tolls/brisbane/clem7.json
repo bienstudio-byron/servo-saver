@@ -1,0 +1,20 @@
+{
+  "id": "clem7",
+  "name": "Clem7 Tunnel",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "c7-north1", "name": "Clem7 Tunnel, north portal toll point (Bowen Hills)", "position": { "lat": -27.4481490, "lng": 153.0325012 } },
+    { "id": "c7-north2", "name": "Clem7 Tunnel, north portal toll point (Bowen Hills)", "position": { "lat": -27.4481631, "lng": 153.0326986 } }
+  ],
+  "segments": [
+    {
+      "id": "c7-full",
+      "name": "Clem7 Tunnel (full length)",
+      "entryGantry": "c7-north1",
+      "exitGantry": "c7-north2",
+      "pricing": { "peak": 650, "offPeak": 650, "weekend": 650 },
+      "notes": "Flat toll $6.50 for cars. Tolls adjusted 1 July annually (CPI). 6.8km tunnel under Brisbane River."
+    }
+  ]
+}

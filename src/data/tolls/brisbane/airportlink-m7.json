@@ -1,0 +1,41 @@
+{
+  "id": "airportlink-m7",
+  "name": "AirportlinkM7",
+  "operator": "Transurban (Linkt)",
+  "city": "brisbane",
+  "gantries": [
+    { "id": "al-bowen1", "name": "AirportlinkM7, Bowen Hills toll point", "position": { "lat": -27.4412371, "lng": 153.0320209 } },
+    { "id": "al-bowen2", "name": "AirportlinkM7, Bowen Hills toll point", "position": { "lat": -27.4410549, "lng": 153.0315428 } },
+    { "id": "al-bowen3", "name": "AirportlinkM7, Bowen Hills toll point", "position": { "lat": -27.4410581, "lng": 153.0316309 } },
+    { "id": "al-bowen4", "name": "AirportlinkM7, Bowen Hills toll point", "position": { "lat": -27.4414897, "lng": 153.0318095 } },
+    { "id": "al-kedron", "name": "AirportlinkM7, Kedron toll point", "position": { "lat": -27.4378941, "lng": 153.0314355 } },
+    { "id": "al-toombul1", "name": "AirportlinkM7, Toombul toll point", "position": { "lat": -27.4106011, "lng": 153.0550509 } },
+    { "id": "al-toombul2", "name": "AirportlinkM7, Toombul toll point", "position": { "lat": -27.4108047, "lng": 153.0550154 } }
+  ],
+  "segments": [
+    {
+      "id": "al-bowen-kedron",
+      "name": "Bowen Hills to Kedron",
+      "entryGantry": "al-bowen1",
+      "exitGantry": "al-kedron",
+      "pricing": { "peak": 716, "offPeak": 716, "weekend": 716 },
+      "notes": "AirportlinkM7 $7.16. Tolls adjusted 1 January annually (CPI)."
+    },
+    {
+      "id": "al-bowen-toombul",
+      "name": "Bowen Hills to Toombul",
+      "entryGantry": "al-bowen1",
+      "exitGantry": "al-toombul1",
+      "pricing": { "peak": 716, "offPeak": 716, "weekend": 716 },
+      "notes": "AirportlinkM7 full length $7.16."
+    },
+    {
+      "id": "al-kedron-toombul",
+      "name": "Kedron to Toombul",
+      "entryGantry": "al-kedron",
+      "exitGantry": "al-toombul1",
+      "pricing": { "peak": 536, "offPeak": 536, "weekend": 536 },
+      "notes": "Partial trip Kedron to Toombul $5.36."
+    }
+  ]
+}

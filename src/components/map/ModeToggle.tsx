@@ -57,10 +57,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
   // Reverse geocode GPS for "From" display
   useEffect(() => {
     if (!userLocation) return;
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation.lat}&lon=${userLocation.lng}`,
-      { headers: { "User-Agent": "PetrolSaver/1.0" } }
-    )
+    fetch(`/api/geocode?mode=reverse&lat=${userLocation.lat}&lng=${userLocation.lng}`)
       .then((r) => r.json())
       .then((data) => {
         const name = data.address?.suburb || data.address?.town || data.address?.city || null;
@@ -105,10 +102,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
   const searchDest = useCallback((q: string) => {
     if (q.length < 2) { setDestResults([]); return; }
     setDestLoading(true);
-    fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Australia")}&limit=4`,
-      { headers: { "User-Agent": "PetrolSaver/1.0" } }
-    )
+    fetch(`/api/geocode?q=${encodeURIComponent(q)}`)
       .then((r) => r.json())
       .then((data: SearchResult[]) => { setDestResults(data); setDestLoading(false); })
       .catch(() => setDestLoading(false));
@@ -133,10 +127,7 @@ export default function ModeToggle({ themeToggle }: { themeToggle?: React.ReactN
   const searchOriginFn = useCallback((q: string) => {
     if (q.length < 2) { setOriginResults([]); return; }
     setOriginLoading(true);
-    fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&countrycodes=au&q=${encodeURIComponent(q + ", Australia")}&limit=4`,
-      { headers: { "User-Agent": "PetrolSaver/1.0" } }
-    )
+    fetch(`/api/geocode?q=${encodeURIComponent(q)}`)
       .then((r) => r.json())
       .then((data: SearchResult[]) => { setOriginResults(data); setOriginLoading(false); })
       .catch(() => setOriginLoading(false));

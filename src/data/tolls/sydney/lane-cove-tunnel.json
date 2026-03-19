@@ -1,0 +1,30 @@
+{
+  "id": "lane-cove-tunnel",
+  "name": "Lane Cove Tunnel",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "lct-lcw", "name": "Lane Cove Tunnel, westbound entry (Lane Cove)", "ref": "LCT-LCW", "position": { "lat": -33.8021627, "lng": 151.1456703 } },
+    { "id": "lct-lce", "name": "Lane Cove Tunnel, eastbound entry (Lane Cove)", "ref": "LCT-LCE", "position": { "lat": -33.8020806, "lng": 151.1457581 } },
+    { "id": "lct-fnb", "name": "Lane Cove Tunnel, Falcon St northbound (North Sydney)", "ref": "LCT-FNB", "position": { "lat": -33.8284477, "lng": 151.2138332 } },
+    { "id": "lct-fsb", "name": "Lane Cove Tunnel, Falcon St southbound (North Sydney)", "ref": "LCT-FSB", "position": { "lat": -33.8285612, "lng": 151.2145554 } }
+  ],
+  "segments": [
+    {
+      "id": "lct-main",
+      "name": "Lane Cove Tunnel (full length)",
+      "entryGantry": "lct-lce",
+      "exitGantry": "lct-fnb",
+      "pricing": { "peak": 422, "offPeak": 422, "weekend": 422 },
+      "notes": "Fixed toll $4.22, no time-of-day variation."
+    },
+    {
+      "id": "lct-eramp",
+      "name": "Military Road E-Ramp",
+      "entryGantry": "lct-fsb",
+      "exitGantry": "lct-fnb",
+      "pricing": { "peak": 211, "offPeak": 211, "weekend": 211 },
+      "notes": "Military Road E-Ramp $2.11."
+    }
+  ]
+}

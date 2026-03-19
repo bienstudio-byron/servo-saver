@@ -1,0 +1,23 @@
+{
+  "id": "eastern-distributor",
+  "name": "Eastern Distributor",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "ed-ab", "name": "Eastern Distributor, Airport entry (Woolloomooloo)", "ref": "ED-AB", "position": { "lat": -33.8698004, "lng": 151.2184165 } },
+    { "id": "ed-c1", "name": "Eastern Distributor, southbound (Surry Hills)", "ref": "ED-C", "position": { "lat": -33.8715508, "lng": 151.2162986 } },
+    { "id": "ed-c2", "name": "Eastern Distributor, southbound (Surry Hills)", "ref": "ED-C", "position": { "lat": -33.8755430, "lng": 151.2172024 } },
+    { "id": "ed-c3", "name": "Eastern Distributor, southbound (Surry Hills)", "ref": "ED-C", "position": { "lat": -33.8755174, "lng": 151.2173424 } }
+  ],
+  "segments": [
+    {
+      "id": "ed-south",
+      "name": "Eastern Distributor Southbound",
+      "direction": "southbound",
+      "entryGantry": "ed-ab",
+      "exitGantry": "ed-c2",
+      "pricing": { "peak": 1026, "offPeak": 1026, "weekend": 1026 },
+      "notes": "Southbound only. Fixed toll $10.26, no time-of-day variation."
+    }
+  ]
+}

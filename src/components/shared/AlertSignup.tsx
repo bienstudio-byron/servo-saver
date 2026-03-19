@@ -28,8 +28,7 @@ export default function AlertSignup({ selectedFuelType, onClose }: AlertSignupPr
       async (pos) => {
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`,
-            { headers: { "User-Agent": "PetrolSaver/1.0" } }
+            `/api/geocode?mode=reverse&lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`
           );
           const data = await res.json();
           const sub = data.address?.suburb || data.address?.town || data.address?.city || "";

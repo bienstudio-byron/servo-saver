@@ -1,0 +1,26 @@
+{
+  "id": "m5-south-west",
+  "name": "M5 South-West Motorway",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "m5-hv1", "name": "M5 SW, Hammondville (near Heathcote Rd)", "ref": "M5-HV", "position": { "lat": -33.9473841, "lng": 150.9660019 } },
+    { "id": "m5-hv2", "name": "M5 SW, Hammondville (near Heathcote Rd)", "ref": "M5-HV", "position": { "lat": -33.9474797, "lng": 150.9660028 } },
+    { "id": "m5-hl1", "name": "M5 SW, Hammondville (near Newbridge Rd)", "ref": "M5-HL", "position": { "lat": -33.9440064, "lng": 150.9844551 } },
+    { "id": "m5-hl2", "name": "M5 SW, Hammondville (near Newbridge Rd)", "ref": "M5-HL", "position": { "lat": -33.9443527, "lng": 150.9852151 } },
+    { "id": "m5-rr1", "name": "M5 SW, Riverwood (near Belmore Rd)", "ref": "M5-RR", "position": { "lat": -33.9406962, "lng": 151.0197277 } },
+    { "id": "m5-rr2", "name": "M5 SW, Riverwood (near Belmore Rd)", "ref": "M5-RR", "position": { "lat": -33.9412522, "lng": 151.0201247 } },
+    { "id": "m5-fr1", "name": "M5 SW, Fairford Rd (Padstow)", "ref": "M5-FR", "position": { "lat": -33.9409284, "lng": 151.0381459 } },
+    { "id": "m5-fr2", "name": "M5 SW, Fairford Rd (Padstow)", "ref": "M5-FR", "position": { "lat": -33.9404098, "lng": 151.0377997 } }
+  ],
+  "segments": [
+    {
+      "id": "m5sw-full",
+      "name": "M5 South-West (full length)",
+      "entryGantry": "m5-hv1",
+      "exitGantry": "m5-fr1",
+      "pricing": { "peak": 595, "offPeak": 595, "weekend": 595 },
+      "notes": "Flat toll $5.95, no time-of-day variation. Cashback scheme may apply for eligible users."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "northconnex",
+  "name": "NorthConnex",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "nx-tp1", "name": "NorthConnex, north portal (Wahroonga)", "ref": "NXTP1", "position": { "lat": -33.7580858, "lng": 151.0480736 } },
+    { "id": "nx-tp2", "name": "NorthConnex, north portal (Wahroonga)", "ref": "NXTP2", "position": { "lat": -33.7594549, "lng": 151.0462820 } },
+    { "id": "nx-tp3", "name": "NorthConnex, south portal (West Pennant Hills)", "ref": "NXTP3", "position": { "lat": -33.7561248, "lng": 151.0484206 } },
+    { "id": "nx-tp4", "name": "NorthConnex, south portal (West Pennant Hills)", "ref": "NXTP4", "position": { "lat": -33.7560708, "lng": 151.0479788 } }
+  ],
+  "segments": [
+    {
+      "id": "nx-full",
+      "name": "NorthConnex (Wahroonga to West Pennant Hills)",
+      "entryGantry": "nx-tp1",
+      "exitGantry": "nx-tp4",
+      "pricing": { "peak": 1039, "offPeak": 1039, "weekend": 1039 },
+      "notes": "Flat toll $10.39, no time-of-day variation. 9km tunnel connecting M1 to M2."
+    }
+  ]
+}

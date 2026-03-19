@@ -1,0 +1,112 @@
+{
+  "id": "citylink",
+  "name": "CityLink",
+  "operator": "Transurban (Linkt)",
+  "tripCap": { "day": 1238, "night": 619 },
+  "gantries": [
+    { "id": "cl-tulla", "name": "Tullamarine Fwy (near Bulla Rd)", "position": { "lat": -37.7350, "lng": 144.9280 }, "zone": 1 },
+    { "id": "cl-bell", "name": "Bell St / Moreland Rd", "position": { "lat": -37.758555, "lng": 144.9379912 }, "zone": 1 },
+    { "id": "cl-brunswick", "name": "Brunswick Rd", "position": { "lat": -37.7800, "lng": 144.9370 }, "zone": 2 },
+    { "id": "cl-flemington", "name": "Flemington Rd / Racecourse Rd", "position": { "lat": -37.7957682, "lng": 144.9360109 }, "zone": 2 },
+    { "id": "cl-dynon", "name": "Dynon Rd / Footscray Rd", "position": { "lat": -37.8156326, "lng": 144.9336179 }, "zone": 3 },
+    { "id": "cl-bolte", "name": "Bolte Bridge / West Gate Fwy", "position": { "lat": -37.8194839, "lng": 144.9761822 }, "zone": 4 },
+    { "id": "cl-exhibition", "name": "Exhibition St Extension", "position": { "lat": -37.8263242, "lng": 144.9850613 }, "zone": 4 },
+    { "id": "cl-swan", "name": "Swan St", "position": { "lat": -37.8280, "lng": 144.9950 }, "zone": 5 },
+    { "id": "cl-burnley-w", "name": "Burnley Tunnel west portal", "position": { "lat": -37.8301491, "lng": 145.005023 }, "zone": 5 },
+    { "id": "cl-burnley-e", "name": "Burnley Tunnel east exit", "position": { "lat": -37.8322377, "lng": 145.0228029 }, "zone": 6 },
+    { "id": "cl-domain-w", "name": "Domain Tunnel west portal", "position": { "lat": -37.8334332, "lng": 144.9949987 }, "zone": 5 },
+    { "id": "cl-domain-e", "name": "Domain Tunnel east end", "position": { "lat": -37.8325975, "lng": 145.0012355 }, "zone": 6 },
+    { "id": "cl-punt", "name": "Punt Rd", "position": { "lat": -37.8350, "lng": 145.0100 }, "zone": 6 },
+    { "id": "cl-toorak", "name": "Toorak Rd / Monash Fwy", "position": { "lat": -37.8440, "lng": 145.0200 }, "zone": 7 }
+  ],
+  "segments": [
+    {
+      "id": "cl-1zone",
+      "name": "CityLink (1 zone)",
+      "entryGantry": "cl-bell",
+      "exitGantry": "cl-flemington",
+      "pricing": { "peak": 330, "offPeak": 330, "weekend": 165 },
+      "zones": 1
+    },
+    {
+      "id": "cl-tulla-dynon",
+      "name": "Tulla Fwy → Dynon Rd",
+      "entryGantry": "cl-tulla",
+      "exitGantry": "cl-dynon",
+      "pricing": { "peak": 660, "offPeak": 660, "weekend": 330 },
+      "zones": 2
+    },
+    {
+      "id": "cl-bell-dynon",
+      "name": "Bell St → Dynon Rd",
+      "entryGantry": "cl-bell",
+      "exitGantry": "cl-dynon",
+      "pricing": { "peak": 660, "offPeak": 660, "weekend": 330 },
+      "zones": 2
+    },
+    {
+      "id": "cl-tulla-bolte",
+      "name": "Tulla Fwy → Bolte Bridge",
+      "entryGantry": "cl-tulla",
+      "exitGantry": "cl-bolte",
+      "pricing": { "peak": 1073, "offPeak": 1073, "weekend": 536 },
+      "zones": 3
+    },
+    {
+      "id": "cl-bell-bolte",
+      "name": "Bell St → Bolte Bridge",
+      "entryGantry": "cl-bell",
+      "exitGantry": "cl-bolte",
+      "pricing": { "peak": 1073, "offPeak": 1073, "weekend": 536 },
+      "zones": 3
+    },
+    {
+      "id": "cl-dynon-burnley",
+      "name": "Dynon Rd → Burnley Tunnel",
+      "entryGantry": "cl-dynon",
+      "exitGantry": "cl-burnley-e",
+      "pricing": { "peak": 743, "offPeak": 743, "weekend": 371 },
+      "zones": 3
+    },
+    {
+      "id": "cl-dynon-domain",
+      "name": "Dynon Rd → Domain Tunnel",
+      "entryGantry": "cl-dynon",
+      "exitGantry": "cl-domain-e",
+      "pricing": { "peak": 743, "offPeak": 743, "weekend": 371 },
+      "zones": 3
+    },
+    {
+      "id": "cl-tulla-burnley",
+      "name": "Tulla Fwy → Burnley Tunnel (full CityLink)",
+      "entryGantry": "cl-tulla",
+      "exitGantry": "cl-burnley-e",
+      "pricing": { "peak": 1238, "offPeak": 1238, "weekend": 619 },
+      "zones": 5
+    },
+    {
+      "id": "cl-bell-burnley",
+      "name": "Bell St → Burnley Tunnel",
+      "entryGantry": "cl-bell",
+      "exitGantry": "cl-burnley-e",
+      "pricing": { "peak": 1238, "offPeak": 1238, "weekend": 619 },
+      "zones": 5
+    },
+    {
+      "id": "cl-tulla-toorak",
+      "name": "Tulla Fwy → Toorak Rd (full CityLink)",
+      "entryGantry": "cl-tulla",
+      "exitGantry": "cl-toorak",
+      "pricing": { "peak": 1238, "offPeak": 1238, "weekend": 619 },
+      "zones": 6
+    },
+    {
+      "id": "cl-bell-toorak",
+      "name": "Bell St → Toorak Rd (full CityLink)",
+      "entryGantry": "cl-bell",
+      "exitGantry": "cl-toorak",
+      "pricing": { "peak": 1238, "offPeak": 1238, "weekend": 619 },
+      "zones": 6
+    }
+  ]
+}

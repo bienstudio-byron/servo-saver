@@ -1,0 +1,69 @@
+{
+  "id": "m2-hills",
+  "name": "Hills M2 Motorway",
+  "operator": "Transurban (Linkt)",
+  "city": "sydney",
+  "gantries": [
+    { "id": "m2-g1a", "name": "M2 Pennant Hills Rd interchange (West Pennant Hills)", "ref": "M2-1A", "position": { "lat": -33.7672346, "lng": 151.1136997 } },
+    { "id": "m2-g1b", "name": "M2 Pennant Hills Rd interchange (West Pennant Hills)", "ref": "M2-1B", "position": { "lat": -33.7671818, "lng": 151.1138466 } },
+    { "id": "m2-g2a", "name": "M2 near NorthConnex interchange (North Epping)", "ref": "M2-2A", "position": { "lat": -33.7588447, "lng": 151.0453860 } },
+    { "id": "m2-g2b", "name": "M2 near NorthConnex interchange (North Epping)", "ref": "M2-2B", "position": { "lat": -33.7590982, "lng": 151.0476671 } },
+    { "id": "m2-g2c", "name": "M2 near NorthConnex interchange (North Epping)", "ref": "M2-2C", "position": { "lat": -33.7587279, "lng": 151.0453719 } },
+    { "id": "m2-g2d", "name": "M2 near NorthConnex interchange (North Epping)", "ref": "M2-2D", "position": { "lat": -33.7595910, "lng": 151.0444418 } },
+    { "id": "m2-g3a", "name": "M2 Windsor Rd interchange (Baulkham Hills)", "ref": "M2-3A", "position": { "lat": -33.7729683, "lng": 151.1208720 } },
+    { "id": "m2-g3b", "name": "M2 Windsor Rd interchange (Baulkham Hills)", "ref": "M2-3B", "position": { "lat": -33.7746101, "lng": 151.1231022 } },
+    { "id": "m2-g4a", "name": "M2 near Oakes Rd (Carlingford)", "ref": "M2-4A", "position": { "lat": -33.7681289, "lng": 150.9959410 } },
+    { "id": "m2-g4b", "name": "M2 near Oakes Rd (Carlingford)", "ref": "M2-4B", "position": { "lat": -33.7683278, "lng": 150.9972277 } },
+    { "id": "m2-g5a", "name": "M2 near Herring Rd (North Ryde)", "ref": "M2-5A", "position": { "lat": -33.7818872, "lng": 151.1335433 } }
+  ],
+  "segments": [
+    {
+      "id": "m2-mainline",
+      "name": "M2 Mainline (full length)",
+      "entryGantry": "m2-g4a",
+      "exitGantry": "m2-g1a",
+      "pricing": { "peak": 1040, "offPeak": 1040, "weekend": 1040 },
+      "notes": "Fixed toll, no time-of-day variation. Class A (car) $10.40."
+    },
+    {
+      "id": "m2-pennant-hills",
+      "name": "Pennant Hills Rd section",
+      "entryGantry": "m2-g1a",
+      "exitGantry": "m2-g1b",
+      "pricing": { "peak": 519, "offPeak": 519, "weekend": 519 },
+      "notes": "Per-gantry toll $5.19."
+    },
+    {
+      "id": "m2-windsor",
+      "name": "Windsor Rd section",
+      "entryGantry": "m2-g3a",
+      "exitGantry": "m2-g3b",
+      "pricing": { "peak": 367, "offPeak": 367, "weekend": 367 },
+      "notes": "Per-gantry toll $3.67."
+    },
+    {
+      "id": "m2-lane-cove",
+      "name": "Lane Cove Rd section",
+      "entryGantry": "m2-g5a",
+      "exitGantry": "m2-g5a",
+      "pricing": { "peak": 307, "offPeak": 307, "weekend": 307 },
+      "notes": "Per-gantry toll $3.07."
+    },
+    {
+      "id": "m2-herring-christie",
+      "name": "Herring/Christie Rd section",
+      "entryGantry": "m2-g1a",
+      "exitGantry": "m2-g5a",
+      "pricing": { "peak": 519, "offPeak": 519, "weekend": 519 },
+      "notes": "Per-gantry toll $5.19."
+    },
+    {
+      "id": "m2-ncx",
+      "name": "M2-NorthConnex section",
+      "entryGantry": "m2-g2a",
+      "exitGantry": "m2-g2b",
+      "pricing": { "peak": 519, "offPeak": 519, "weekend": 519 },
+      "notes": "Per-gantry toll $5.19."
+    }
+  ]
+}
