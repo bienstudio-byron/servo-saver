@@ -141,6 +141,100 @@ src/
   types/fuel.ts                 # TypeScript interfaces
 ```
 
+## TollSaver
+
+Toll vs free route comparison, integrated as a "Tolls" tab alongside Fuel. Lives at petrolsaver.live (same app).
+
+### Core Concept
+
+For any trip, we calculate two routes (toll allowed vs toll-free) and show the true cost of each: fuel + tolls + time. The user sees which route actually saves money, with full transparency on the math.
+
+### Routing
+
+- **OpenRouteService** for routing — two requests per comparison (default + `avoid_features=tollways`)
+- All routing goes through `/api/toll` server-side proxy (API key in `ORS_API_KEY` env var)
+- Geocoding also via ORS through the same proxy
+- Snap radius: 2000m (handles airports, parks)
+
+### Toll Detection (first-principles approach)
+
+NOT gantry proximity. Instead:
+1. Compare both route polylines — find "toll-only" points (>300m from free route)
+2. If <5% of route diverges → no tolls (routes are basically the same)
+3. Match toll-only points against toll road gantry corridors (1km radius, need ≥10% match)
+4. For trip-cap roads (CityLink): pick best matching entry-exit segment, capped at max
+
+This eliminates false positives from routes that pass near but don't use toll roads.
+
+### Toll Data
+
+| State | Source | Roads |
+|---|---|---|
+| NSW | TfNSW Toll Calculator API (live, `TFNSW_TOLL_API_KEY` env var) | 11 (Harbour Bridge, M2, M4, M5, M7, M8, NorthConnex, etc.) |
+| VIC | Static JSON, verified quarterly | CityLink (entry-exit matrix + $12.38 trip cap), EastLink |
+| QLD | Static JSON, verified annually | Gateway, Clem7, Legacy Way, AirportlinkM7, Go Between, Logan, Toowoomba |
+
+Static data in `src/data/tolls/{melbourne,sydney,brisbane}/`. CityLink pricing from Linkt quarterly PDF.
+
+### Cost Formula
+
+```
+true_cost = fuel_cost + toll_fees + time_cost
+fuel_cost = (distance_km / 100) × consumption × price_per_litre
+time_cost = (duration_min / 60) × $/hr  (optional, default $0)
+```
+
+**No consumption multipliers.** Same formula for both routes. The distance difference IS the cost difference. Previous 0.9x/1.2x highway/suburban multipliers were removed — they were applied to entire routes when only a small section diverges, creating false cost advantages.
+
+### Fuel Price
+
+Auto-populated from PetrolSaver's live station data — average price for selected fuel type at stations within 15km of origin. Updates when user changes fuel type or origin location.
+
+### UI Architecture
+
+- `ModeTabBar` — Fuel | Tolls tab switcher in page.tsx
+- Two-step sidebar: Step 1 = search (destination + GPS origin), Step 2 = results with editable settings chips
+- Settings chips (vehicle, time period, fuel type + price, frequency, time value) appear in results — tap to change and recalculate
+- Map: toll route = red, free route = blue, recommended = solid + glow, alternative = dashed
+- Toll price tags placed on the divergent section of the toll route polyline
+- User location pulsing blue dot (same as fuel map)
+- Quota exceeded banner when ORS daily limit hit (2,000 req/day free tier)
+- `/how-it-works/tolls` — full algorithm transparency page
+
+### Key Files
+
+```
+src/
+  components/tolls/
+    TollMode.tsx              # Layout: sidebar + map + mobile sheet
+    TollSidebar.tsx           # Desktop: search + settings + results
+    TollMobileSheet.tsx       # Mobile: bottom sheet version
+    TollMapView.tsx           # Leaflet map with dual routes + price tags
+  components/shared/
+    ModeTabBar.tsx            # Fuel | Tolls tab switcher
+  app/
+    api/toll/route.ts         # Server-side proxy: ORS routing/geocoding + TfNSW tolls
+    api/geocode/route.ts      # Nominatim proxy with 1hr cache + rate limiting
+    how-it-works/tolls/page.tsx # Algorithm transparency
+  lib/
+    openroute.ts              # Client: calls /api/toll for routing + geocoding
+    tfnsw-toll.ts             # Client: calls /api/toll for NSW toll calculation
+    toll-calculator.ts        # Core cost math (fuel + tolls + time)
+    toll-detector.ts          # Polyline comparison + toll road matching
+  stores/
+    toll-store.ts             # Zustand: search state, routes, comparison, settings
+  data/tolls/
+    melbourne/                # CityLink, EastLink JSON
+    sydney/                   # 11 toll road JSON files
+    brisbane/                 # 7 toll road JSON files
+  types/toll.ts               # TypeScript interfaces
+```
+
+### Env Vars (Vercel)
+
+- `ORS_API_KEY` — OpenRouteService routing + geocoding
+- `TFNSW_TOLL_API_KEY` — Transport for NSW toll calculator
+
 ## GitHub & Deployment
 
 - **Repo:** github.com/bienstudio-byron/servo-saver
@@ -148,7 +242,7 @@ src/
 - **Git remote uses:** `https://bienstudio-byron@github.com/...`
 - **Vercel:** Auto-deploys on push to `main`
 - **Domain:** petrolsaver.live (Namecheap DNS → Vercel)
-- **Env vars (Vercel):** `FUEL_API_CONSUMER_ID`, `NEXT_PUBLIC_ADSENSE_PUB_ID`, `ENABLE_NSW`
+- **Env vars (Vercel):** `FUEL_API_CONSUMER_ID`, `NEXT_PUBLIC_ADSENSE_PUB_ID`, `ENABLE_NSW`, `ORS_API_KEY`, `TFNSW_TOLL_API_KEY`
 
 ## Design Principles
 
@@ -159,3 +253,41 @@ src/
 - Transparent algorithm — /how-it-works page
 - Brand logos stored locally in /public/logos/
 - Attribution required: "Data sourced from Service Victoria and Transport for NSW"
+- TollSaver: show the working, not just the answer — every cost line has an icon + formula
+- Toll route = red (danger/cost), free route = blue (safe) on map
+- No fake multipliers — same fuel formula for both routes, distance difference IS the cost difference
+- All API keys server-side via `/api/toll` and `/api/geocode` proxies
+
+## Roadmap (from user feedback, 2026-03-19)
+
+### Stage 1: Core accuracy + expansion
+
+1. **Vehicle profiles** — Let users set car model or manually enter tank size (L) + consumption (L/100km). Pre-populate common AU cars (Corolla 50L/7.5L, Hilux 80L/10.5L, Ranger 65L/11L, Prado 150L/12L). Replaces hardcoded 55L tank + 8.5L/100km. Affects both PetrolSaver (savings calc) and TollSaver (fuel cost). Persist to localStorage.
+
+2. **QLD fuel data** — Add Queensland as third provider. QLD OESR fuel API or equivalent. Same provider pattern as VIC/NSW. Brisbane TollSaver already has toll data — need fuel prices to match.
+
+3. **Station reporting / flagging** — Surface existing InlineReportForm more prominently. Add "flag as closed" option. One closed station with old prices destroys trust in nearby results.
+
+4. **Multi fuel type comparison** — Show P95 AND P98 prices side by side per station. Highlight when premium is cheaper than regular (happens at independents). Change FillStrategy to accept `string[]` for fuel types.
+
+### Stage 2: Smarter calculations
+
+5. **ATO wear & tear mode** — Optional "full vehicle cost" toggle using ATO cents-per-km rate (85c/km for 2024-25). Makes detour calculations more realistic: 5km detour = $4.25 real cost, not $0.70 fuel. Two modes: "fuel only" (default) and "full cost" (ATO rate). Reference: https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/deductions-for-motor-vehicle-expenses/cents-per-kilometre-method
+
+6. **Long trip fuel planning** — Multi-stop planner for trips >1 tank range. Given current fuel level + 500km destination, find optimal refuel stop along route considering price + remaining range. Killer feature for road trips.
+
+7. **Actual road distance for trip mode** — Replace `straight_line × 1.35` with real road distance from ORS/OSRM routing for station detour calculations. Fixes inaccuracies near lakes, rivers, bridges.
+
+8. **Price prediction / cycle timing** — Track historical prices in Supabase. Detect weekly fuel price cycles (VIC/NSW follow predictable patterns). Show "prices likely dropping tomorrow — wait" or "fill now, spike coming." Needs: daily price snapshot cron, cycle detection algorithm, confidence thresholds. A user confirmed they've been 20-50c under average for years using a Python script for this — validates the concept.
+
+### Stage 3: Personalisation
+
+9. **Loyalty / voucher discounts** — "My discounts" settings. Simple v1: per-brand cents-off (e.g., "I get 4c off at Coles"). Complex v2: integrate Coles/Flybuys, Shell Go+, 7-Eleven Fuel Lock APIs. Apply discounts to recommendation engine — a Coles station at 195c becomes 191c for a Flybuys user.
+
+10. **Fuel gauge UX improvement** — Replace abstract km slider with visual fuel gauge (E/¼/½/¾/F) that maps to the user's actual tank size. More intuitive than "200km range."
+
+### Known issues to fix
+
+- Closed stations showing stale prices — need better staleness filtering or user flagging (ties to #3)
+- Trip mode uses straight-line × 1.35 — inaccurate near geographic features (ties to #7)
+- ORS free tier limit (2,000 req/day) — may need upgrade or OSRM self-hosting if TollSaver usage grows
