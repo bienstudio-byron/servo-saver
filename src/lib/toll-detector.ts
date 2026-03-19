@@ -4,6 +4,7 @@ import { haversineDistance } from "@/lib/geo";
 // Melbourne
 import citylink from "@/data/tolls/melbourne/citylink.json";
 import eastlink from "@/data/tolls/melbourne/eastlink.json";
+import westGateTunnel from "@/data/tolls/melbourne/west-gate-tunnel.json";
 
 // Sydney
 import harbourBridge from "@/data/tolls/sydney/harbour-bridge-tunnel.json";
@@ -42,7 +43,7 @@ interface TollRoadData {
 }
 
 const tollRoads: TollRoadData[] = [
-  citylink, eastlink,
+  citylink, eastlink, westGateTunnel,
   harbourBridge, m2Hills, laneCove, easternDist, crossCity,
   m5SouthWest, westconnexM4, westconnexM4M5, westconnexM8, m7Westlink, northconnex,
   gateway, clem7, legacyWay, goBetween, airportLink, logan, toowoomba,
@@ -113,10 +114,8 @@ export function detectTollSegments(
 
   for (const road of tollRoads) {
     const count = pointsNearRoad(tollOnlyPoints, road);
-    // Need at least 20% of divergent points near the road AND minimum 8 points.
-    // This prevents false positives from routes that pass near toll gantries
-    // without actually using the toll road.
-    const minPoints = Math.max(8, Math.round(tollOnlyPoints.length * 0.2));
+    // Need at least 15% of divergent points near the road AND minimum 6 points.
+    const minPoints = Math.max(6, Math.round(tollOnlyPoints.length * 0.15));
     if (count >= minPoints) {
       detectedRoads.push({ road, pointCount: count });
     }

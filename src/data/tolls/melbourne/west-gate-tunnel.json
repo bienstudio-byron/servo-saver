@@ -1,0 +1,29 @@
+{
+  "id": "west-gate-tunnel",
+  "name": "West Gate Tunnel",
+  "operator": "Transurban (Linkt)",
+  "gantries": [
+    { "id": "wgt-north", "name": "West Gate Tunnel, northern portal (Footscray)", "position": { "lat": -37.7990, "lng": 144.8850 } },
+    { "id": "wgt-south", "name": "West Gate Tunnel, southern portal (Spotswood)", "position": { "lat": -37.8310, "lng": 144.8920 } },
+    { "id": "wgt-hyde-n", "name": "Hyde St ramp north", "position": { "lat": -37.8180, "lng": 144.8930 } },
+    { "id": "wgt-hyde-s", "name": "Hyde St ramp south", "position": { "lat": -37.8250, "lng": 144.8910 } }
+  ],
+  "segments": [
+    {
+      "id": "wgt-tunnel",
+      "name": "West Gate Tunnel",
+      "entryGantry": "wgt-north",
+      "exitGantry": "wgt-south",
+      "pricing": { "peak": 661, "offPeak": 413, "weekend": 413 },
+      "notes": "Peak = AM peak 7-9am weekdays ($6.61). Off-peak/weekend = $4.13. West Gate Bridge and Freeway remain free for cars."
+    },
+    {
+      "id": "wgt-hyde",
+      "name": "Hyde St Ramps",
+      "entryGantry": "wgt-hyde-n",
+      "exitGantry": "wgt-hyde-s",
+      "pricing": { "peak": 661, "offPeak": 413, "weekend": 413 },
+      "notes": "Same pricing as main tunnel."
+    }
+  ]
+}
