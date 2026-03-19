@@ -585,6 +585,15 @@ export default function TollSidebar() {
         })()}
 
       </div>
+
+      {/* Footer */}
+      <div className="shrink-0 border-t border-[var(--subtle-border)]">
+        <div className="px-3 py-2 flex items-center justify-center gap-1.5">
+          <a href="/how-it-works/tolls" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
+          <a href="/terms" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
+          <a href="/privacy" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
+        </div>
+      </div>
     </motion.div>
   );
 }
