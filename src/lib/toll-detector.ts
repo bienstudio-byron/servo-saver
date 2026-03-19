@@ -113,8 +113,10 @@ export function detectTollSegments(
 
   for (const road of tollRoads) {
     const count = pointsNearRoad(tollOnlyPoints, road);
-    // Need at least 10% of divergent points near the road, and minimum 5 points
-    const minPoints = Math.max(5, Math.round(tollOnlyPoints.length * 0.1));
+    // Need at least 20% of divergent points near the road AND minimum 8 points.
+    // This prevents false positives from routes that pass near toll gantries
+    // without actually using the toll road.
+    const minPoints = Math.max(8, Math.round(tollOnlyPoints.length * 0.2));
     if (count >= minPoints) {
       detectedRoads.push({ road, pointCount: count });
     }
