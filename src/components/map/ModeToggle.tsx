@@ -524,8 +524,9 @@ function MobileFilterChips({
 
   return (
     <div ref={wrapperRef}>
-      {/* Pills row — scrollable on mobile */}
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+      {/* Pills row — scrollable on mobile with fade hint */}
+      <div className="relative">
+      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pr-6">
         <motion.button
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -570,6 +571,8 @@ function MobileFilterChips({
           Time ·{timeValuePerHour === 0 ? "ignore" : `$${timeValuePerHour}/hr`}
           <ChevronDown className={`h-3 w-3 transition-transform ${open === "time" ? "rotate-180" : ""}`} strokeWidth={2} />
         </motion.button>
+      </div>
+      <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none bg-gradient-to-l from-[var(--background)] to-transparent md:hidden" />
       </div>
 
 
