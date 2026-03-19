@@ -161,6 +161,16 @@ export default function TollMobileSheet() {
                 {/* ═══ SEARCH STEP ═══ */}
                 {step === "search" && !quotaExceeded && (
                   <>
+                    {/* Welcome — only when empty */}
+                    {!destQuery && !localDest && (
+                      <div className="rounded-xl bg-[var(--subtle)] p-3 mb-3 space-y-1.5">
+                        <p className="text-[12px] font-semibold text-[var(--foreground)]">Should you take the toll road?</p>
+                        <p className="text-[10px] text-[var(--muted)] leading-relaxed">
+                          We compare both routes and show you the actual cost — fuel, tolls, and time. No guessing.
+                        </p>
+                      </div>
+                    )}
+
                     {/* Destination */}
                     <div className="relative mb-2">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />

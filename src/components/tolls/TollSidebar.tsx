@@ -288,6 +288,36 @@ export default function TollSidebar() {
         {/* ═══ STEP 1: SEARCH ═══ */}
         {step === "search" && !quotaExceeded && (
           <>
+            {/* Welcome / explainer — only when inputs are empty */}
+            {!destQuery && !localDest && (
+              <div className="px-4 pt-4 pb-2">
+                <div className="rounded-xl bg-[var(--subtle)] p-4 space-y-3">
+                  <p className="text-[13px] font-semibold text-[var(--foreground)]">
+                    Should you take the toll road?
+                  </p>
+                  <p className="text-[11px] text-[var(--muted)] leading-relaxed">
+                    We compare both routes — toll and free — and show you the <strong className="text-[var(--foreground)]">actual cost</strong> of each,
+                    factoring in fuel, tolls, and time. No guessing, just maths.
+                  </p>
+                  <div className="flex gap-2.5 text-[10px] text-[var(--muted)]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-4 h-0.5 rounded-full bg-[#4285f4]" />
+                      <span>Free route</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-4 h-0.5 rounded-full bg-[#ef4444]" />
+                      <span>Toll route</span>
+                    </div>
+                  </div>
+                  <div className="text-[9px] text-[var(--muted)] flex flex-wrap gap-x-3 gap-y-1">
+                    <span>20 toll roads</span>
+                    <span>Melbourne + Sydney + Brisbane</span>
+                    <span>Live fuel prices</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Destination */}
             <div className="px-4 pt-4 pb-3">
               <div className="relative">
