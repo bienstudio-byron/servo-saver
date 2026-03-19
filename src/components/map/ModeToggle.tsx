@@ -567,7 +567,7 @@ function MobileFilterChips({
           className={chipClass(open === "time", timeValuePerHour > 0)}
         >
           <Clock className="h-3.5 w-3.5" strokeWidth={2} />
-          Time ·{timeValuePerHour === 0 ? "off" : `$${timeValuePerHour}/hr`}
+          Time ·{timeValuePerHour === 0 ? "ignore" : `$${timeValuePerHour}/hr`}
           <ChevronDown className={`h-3 w-3 transition-transform ${open === "time" ? "rotate-180" : ""}`} strokeWidth={2} />
         </motion.button>
       </div>

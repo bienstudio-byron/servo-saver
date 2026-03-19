@@ -1139,9 +1139,30 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       {/* Options list */}
       <div ref={listRef} className={`overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised || selectedOpt !== null ? "hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
           {(!origin || loading) && options.length === 0 ? (
-            <div className="px-3 py-4 flex items-center gap-2.5">
-              <div className="h-4 w-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
-              <span className="text-xs text-[var(--muted)]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>
+            <div>
+              {/* Welcome explainer — shows while loading */}
+              <div className="px-3 pt-3 pb-2">
+                <div className="rounded-xl bg-[var(--subtle)] p-3.5 space-y-2">
+                  <p className="text-[12px] font-semibold text-[var(--foreground)]">Finding you the cheapest fill</p>
+                  <p className="text-[10px] text-[var(--muted)] leading-relaxed">
+                    We compare every station nearby — not just the price, but the real cost including detour fuel{timeValuePerHour > 0 ? " and your time" : ""}. The cheapest pump isn&apos;t always the smartest deal.
+                  </p>
+                  <div className="flex gap-3 text-[9px] text-[var(--muted)]">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--tier-cheap)]" />Cheap</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--tier-mid)]" />Mid</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[var(--tier-exp)]" />Expensive</span>
+                  </div>
+                  <div className="text-[8px] text-[var(--muted)] flex flex-wrap gap-x-3 gap-y-0.5">
+                    <span>4,000+ stations</span>
+                    <span>VIC + NSW</span>
+                    <span>Updated hourly</span>
+                  </div>
+                </div>
+              </div>
+              <div className="px-3 py-3 flex items-center gap-2.5">
+                <div className="h-4 w-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
+                <span className="text-xs text-[var(--muted)]">{!userLocation ? "Finding your location..." : "Loading stations..."}</span>
+              </div>
             </div>
           ) : options.length === 0 ? (
             <div className="px-3 py-4 text-xs text-[var(--muted)] text-center">
