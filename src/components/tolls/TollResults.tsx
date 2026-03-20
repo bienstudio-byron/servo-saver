@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Clock, Fuel, DollarSign, TriangleAlert, Search, X, Zap, ChevronDown, Navigation, Info } from "lucide-react";
@@ -24,7 +24,8 @@ function findStationsNearRoute(
   maxRangeKm?: number,
   originLat?: number,
   originLng?: number,
-  count = 3
+  count = 3,
+  flaggedIds?: Set<string>
 ): RouteStation[] {
   const sampleStep = Math.max(1, Math.floor(polyline.length / Math.max(polyline.length * 0.5, 50)));
   const samples = polyline.filter((_, i) => i % sampleStep === 0 || i === polyline.length - 1);
@@ -34,6 +35,7 @@ function findStationsNearRoute(
   for (const s of stations) {
     const p = s.prices.find((pr) => pr.fuelType === fuelType);
     if (!p || p.price < 50 || p.price > 500) continue;
+    if (flaggedIds?.has(s.id)) continue;
 
     // Check if reachable with current fuel
     if (maxRangeKm && originLat != null && originLng != null) {
@@ -165,6 +167,11 @@ export default function TollResults() {
   const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
   const [fuelRadius, setFuelRadius] = useState<1 | 3 | 5>(3);
   const [showAltRoute, setShowAltRoute] = useState(false);
+  const [globalFlaggedIds, setGlobalFlaggedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch("/api/flag").then((r) => r.json()).then((d) => { if (d.flags) setGlobalFlaggedIds(new Set(Object.keys(d.flags))); }).catch(() => {});
+  }, []);
 
   const rangeKm = useFuelStore((s) => s.rangeKm);
   const origin = useTollStore.getState().origin;
@@ -173,10 +180,10 @@ export default function TollResults() {
   const routeStations = useMemo(() => {
     if (!comparison) return { free: [] as RouteStation[], toll: [] as RouteStation[] };
     return {
-      free: findStationsNearRoute(comparison.freeRoute.polyline, allStations, selectedFuelType, fuelRadius, rangeKm, origin?.lat, origin?.lng),
-      toll: findStationsNearRoute(comparison.tollRoute.polyline, allStations, selectedFuelType, fuelRadius, rangeKm, origin?.lat, origin?.lng),
+      free: findStationsNearRoute(comparison.freeRoute.polyline, allStations, selectedFuelType, fuelRadius, rangeKm, origin?.lat, origin?.lng, 3, globalFlaggedIds),
+      toll: findStationsNearRoute(comparison.tollRoute.polyline, allStations, selectedFuelType, fuelRadius, rangeKm, origin?.lat, origin?.lng, 3, globalFlaggedIds),
     };
-  }, [comparison, allStations, selectedFuelType, fuelRadius, rangeKm]);
+  }, [comparison, allStations, selectedFuelType, fuelRadius, rangeKm, globalFlaggedIds]);
 
   // Don't render if no comparison and not loading
   if (!comparison && !loading && !error && !quotaExceeded) return null;
