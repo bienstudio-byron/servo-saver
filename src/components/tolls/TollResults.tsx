@@ -1,12 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Clock, Fuel, DollarSign, TriangleAlert, Search, X, Zap, ChevronDown } from "lucide-react";
+import { MapPin, Clock, Fuel, DollarSign, TriangleAlert, Search, X, Zap, ChevronDown, Navigation } from "lucide-react";
 import { useTollStore } from "@/stores/toll-store";
+import { useFuelStore } from "@/stores/fuel-store";
 import { useVehicleStore } from "@/stores/vehicle-store";
-import type { TimePeriod, TollSegment } from "@/types/toll";
+import { haversineDistance } from "@/lib/geo";
+import type { TimePeriod, TollSegment, LatLng } from "@/types/toll";
+import type { StationWithPrices } from "@/types/fuel";
+import BrandLogo from "@/components/shared/BrandLogo";
 import SidebarFooter from "@/components/shared/SidebarFooter";
+
+/** Find cheapest station within radiusKm of a route polyline */
+function findCheapestNearRoute(
+  polyline: LatLng[],
+  stations: StationWithPrices[],
+  fuelType: string,
+  radiusKm: number
+): { station: StationWithPrices; price: number; distToRoute: number } | null {
+  // Sample every ~500m along the polyline for performance
+  const sampleStep = Math.max(1, Math.floor(polyline.length / Math.max(polyline.length * 0.5, 50)));
+  const samples = polyline.filter((_, i) => i % sampleStep === 0 || i === polyline.length - 1);
+
+  let best: { station: StationWithPrices; price: number; distToRoute: number } | null = null;
+
+  for (const s of stations) {
+    const p = s.prices.find((pr) => pr.fuelType === fuelType);
+    if (!p || p.price < 50 || p.price > 500) continue;
+
+    // Find minimum distance to any sample point on route
+    let minDist = Infinity;
+    for (const pt of samples) {
+      const d = haversineDistance(s.latitude, s.longitude, pt.lat, pt.lng);
+      if (d < minDist) minDist = d;
+      if (d < radiusKm) break; // early exit
+    }
+
+    if (minDist <= radiusKm) {
+      if (!best || p.price < best.price) {
+        best = { station: s, price: p.price, distToRoute: Math.round(minDist * 10) / 10 };
+      }
+    }
+  }
+
+  return best;
+}
 
 const PERIODS: { id: TimePeriod; label: string; desc: string }[] = [
   { id: "peak", label: "Peak", desc: "7-9am, 4-7pm" },
@@ -82,6 +121,20 @@ export default function TollResults() {
   const { comparison, settings, loading, error, quotaExceeded, updateSettings } = useTollStore();
   const vehicleProfile = useVehicleStore((s) => s.profile);
   const costModel = useVehicleStore((s) => s.costModel);
+  const allStations = useFuelStore((s) => s.allStations);
+  const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
+  const [fuelRadius, setFuelRadius] = useState<1 | 3 | 5>(3);
+
+  // Find cheapest stations near each route
+  const routeStations = useMemo(() => {
+    if (!comparison) return { free: null, toll: null };
+    const freeRoute = comparison.freeRoute.polyline;
+    const tollRoute = comparison.tollRoute.polyline;
+    return {
+      free: findCheapestNearRoute(freeRoute, allStations, selectedFuelType, fuelRadius),
+      toll: findCheapestNearRoute(tollRoute, allStations, selectedFuelType, fuelRadius),
+    };
+  }, [comparison, allStations, selectedFuelType, fuelRadius]);
 
   // Don't render if no comparison and not loading
   if (!comparison && !loading && !error && !quotaExceeded) return null;
@@ -239,6 +292,66 @@ export default function TollResults() {
                     </div>
 
                     <TollBreakdown segments={comparison.tollBreakdown} timePeriod={settings.timePeriod} />
+
+                    {/* Cheapest fuel along each route */}
+                    <div className="rounded-xl border border-[var(--subtle-border)] overflow-hidden">
+                      <div className="px-3 py-2 flex items-center justify-between border-b border-[var(--subtle-border)]">
+                        <span className="text-[11px] font-semibold text-[var(--foreground)]">Cheapest fuel on route</span>
+                        <div className="flex gap-0.5 bg-[var(--background)] rounded-md p-0.5 border border-[var(--subtle-border)]">
+                          {([1, 3, 5] as const).map((r) => (
+                            <button key={r} onClick={() => setFuelRadius(r)}
+                              className={`px-2 py-0.5 rounded text-[9px] font-bold cursor-pointer transition-all ${fuelRadius === r ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)]"}`}>
+                              {r}km
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Free route station */}
+                      <div className="px-3 py-2 flex items-center gap-2">
+                        <div className="w-4 h-1 rounded-full bg-[#4285f4] shrink-0" />
+                        {routeStations.free ? (
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <BrandLogo brandName={routeStations.free.station.brand?.name ?? "?"} size="sm" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[11px] font-medium text-[var(--foreground)] truncate">{routeStations.free.station.name}</div>
+                              <div className="text-[9px] text-[var(--muted)]">{routeStations.free.distToRoute}km from route</div>
+                            </div>
+                            <span className="text-[12px] font-bold font-mono text-[var(--foreground)] shrink-0">{routeStations.free.price.toFixed(1)}c</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-[var(--muted)]">No stations within {fuelRadius}km of free route</span>
+                        )}
+                      </div>
+
+                      <div className="border-t border-[var(--subtle-border)]/50" />
+
+                      {/* Toll route station */}
+                      <div className="px-3 py-2 flex items-center gap-2">
+                        <div className="w-4 h-1 rounded-full bg-[#ef4444] shrink-0" />
+                        {routeStations.toll ? (
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <BrandLogo brandName={routeStations.toll.station.brand?.name ?? "?"} size="sm" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[11px] font-medium text-[var(--foreground)] truncate">{routeStations.toll.station.name}</div>
+                              <div className="text-[9px] text-[var(--muted)]">{routeStations.toll.distToRoute}km from route</div>
+                            </div>
+                            <span className="text-[12px] font-bold font-mono text-[var(--foreground)] shrink-0">{routeStations.toll.price.toFixed(1)}c</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-[var(--muted)]">No stations within {fuelRadius}km of toll route</span>
+                        )}
+                      </div>
+
+                      {/* Price difference */}
+                      {routeStations.free && routeStations.toll && Math.abs(routeStations.free.price - routeStations.toll.price) > 1 && (
+                        <div className="border-t border-[var(--subtle-border)] px-3 py-1.5 text-[9px] text-[var(--muted)]">
+                          {routeStations.free.price < routeStations.toll.price
+                            ? `Free route has cheaper fuel — ${(routeStations.toll.price - routeStations.free.price).toFixed(1)}c/L less`
+                            : `Toll route has cheaper fuel — ${(routeStations.free.price - routeStations.toll.price).toFixed(1)}c/L less`}
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
