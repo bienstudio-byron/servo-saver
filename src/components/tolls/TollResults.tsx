@@ -314,7 +314,7 @@ export default function TollResults() {
                             <>
                               <Row icon={<MapPin className="h-3 w-3" strokeWidth={2} />} label="Distance" value={`${r.route.distance} km`} tip="Total driving distance via OpenRouteService." />
                               <div className="border-t border-[var(--subtle-border)]/50" />
-                              <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${r.cost.adjustedDuration} min`} tip="Estimated drive time based on speed limits." />
+                              <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${r.cost.adjustedDuration} min`} tip="Estimated drive time based on speed limits and road types. Does not include real-time traffic — in peak hour, toll roads are usually significantly faster." />
                               <div className="border-t border-[var(--subtle-border)]/50" />
                               <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${r.cost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${r.route.distance}km × 88¢/km` : `${r.route.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} tip={costModel === "fullCost" ? "Full vehicle cost at ATO rate." : "Fuel cost based on your vehicle."} />
                               <div className="border-t border-[var(--subtle-border)]/50" />

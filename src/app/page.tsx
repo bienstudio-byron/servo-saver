@@ -38,6 +38,14 @@ export default function HomePage() {
     // Hydrate vehicle store from localStorage (SSR-safe)
     useVehicleStore.getState().hydrate();
 
+    // Hydrate persisted filters
+    try {
+      const tv = localStorage.getItem("petrolsaver-time-value");
+      if (tv) useFuelStore.getState().setTimeValuePerHour(Number(tv));
+      const br = localStorage.getItem("petrolsaver-brands");
+      if (br) useFuelStore.getState().setSelectedBrands(JSON.parse(br));
+    } catch {}
+
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       setSelectedFuelType(stored);

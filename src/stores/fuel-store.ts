@@ -88,7 +88,10 @@ export const useFuelStore = create<FuelStore>((set) => {
   selectedFuelType: DEFAULT_FUEL_TYPE,
   setSelectedFuelType: (type) => set({ selectedFuelType: type }),
   selectedBrands: [],
-  setSelectedBrands: (brands) => set({ selectedBrands: brands }),
+  setSelectedBrands: (brands) => {
+    try { localStorage.setItem("petrolsaver-brands", JSON.stringify(brands)); } catch {}
+    set({ selectedBrands: brands });
+  },
   userLocation: saved?.location ?? null,
   setUserLocation: (location) => set({ userLocation: location }),
   locationName: saved?.name ?? null,
@@ -137,5 +140,8 @@ export const useFuelStore = create<FuelStore>((set) => {
   tripOrigin: null,
   setTripOrigin: (origin) => set({ tripOrigin: origin }),
   timeValuePerHour: 0,
-  setTimeValuePerHour: (value) => set({ timeValuePerHour: value }),
+  setTimeValuePerHour: (value) => {
+    try { localStorage.setItem("petrolsaver-time-value", String(value)); } catch {}
+    set({ timeValuePerHour: value });
+  },
 };});
