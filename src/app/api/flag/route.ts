@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabase();
 
     // Check if this device already flagged this station (prevent duplicates)
-    const { data: existing } = await supabase
+    const { data: existing, error: checkError } = await supabase
       .from("station_flags")
       .select("id")
       .eq("station_id", stationId)
@@ -92,16 +92,22 @@ export async function POST(req: NextRequest) {
       .gt("expires_at", new Date().toISOString())
       .limit(1);
 
+    if (checkError) console.error("Supabase flag check error:", checkError);
+
     if (!existing || existing.length === 0) {
-      await supabase.from("station_flags").insert({
+      const { error: insertError } = await supabase.from("station_flags").insert({
         station_id: stationId,
         station_name: stationName,
         reason: reason || "Not specified",
         device_hash: deviceHash,
       });
 
-      // Invalidate cache
-      flagCache.ts = 0;
+      if (insertError) {
+        console.error("Supabase flag insert error:", insertError);
+      } else {
+        // Invalidate cache
+        flagCache.ts = 0;
+      }
     }
 
     // Also send email notification
