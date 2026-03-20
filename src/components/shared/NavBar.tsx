@@ -468,6 +468,28 @@ export default function NavBar() {
                         <span className="text-xs text-[var(--muted)]">Comparing routes...</span>
                       </div>
                     )}
+
+                    {/* Compare button */}
+                    {!tollStore.loading && (
+                      <motion.button whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          // If no origin set, use GPS
+                          if (!tollStore.origin && userLocation) {
+                            tollStore.selectOrigin({ lat: userLocation.lat, lng: userLocation.lng, label: gpsSuburb || locationName || "Your location" });
+                          }
+                          if (tollStore.origin && tollStore.destination) {
+                            tollStore.compare();
+                            setExpanded(null);
+                          }
+                        }}
+                        disabled={!tollStore.destination}
+                        className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                          tollStore.destination ? "bg-[var(--foreground)] text-[var(--card)] hover:opacity-90 shadow-lg" : "bg-[var(--subtle)] text-[var(--muted)] cursor-not-allowed"
+                        }`}>
+                        <Route className="h-4 w-4" strokeWidth={2} />
+                        Compare routes
+                      </motion.button>
+                    )}
                   </div>
                 )}
 
