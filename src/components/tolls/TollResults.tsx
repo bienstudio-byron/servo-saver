@@ -150,6 +150,7 @@ export default function TollResults() {
   const allStations = useFuelStore((s) => s.allStations);
   const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
   const [fuelRadius, setFuelRadius] = useState<1 | 3 | 5>(3);
+  const [showAltRoute, setShowAltRoute] = useState(false);
 
   // Find cheapest stations near each route
   const routeStations = useMemo(() => {
@@ -266,39 +267,63 @@ export default function TollResults() {
                   </div>
                 ) : (
                   <>
-                    {/* Free route */}
-                    <div className={`bg-[var(--background)] border rounded-xl overflow-hidden ${freeIsBetter ? "border-[#4285f4]/40" : "border-[var(--subtle-border)] opacity-60"}`}>
-                      <div className="px-3 py-2 flex items-center gap-2.5 border-b border-[var(--subtle-border)]">
-                        <div className="w-5 h-1 rounded-full bg-[#4285f4]" />
-                        <span className="text-[11px] font-semibold text-[var(--foreground)] flex-1">Free route</span>
-                        {freeIsBetter && <span className="text-[8px] font-medium uppercase px-1.5 py-0.5 rounded bg-[rgba(16,185,129,0.15)] text-[var(--tier-cheap)]">Top pick</span>}
-                        <span className="text-[14px] font-bold font-mono text-[var(--foreground)]">${comparison.freeCost.totalCost.toFixed(2)}</span>
-                      </div>
-                      <Row icon={<MapPin className="h-3 w-3" strokeWidth={2} />} label="Distance" value={`${comparison.freeRoute.distance} km`} tip="Total driving distance for this route via OpenRouteService." />
-                      <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${comparison.freeCost.adjustedDuration} min`} sub={timeDiffAbs > 0 && freeIsBetter ? `+${timeDiffAbs} min vs toll` : undefined} tip="Estimated drive time based on speed limits and road types." />
-                      <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${comparison.freeCost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${comparison.freeRoute.distance}km × 88¢/km` : `${comparison.freeRoute.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} tip={costModel === "fullCost" ? "Full vehicle cost at ATO rate — includes fuel, tyres, servicing, depreciation." : "Fuel cost based on your vehicle's consumption and the average local fuel price."} />
-                      <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<DollarSign className="h-3 w-3" strokeWidth={2} />} label="Tolls" value="$0.00" color="text-[var(--tier-cheap)]" tip="No toll charges on the free route." />
-                    </div>
+                    {/* Recommended route (expanded by default) */}
+                    {(() => {
+                      const rec = freeIsBetter ? { route: comparison.freeRoute, cost: comparison.freeCost, label: "Free route", color: "#4285f4", tollCost: 0, station: routeStations.free } : { route: comparison.tollRoute, cost: comparison.tollCost, label: "Toll route", color: "#ef4444", tollCost: comparison.tollCost.tollCost, station: routeStations.toll };
+                      const alt = freeIsBetter ? { route: comparison.tollRoute, cost: comparison.tollCost, label: "Toll route", color: "#ef4444", tollCost: comparison.tollCost.tollCost, station: routeStations.toll } : { route: comparison.freeRoute, cost: comparison.freeCost, label: "Free route", color: "#4285f4", tollCost: 0, station: routeStations.free };
 
-                    {/* Toll route */}
-                    <div className={`bg-[var(--background)] border rounded-xl overflow-hidden ${!freeIsBetter ? "border-[#ef4444]/40" : "border-[var(--subtle-border)] opacity-60"}`}>
-                      <div className="px-3 py-2 flex items-center gap-2.5 border-b border-[var(--subtle-border)]">
-                        <div className="w-5 h-1 rounded-full bg-[#ef4444]" />
-                        <span className="text-[11px] font-semibold text-[var(--foreground)] flex-1">Toll route</span>
-                        {!freeIsBetter && <span className="text-[8px] font-medium uppercase px-1.5 py-0.5 rounded bg-[rgba(239,68,68,0.15)] text-[var(--tier-exp)]">Faster</span>}
-                        <span className="text-[14px] font-bold font-mono text-[var(--foreground)]">${comparison.tollCost.totalCost.toFixed(2)}</span>
-                      </div>
-                      <Row icon={<MapPin className="h-3 w-3" strokeWidth={2} />} label="Distance" value={`${comparison.tollRoute.distance} km`} tip="Total driving distance for this route via OpenRouteService." />
-                      <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${comparison.tollCost.adjustedDuration} min`} sub={timeDiffAbs > 0 && !freeIsBetter ? `${timeDiffAbs} min faster` : undefined} tip="Estimated drive time based on speed limits and road types." />
-                      <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${comparison.tollCost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${comparison.tollRoute.distance}km × 88¢/km` : `${comparison.tollRoute.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} tip={costModel === "fullCost" ? "Full vehicle cost at ATO rate — includes fuel, tyres, servicing, depreciation." : "Fuel cost based on your vehicle's consumption and the average local fuel price."} />
-                      <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<TriangleAlert className="h-3 w-3" strokeWidth={2} />} label="Tolls" value={`$${comparison.tollCost.tollCost.toFixed(2)}`} color="text-[var(--tier-exp)]" tip="Toll charges detected on this route. See breakdown below for details." />
-                    </div>
+                      const renderRouteCard = (r: typeof rec, isRecommended: boolean, expanded: boolean, onToggle?: () => void) => (
+                        <div className={`bg-[var(--background)] border rounded-xl overflow-hidden ${isRecommended ? `border-[${r.color}]/40` : "border-[var(--subtle-border)]"}`}>
+                          <button onClick={onToggle} className={`w-full px-3 py-2 flex items-center gap-2.5 ${expanded ? "border-b border-[var(--subtle-border)]" : ""} ${onToggle ? "cursor-pointer" : ""}`}>
+                            <div className="w-5 h-1 rounded-full shrink-0" style={{ background: r.color }} />
+                            <span className="text-[11px] font-semibold text-[var(--foreground)] flex-1 text-left">{r.label}</span>
+                            {isRecommended && <span className="text-[8px] font-medium uppercase px-1.5 py-0.5 rounded bg-[rgba(16,185,129,0.15)] text-[var(--tier-cheap)]">Top pick</span>}
+                            <span className="text-[14px] font-bold font-mono text-[var(--foreground)]">${r.cost.totalCost.toFixed(2)}</span>
+                            {onToggle && <ChevronDown className={`h-3 w-3 text-[var(--muted)] transition-transform ${expanded ? "rotate-180" : ""}`} strokeWidth={2} />}
+                          </button>
+                          {expanded && (
+                            <>
+                              <Row icon={<MapPin className="h-3 w-3" strokeWidth={2} />} label="Distance" value={`${r.route.distance} km`} tip="Total driving distance via OpenRouteService." />
+                              <div className="border-t border-[var(--subtle-border)]/50" />
+                              <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${r.cost.adjustedDuration} min`} tip="Estimated drive time based on speed limits." />
+                              <div className="border-t border-[var(--subtle-border)]/50" />
+                              <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${r.cost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${r.route.distance}km × 88¢/km` : `${r.route.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} tip={costModel === "fullCost" ? "Full vehicle cost at ATO rate." : "Fuel cost based on your vehicle."} />
+                              <div className="border-t border-[var(--subtle-border)]/50" />
+                              <Row icon={r.tollCost > 0 ? <TriangleAlert className="h-3 w-3" strokeWidth={2} /> : <DollarSign className="h-3 w-3" strokeWidth={2} />} label="Tolls" value={r.tollCost > 0 ? `$${r.tollCost.toFixed(2)}` : "$0.00"} color={r.tollCost > 0 ? "text-[var(--tier-exp)]" : "text-[var(--tier-cheap)]"} tip={r.tollCost > 0 ? "Toll charges on this route." : "No tolls."} />
+                              {/* Best fuel stop on this route */}
+                              {r.station && (
+                                <>
+                                  <div className="border-t border-[var(--subtle-border)]" />
+                                  <div className="px-3.5 py-2">
+                                    <div className="text-[9px] text-[var(--muted)] uppercase tracking-wider font-semibold mb-1.5">Best fuel stop</div>
+                                    <div className="flex items-center gap-2">
+                                      <BrandLogo brandName={r.station.station.brand?.name ?? "?"} size="sm" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-[11px] font-medium text-[var(--foreground)] truncate">{r.station.station.name}</div>
+                                        <div className="text-[9px] text-[var(--muted)]">{r.station.price.toFixed(1)}c/L · {r.station.distToRoute}km from route</div>
+                                      </div>
+                                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${r.station.station.latitude},${r.station.station.longitude}`}
+                                        target="_blank" rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)] text-[9px] font-bold hover:opacity-90 transition-opacity cursor-pointer shrink-0">
+                                        <Navigation className="h-3 w-3" strokeWidth={2} />
+                                        Go
+                                      </a>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+
+                      return (
+                        <>
+                          {renderRouteCard(rec, true, true)}
+                          {renderRouteCard(alt, false, showAltRoute, () => setShowAltRoute(!showAltRoute))}
+                        </>
+                      );
+                    })()}
 
                     {/* Verdict */}
                     <div className={`p-3 rounded-xl ${freeIsBetter ? "bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)]" : "bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.3)]"}`}>
