@@ -213,7 +213,8 @@ export default function NavBar() {
     : fillMode === "dollars" && fillDollarsInput ? `$${fillDollarsInput}`
     : `~${Math.round(litresFillingUp)}L`;
 
-  const hasActiveFilters = selectedBrands.length > 0 || timeValuePerHour > 0 || costModel === "fullCost";
+  const activeFilterCount = (selectedBrands.length > 0 ? 1 : 0) + (timeValuePerHour > 0 ? 1 : 0) + (costModel === "fullCost" ? 1 : 0);
+  const hasActiveFilters = activeFilterCount > 0;
 
   // ─── Effects ───
   useEffect(() => {
@@ -752,7 +753,12 @@ export default function NavBar() {
                 : "bg-[var(--card)] text-[var(--muted)] border-[var(--subtle-border)] hover:text-[var(--foreground)]"
             }`}
           >
+            <span className="relative">
             <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
+            {hasActiveFilters && (
+              <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--accent-text)] text-white text-[9px] font-bold flex items-center justify-center">{activeFilterCount}</span>
+            )}
+          </span>
             Filters
           </motion.button>
       </div>{/* end barRef */}
