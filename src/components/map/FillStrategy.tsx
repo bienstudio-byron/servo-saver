@@ -539,7 +539,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       .filter((s) => selectedBrands.length === 0 || (s.brand?.name && selectedBrands.includes(s.brand.name)))
       .map((s) => {
         const p = s.prices.find((pr) => pr.fuelType === selectedFuelType);
-        if (!p) return null;
+        if (!p || p.price < 50 || p.price > 500) return null; // Filter bad data: <50c or >500c/L
         return { station: s, price: p.price, isStale: !!p.isStale, updatedAt: p.updatedAt, source: p.source, distance: haversineDistance(origin.lat, origin.lng, s.latitude, s.longitude) * ROAD_FACTOR };
       }).filter(Boolean) as { station: StationWithPrices; price: number; isStale: boolean; updatedAt: string; source?: "official" | "community"; distance: number }[];
 

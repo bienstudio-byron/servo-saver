@@ -372,7 +372,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
     return stations
       .map((s) => {
         const entry = s.prices.find((p) => p.fuelType === selectedFuelType);
-        return entry ? { station: s, price: entry.price } : null;
+        return entry && entry.price >= 50 && entry.price <= 500 ? { station: s, price: entry.price } : null;
       })
       .filter((x): x is { station: StationWithPrices; price: number } => x !== null);
   }, [stations, selectedFuelType]);
