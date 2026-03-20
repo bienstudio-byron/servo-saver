@@ -156,7 +156,7 @@ export default function StationModal({
                       fetch("/api/flag", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ stationName: station.name, stationId: station.id, reason }),
+                        body: JSON.stringify({ stationName: station.name, stationId: station.id, reason, deviceId: (() => { const k = "petrolsaver-device-id"; let id = localStorage.getItem(k); if (!id) { id = crypto.randomUUID(); localStorage.setItem(k, id); } return id; })() }),
                       }).catch(() => {});
                     }}
                     className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border border-[var(--subtle-border)] hover:bg-[var(--card)] transition-colors !cursor-pointer"

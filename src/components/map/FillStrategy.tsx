@@ -16,6 +16,13 @@ import { getPriceTier } from "@/lib/price-utils";
 import { titleCase, TAG_DESCRIPTIONS, formatUpdated, getTierColor, getTagStyle } from "@/lib/station-utils";
 import BrandLogo from "@/components/shared/BrandLogo";
 import { getFlaggedStations, flagStation, isStationFlagged } from "@/lib/flagged-stations";
+
+function getDeviceId(): string {
+  const key = "petrolsaver-device-id";
+  let id = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+  if (!id) { id = crypto.randomUUID(); try { localStorage.setItem(key, id); } catch {} }
+  return id;
+}
 import SidebarFooter from "@/components/shared/SidebarFooter";
 
 /** Desktop hover tooltip — fixed positioning, clamped to viewport edges */
@@ -452,6 +459,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [reportedStationIds, setReportedStationIds] = useState<Set<string>>(new Set());
   const [flaggingStationId, setFlaggingStationId] = useState<string | null>(null);
   const [flaggedStationIds, setFlaggedStationIds] = useState<Set<string>>(new Set());
+  const [globalFlags, setGlobalFlags] = useState<Record<string, { count: number; reasons: string[] }>>({});
   const [showAllTrip, setShowAllTrip] = useState(false);
   const [showAllNearby, setShowAllNearby] = useState(false);
   const lastUpdated = useMemo(() => {
@@ -474,6 +482,14 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   }, []);
   const [minimised, setMinimised] = useState(() => typeof window !== "undefined" ? window.innerWidth < 768 : true);
   const thresholds = usePriceThresholds();
+
+  // Fetch globally flagged stations
+  useEffect(() => {
+    fetch("/api/flag")
+      .then((r) => r.json())
+      .then((data) => { if (data.flags) setGlobalFlags(data.flags); })
+      .catch(() => {});
+  }, []);
 
   // Reverse geocode origin (searchOrigin or userLocation) to get suburb name
   useEffect(() => {
@@ -1101,7 +1117,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                           fetch("/api/flag", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ stationName: opt.station.name, stationId: opt.station.id, reason }),
+                            body: JSON.stringify({ stationName: opt.station.name, stationId: opt.station.id, reason, deviceId: getDeviceId() }),
                           }).catch(() => {});
                         }}
                         className="flex flex-col items-center gap-1 px-2 py-2 rounded-lg border border-[var(--subtle-border)] hover:bg-[var(--card)] transition-colors !cursor-pointer"
@@ -1316,13 +1332,15 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                 const isFirst = i === 0;
                 const isExpanded = expandedIndex === i;
                 const isActive = activeStation?.id === opt.station.id;
+                const globalFlag = globalFlags[opt.station.id];
+                const isGloballyFlagged = globalFlag && globalFlag.count >= 1;
 
                 return (
                   <div
                     ref={(el: HTMLDivElement | null) => setRowRef(i, el)}
                     key={opt.station.id}
-                    className={`${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""} ${isFirst ? "border-b border-[var(--subtle-border)]" : "border-b border-[var(--subtle-border)]/50"} border-l-2 ${
-                      getPriceTier(opt.price, thresholds) === "cheap" ? "border-l-[var(--tier-cheap)]" : getPriceTier(opt.price, thresholds) === "mid" ? "border-l-[var(--tier-mid)]" : getPriceTier(opt.price, thresholds) === "expensive" ? "border-l-[var(--tier-exp)]" : "border-l-transparent"
+                    className={`${isGloballyFlagged ? "opacity-50" : ""} ${(isExpanded || isActive) ? "bg-[var(--subtle)]" : ""} ${isFirst ? "border-b border-[var(--subtle-border)]" : "border-b border-[var(--subtle-border)]/50"} border-l-2 ${
+                      isGloballyFlagged ? "border-l-[var(--tier-exp)]" : getPriceTier(opt.price, thresholds) === "cheap" ? "border-l-[var(--tier-cheap)]" : getPriceTier(opt.price, thresholds) === "mid" ? "border-l-[var(--tier-mid)]" : getPriceTier(opt.price, thresholds) === "expensive" ? "border-l-[var(--tier-exp)]" : "border-l-transparent"
                     }`}
                   >
                     <button
@@ -1352,7 +1370,13 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                               </span>
                             )}
                           </div>
-                          {opt.isStale && (
+                          {isGloballyFlagged && (
+                            <div className="flex items-center gap-1 text-[11px] text-[var(--tier-exp)] mt-2">
+                              <Flag className="h-3 w-3 shrink-0" fill="currentColor" strokeWidth={1} />
+                              Flagged: {globalFlag.reasons[0]} · {globalFlag.count} report{globalFlag.count > 1 ? "s" : ""}
+                            </div>
+                          )}
+                          {opt.isStale && !isGloballyFlagged && (
                             <div className="flex items-center gap-1 text-[11px] text-[var(--tier-mid)] mt-2">
                               <TriangleAlert className="h-3 w-3 shrink-0" strokeWidth={2} />
                               Price may be outdated
@@ -1367,7 +1391,12 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
                           <div className="min-w-0 flex-1">
                             <div className="font-medium text-[var(--foreground)] text-xs truncate">{opt.station.name}</div>
                             <div className="text-[10px] text-[var(--muted)] mt-0.5">
-                              {opt.isStale ? (
+                              {isGloballyFlagged ? (
+                                <span className="flex items-center gap-0.5 text-[var(--tier-exp)]">
+                                  <Flag className="h-3 w-3 inline shrink-0" fill="currentColor" strokeWidth={1} />
+                                  {globalFlag.reasons[0]}
+                                </span>
+                              ) : opt.isStale ? (
                                 <span className="flex items-center gap-0.5 text-[var(--tier-mid)]">
                                   <TriangleAlert className="h-3 w-3 inline shrink-0" strokeWidth={2} />
                                   Price may be outdated
