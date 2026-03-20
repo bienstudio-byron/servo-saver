@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -55,8 +55,8 @@ const iconCache = new Map<string, L.DivIcon>();
 
 type PinHighlight = "focused" | "recommended" | "none";
 
-function getPillIcon(brandName: string, price: number, tier: PriceTier, highlight: PinHighlight = "none", themeKey = "dark"): L.DivIcon {
-  const key = `${themeKey}|${brandName}|${price.toFixed(1)}|${tier}|${highlight}`;
+function getPillIcon(brandName: string, price: number, tier: PriceTier, highlight: PinHighlight = "none", themeKey = "dark", flagged = false): L.DivIcon {
+  const key = `${themeKey}|${brandName}|${price.toFixed(1)}|${tier}|${highlight}|${flagged}`;
   const cached = iconCache.get(key);
   if (cached) return cached;
 
@@ -72,8 +72,14 @@ function getPillIcon(brandName: string, price: number, tier: PriceTier, highligh
     ? `<img src="${logoUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:contain;background:#fff;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'" /><div style="display:none;width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`
     : `<div style="width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`;
 
+  const flagHtml = flagged
+    ? `<div style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;border:2px solid var(--card,#1a1a1a)"><svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15" stroke="#fff" stroke-width="3"/></svg></div>`
+    : "";
+
+  const opacity = flagged ? "opacity:0.45;" : "";
+
   const icon = L.divIcon({
-    html: `<div class="${pillClass}" style="--pill-glow:${s.text};display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,0.4));cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>`,
+    html: `<div style="position:relative;"><div class="${pillClass}" style="--pill-glow:${s.text};display:inline-flex;align-items:center;gap:4px;padding:2px 7px 2px 3px;border-radius:4px;background:${s.bg};border:1.5px solid ${s.border};box-shadow:0 2px 8px var(--shadow,rgba(0,0,0,0.4));cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);line-height:1;width:fit-content;${opacity}">${logoHtml}<span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:${s.text}">${price.toFixed(1)}</span></div>${flagHtml}</div>`,
     className: "",
     iconSize: [0, 0],
     iconAnchor: [0, 0],
@@ -384,6 +390,17 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   const focusedStationId = useFuelStore((s) => s.focusedStationId);
   const activeRouteStation = useFuelStore((s) => s.activeRouteStation);
 
+  // Global flags
+  const [globalFlaggedIds, setGlobalFlaggedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    fetch("/api/flag")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.flags) setGlobalFlaggedIds(new Set(Object.keys(data.flags)));
+      })
+      .catch(() => {});
+  }, []);
+
   // Nearby mode: show all pins when zoomed in. Trip mode: only show recommended + destination
   const showPins = tripMode === "nearby" && viewport.zoom >= MIN_ZOOM_FOR_PILLS;
 
@@ -442,7 +459,8 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
                 price,
                 getPriceTier(price, thresholds),
                 highlight,
-                theme
+                theme,
+                globalFlaggedIds.has(station.id)
               )}
               zIndexOffset={highlight === "focused" ? 1200 : highlight === "recommended" ? 1000 : 0}
               eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
@@ -480,7 +498,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
               <Marker
                 key={`rec-${rs.id}`}
                 position={[rs.latitude, rs.longitude]}
-                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", recHighlight, theme)}
+                icon={getPillIcon(rs.brand?.name ?? "?", price ?? 0, price ? getPriceTier(price, thresholds) : "unknown", recHighlight, theme, globalFlaggedIds.has(rs.id))}
                 zIndexOffset={recHighlight === "focused" ? 1200 : 1000}
                 eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(rs.id) }}
               />
