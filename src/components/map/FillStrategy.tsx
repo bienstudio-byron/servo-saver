@@ -469,6 +469,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
   const [globalFlags, setGlobalFlags] = useState<Record<string, { count: number; reasons: string[] }>>({});
   const [showAllTrip, setShowAllTrip] = useState(false);
   const [showAllNearby, setShowAllNearby] = useState(false);
+  const [detourTolerance, setDetourTolerance] = useState<1 | 3 | 5>(3);
   const lastUpdated = useMemo(() => {
     if (stations.length === 0) return "";
     let latest = "";
@@ -535,7 +536,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     const total = haversineDistance(oLat, oLng, dLat, dLng);
     const toS = haversineDistance(oLat, oLng, sLat, sLng);
     const sToDest = haversineDistance(sLat, sLng, dLat, dLng);
-    return ((toS + sToDest) - total) < Math.max(5, total * 0.15) && toS < total;
+    // Detour tolerance: how far off the direct route the station can be
+    return ((toS + sToDest) - total) < detourTolerance && toS < total;
   }
 
   const MAIN_FUEL_IDS = ["U91", "P95", "P98", "DSL", "E10", "LPG"];
@@ -653,7 +655,7 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
     });
 
     return { options };
-  }, [origin, stations, selectedFuelType, tripMode, tripDestination, rangeKm, thresholds, selectedBrands, costModel, getCostPerKm]);
+  }, [origin, stations, selectedFuelType, tripMode, tripDestination, rangeKm, thresholds, selectedBrands, costModel, getCostPerKm, detourTolerance]);
 
   const closestOpt = useMemo(() => {
     if (options.length === 0) return null;
@@ -1320,6 +1322,21 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Detour tolerance — trip mode only */}
+      {tripMode === "trip" && tripDestination && !minimised && selectedOpt === null && (
+        <div className="shrink-0 px-3 py-2 border-b border-[var(--subtle-border)] flex items-center justify-between">
+          <span className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider">Detour tolerance</span>
+          <div className="flex gap-0.5 bg-[var(--background)] rounded-md p-0.5 border border-[var(--subtle-border)]">
+            {([1, 3, 5] as const).map((r) => (
+              <button key={r} onClick={() => setDetourTolerance(r)}
+                className={`px-2.5 py-1 rounded text-[10px] font-bold cursor-pointer transition-all ${detourTolerance === r ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm" : "text-[var(--muted)]"}`}>
+                {r}km
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Options list */}
       <div ref={listRef} className={`overflow-y-auto flex-1 min-h-0 overscroll-contain ${minimised || selectedOpt !== null ? "hidden" : ""}`} style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
