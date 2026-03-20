@@ -14,6 +14,7 @@ import NavBar from "@/components/shared/NavBar";
 import VehicleSetup from "@/components/shared/VehicleSetup";
 import TollMode from "@/components/tolls/TollMode";
 import { useFuelStore } from "@/stores/fuel-store";
+import { useVehicleStore } from "@/stores/vehicle-store";
 import { PriceThresholdsProvider } from "@/stores/price-context";
 import type { StationWithPrices } from "@/types/fuel";
 
@@ -34,6 +35,9 @@ export default function HomePage() {
   const setFlyToTarget = useFuelStore((s) => s.setFlyToTarget);
 
   useEffect(() => {
+    // Hydrate vehicle store from localStorage (SSR-safe)
+    useVehicleStore.getState().hydrate();
+
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       setSelectedFuelType(stored);
@@ -43,7 +47,6 @@ export default function HomePage() {
     const params = new URLSearchParams(window.location.search);
     const stationParam = params.get("station");
     if (stationParam) {
-      // Don't show onboarding — go straight to map
       setMounted(true);
       return;
     }
