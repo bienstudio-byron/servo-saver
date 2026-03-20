@@ -782,13 +782,8 @@ export default function NavBar() {
                 : "bg-[var(--card)] text-[var(--muted)] border-[var(--subtle-border)] hover:text-[var(--foreground)]"
             }`}
           >
-            <span className="relative">
             <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
-            {hasActiveFilters && (
-              <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--accent-text)] text-white text-[9px] font-bold flex items-center justify-center">{activeFilterCount}</span>
-            )}
-          </span>
-            Filters
+            Filters{hasActiveFilters ? ` (${activeFilterCount})` : ""}
           </motion.button>
       </div>{/* end barRef */}
 
