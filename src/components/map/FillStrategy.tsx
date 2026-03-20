@@ -58,43 +58,17 @@ function Tip({ text }: { text: string }) {
 }
 
 import TripSummaryCard from "./TripSummaryCard";
-import { Fuel as FuelIcon, Route } from "lucide-react";
-import type { AppMode } from "@/stores/fuel-store";
-
-const desktopModes: { id: AppMode; label: string; icon: typeof FuelIcon }[] = [
-  { id: "petrol", label: "Fuel", icon: FuelIcon },
-  { id: "tolls", label: "Tolls", icon: Route },
-];
-
-function DesktopHeader({ locationName }: { locationName: string | null }) {
-  const mode = useFuelStore((s) => s.mode);
-  const setMode = useFuelStore((s) => s.setMode);
+function DesktopHeader({ locationName, searchOrigin }: { locationName: string | null; searchOrigin: { lat: number; lng: number } | null }) {
+  const tripMode = useFuelStore((s) => s.tripMode);
+  const tripDestination = useFuelStore((s) => s.tripDestination);
+  const label = tripMode === "trip" && tripDestination
+    ? `Trip to ${tripDestination.name}`
+    : searchOrigin && locationName
+    ? `Searching near ${locationName}`
+    : locationName || "Near you";
   return (
-    <div className="hidden md:flex items-center px-3.5 py-2 shrink-0 border-b border-[var(--subtle-border)]">
-      <img src="/logos/nav-icon.png" alt="PetrolSaver" className="h-5 w-5" />
-      <span className="text-[13px] font-bold text-[var(--foreground)] ml-1.5">
-        Petrol<span className="text-[#4285f4]">Saver</span>
-      </span>
-      <div className="flex items-center gap-0.5 ml-auto bg-[var(--background)] rounded-lg p-0.5 border border-[var(--subtle-border)]">
-        {desktopModes.map((m) => {
-          const active = mode === m.id;
-          const Icon = m.icon;
-          return (
-            <button
-              key={m.id}
-              onClick={() => setMode(m.id)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                active
-                  ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <Icon className={`h-3 w-3 ${active ? "text-[var(--accent-text)]" : ""}`} strokeWidth={2.5} />
-              {m.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="hidden md:flex items-center px-3.5 py-2.5 shrink-0 border-b border-[var(--subtle-border)]">
+      <span className="text-[12px] font-semibold text-[var(--foreground)] truncate">{label}</span>
     </div>
   );
 }
@@ -1221,8 +1195,8 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
       style={{ maxHeight: !minimised && expandedIndex !== null ? "80vh" : minimised ? "45vh" : "60vh", transition: "max-height 0.3s ease" }}
     >
 
-      {/* Header — desktop only: logo + inline tabs */}
-      <DesktopHeader locationName={locationName} />
+      {/* Header — desktop only */}
+      <DesktopHeader locationName={locationName} searchOrigin={searchOrigin} />
 
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
       {selectedOpt === null && (
