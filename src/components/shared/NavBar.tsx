@@ -460,7 +460,7 @@ export default function NavBar() {
                       {tollDestResults.length > 0 && (
                         <div className="mt-1.5 rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] overflow-hidden">
                           {tollDestResults.map((r, i) => (
-                            <button key={i} onClick={() => { handleSelectTollDest(r); setExpanded(null); }}
+                            <button key={i} onClick={() => { handleSelectTollDest(r); }}
                               className="w-full text-left px-3 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer">
                               {r.label}
                             </button>
