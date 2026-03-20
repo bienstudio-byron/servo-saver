@@ -1,8 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import TollSidebar from "./TollSidebar";
-import TollMobileSheet from "./TollMobileSheet";
+import TollResults from "./TollResults";
 
 const TollMapView = dynamic(() => import("./TollMapView"), {
   ssr: false,
@@ -15,19 +14,10 @@ const TollMapView = dynamic(() => import("./TollMapView"), {
 
 export default function TollMode() {
   return (
-    <div className="h-full w-full md:flex">
-      {/* Desktop sidebar — results only */}
-      <div className="hidden md:flex md:w-[24rem] md:shrink-0 md:h-full">
-        <TollSidebar />
-      </div>
-      {/* Map + planner overlay */}
-      <div className="relative flex-1 h-full">
-        <TollMapView />
-        {/* Mobile: bottom sheet */}
-        <div className="md:hidden">
-          <TollMobileSheet />
-        </div>
-      </div>
+    <div className="h-full w-full relative">
+      <TollMapView />
+      {/* Results — floating card, appears when comparison exists */}
+      <TollResults />
     </div>
   );
 }

@@ -102,6 +102,21 @@ export interface ApiFuelTypeResponse {
   }>;
 }
 
+// Ranked station option — used in FillStrategy + TripSummaryCard
+export interface RankedOption {
+  station: StationWithPrices;
+  price: number;
+  distance: number;
+  detourKm: number;
+  detourMins: number;
+  detourCost: number; // $ cost of the detour (fuel-only or ATO rate)
+  netSavings: number; // vs nearest station
+  tag: string; // "Best for you" | "Good deal" | "Nearby"
+  isStale: boolean;
+  updatedAt: string;
+  source?: "official" | "community";
+}
+
 // Client-side enriched types
 export interface StationListItem {
   id: string;

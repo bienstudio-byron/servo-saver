@@ -21,10 +21,9 @@ import { useFuelStore } from "@/stores/fuel-store";
 import { getPriceTier, type PriceTier } from "@/lib/price-utils";
 import type { PriceThresholds } from "@/lib/price-utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Moon, Sun, Search, LocateFixed } from "lucide-react";
+import { Search, LocateFixed } from "lucide-react";
 import { haversineDistance } from "@/lib/geo";
 import LocationButton from "./LocationButton";
-import ModeToggle from "./ModeToggle";
 import AreaPriceList from "./AreaPriceList";
 import FillStrategy from "./FillStrategy";
 import { useTheme } from "@/lib/theme";
@@ -100,25 +99,26 @@ function UserLocationMarker() {
   const map = useMap();
   const setUserLocation = useFuelStore((s) => s.setUserLocation);
   const userLocation = useFuelStore((s) => s.userLocation);
+  const locationSource = useFuelStore((s) => s.locationSource);
+
+  const safelyFlyTo = useCallback((latlng: [number, number], zoom: number) => {
+    try {
+      if (!map || !map.getContainer()) return;
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        const targetPoint = map.project(latlng, zoom);
+        targetPoint.y += 120;
+        const offsetLatLng = map.unproject(targetPoint, zoom);
+        map.flyTo(offsetLatLng, zoom, { duration: 1.2 });
+      } else {
+        map.flyTo(latlng, zoom, { duration: 1.2 });
+      }
+    } catch {
+      // Map not ready yet
+    }
+  }, [map]);
 
   const requestLocation = useCallback(() => {
-    const safelyFlyTo = (latlng: [number, number], zoom: number) => {
-      try {
-        if (!map || !map.getContainer()) return;
-        const isMobile = window.innerWidth < 768;
-        if (isMobile) {
-          const targetPoint = map.project(latlng, zoom);
-          targetPoint.y += 120;
-          const offsetLatLng = map.unproject(targetPoint, zoom);
-          map.flyTo(offsetLatLng, zoom, { duration: 1.2 });
-        } else {
-          map.flyTo(latlng, zoom, { duration: 1.2 });
-        }
-      } catch {
-        // Map not ready yet
-      }
-    };
-
     if (!("geolocation" in navigator)) {
       setUserLocation({ lat: -37.8136, lng: 144.9631 });
       safelyFlyTo([-37.8136, 144.9631], 13);
@@ -140,30 +140,48 @@ function UserLocationMarker() {
       },
       { enableHighAccuracy: false, timeout: 15000 }
     );
-  }, [map, setUserLocation, position]);
+  }, [safelyFlyTo, setUserLocation, position]);
 
-  // Initial request
+  // If a manual location is saved, fly to it and skip GPS entirely
   useEffect(() => {
-    requestLocation();
+    if (locationSource === "manual" && userLocation) {
+      const latlng: [number, number] = [userLocation.lat, userLocation.lng];
+      setPosition(latlng);
+      safelyFlyTo(latlng, 13);
+    }
+  }, []); // Only on mount
+
+  // Request GPS only if no manual location is saved
+  useEffect(() => {
+    if (locationSource !== "manual") {
+      requestLocation();
+    }
   }, []);
 
   // Retry after 3s if we still don't have a real position (permission prompt may have delayed)
   useEffect(() => {
-    if (position) return;
+    if (position || locationSource === "manual") return;
     const retry = setTimeout(() => {
       if (!position) requestLocation();
     }, 3000);
     return () => clearTimeout(retry);
-  }, [position]);
+  }, [position, locationSource]);
 
   // Retry again after 8s as final attempt
   useEffect(() => {
-    if (position) return;
+    if (position || locationSource === "manual") return;
     const retry = setTimeout(() => {
       if (!position) requestLocation();
     }, 8000);
     return () => clearTimeout(retry);
-  }, [position]);
+  }, [position, locationSource]);
+
+  // Update position marker when userLocation changes (e.g. manual location set via chip)
+  useEffect(() => {
+    if (userLocation) {
+      setPosition([userLocation.lat, userLocation.lng]);
+    }
+  }, [userLocation?.lat, userLocation?.lng]);
 
   if (!position) return null;
   return <Marker position={position} icon={userLocationIcon} interactive={false} zIndexOffset={2000} />;
@@ -333,7 +351,7 @@ function SearchAreaButton({ mapCentre }: { mapCentre: { lat: number; lng: number
 export default function MapInner({ stations, selectedFuelType, loading }: MapInnerProps) {
   const [viewport, setViewport] = useState<ViewportState>({ bounds: null, zoom: 13, centre: { lat: MAP_CENTER[0], lng: MAP_CENTER[1] } });
   const thresholds = usePriceThresholds();
-  const { theme, toggle: toggleTheme, currentTime } = useTheme();
+  const { theme } = useTheme();
   const tileUrl = theme === "light"
     ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
@@ -382,17 +400,7 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   }, [stationsWithPrice, viewport, showPins]);
 
   return (
-    <div className="h-full w-full md:flex">
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex md:w-[24rem] md:shrink-0 md:h-full">
-        <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
-          setSearchOrigin(null);
-          if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
-        }} onEditTrip={() => setTripPlannerOpen(true)} />
-      </div>
-
-      {/* Map + overlays */}
-      <div className="relative flex-1 h-full">
+    <div className="h-full w-full relative">
       <MapContainer
         center={MAP_CENTER}
         zoom={13}
@@ -542,50 +550,28 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
         })()}
       </MapContainer>
 
-      {/* Mode toggle + filter chips + theme toggle */}
-      <ModeToggle
-        themeToggle={
-          <>
-            <button
-              onClick={() => {
-                setSearchOrigin(null);
-                if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
-              }}
-              className="hidden md:flex rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title="Centre on my location"
-            >
-              <LocateFixed className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-            <button
-              onClick={toggleTheme}
-              className="hidden md:flex rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-2.5 py-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? (
-                <Moon className="h-3.5 w-3.5" strokeWidth={2} />
-              ) : (
-                <Sun className="h-3.5 w-3.5" strokeWidth={2} />
-              )}
-              {currentTime && <span className="text-[11px] font-semibold font-mono">{currentTime}</span>}
-            </button>
-          </>
-        }
-      />
+      {/* Recentre button — bottom right */}
+      <button
+        onClick={() => {
+          setSearchOrigin(null);
+          if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
+        }}
+        className="hidden md:flex absolute bottom-4 right-4 z-[900] rounded-full bg-[var(--card)] border border-[var(--subtle-border)] shadow-xl items-center gap-1.5 px-3 py-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+        title="Centre on my location"
+      >
+        <LocateFixed className="h-4 w-4" strokeWidth={2} />
+      </button>
 
-      {/* Search this area button — desktop only (mobile version is inside FillStrategy) */}
+      {/* Search this area button — desktop only (mobile has it in floating buttons row) */}
       <div className="hidden md:block">
         <SearchAreaButton mapCentre={viewport.centre} />
       </div>
 
-
-      {/* Mobile: FillStrategy as bottom sheet overlay */}
-      <div className="md:hidden">
-        <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
-          setSearchOrigin(null);
-          if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
-        }} onEditTrip={() => setTripPlannerOpen(true)} />
-      </div>
-      </div>
+      {/* FillStrategy — single instance, responsive (bottom sheet on mobile, floating card on desktop) */}
+      <FillStrategy stations={stations} selectedFuelType={selectedFuelType} loading={loading} mapCentre={viewport.centre} onRecentre={() => {
+        setSearchOrigin(null);
+        if (userLocation) setFlyToTarget({ lat: userLocation.lat, lng: userLocation.lng, zoom: 14 });
+      }} onEditTrip={() => setTripPlannerOpen(true)} />
     </div>
   );
 }

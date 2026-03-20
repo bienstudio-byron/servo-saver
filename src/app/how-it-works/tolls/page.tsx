@@ -55,12 +55,14 @@ export default function TollHowItWorksPage() {
 
             <div className="space-y-3">
               <div>
-                <p className="font-semibold text-[var(--foreground)] mb-1">Fuel cost</p>
-                <div className="bg-[var(--background)] rounded-lg p-3 font-mono text-xs text-[var(--foreground)]">
-                  fuel = (distance_km / 100) &times; consumption_L &times; price_per_L
+                <p className="font-semibold text-[var(--foreground)] mb-1">Driving cost</p>
+                <div className="bg-[var(--background)] rounded-lg p-3 font-mono text-xs text-[var(--foreground)] space-y-1">
+                  <div>fuel_only = (distance_km / 100) &times; consumption_L &times; price_per_L</div>
+                  <div className="text-[var(--muted)]">— or —</div>
+                  <div>full_cost = distance_km &times; $0.88 <span className="text-[var(--muted)]">(ATO rate)</span></div>
                 </div>
                 <p className="mt-1.5 text-xs">
-                  Same formula for both routes. No artificial multipliers — the distance difference between routes IS the fuel difference. A longer free route naturally burns more fuel.
+                  Same formula for both routes. Choose &ldquo;Fuel only&rdquo; to count just petrol, or &ldquo;Full cost (ATO 88¢/km)&rdquo; to include tyres, servicing, and depreciation. Toggle this in the More filter. The distance difference between routes IS the cost difference.
                 </p>
               </div>
 

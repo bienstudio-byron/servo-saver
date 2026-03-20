@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Flag, X, Navigation, ChevronDown, Users, Pencil } from "lucide-react";
+import { Flag, X, Navigation, ChevronDown, Users, Pencil, DollarSign, Ban, Clock, MapPinOff } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import ReportPriceModal from "./ReportPriceModal";
 import type { StationWithPrices } from "@/types/fuel";
@@ -12,7 +12,7 @@ import PriceBadge from "./PriceBadge";
 import AdSlot from "./AdSlot";
 import ShareButton from "./ShareButton";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
-import { flagStation, isStationFlagged } from "@/lib/flagged-stations";
+import { flagStation, unflagStation, isStationFlagged } from "@/lib/flagged-stations";
 import PriceHistory from "./PriceHistory";
 
 interface StationModalProps {
@@ -32,6 +32,7 @@ export default function StationModal({
 }: StationModalProps) {
   const [showAllPrices, setShowAllPrices] = useState(false);
   const [flagged, setFlagged] = useState(false);
+  const [showFlagOptions, setShowFlagOptions] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [communityPrice, setCommunityPrice] = useState<{ price: number; reportedAt: string; confidence: number } | null>(null);
 
@@ -115,18 +116,13 @@ export default function StationModal({
         <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
           <button
             onClick={() => {
-              flagStation(station.id);
-              setFlagged(true);
-              fetch("/api/flag", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ stationName: station.name, stationId: station.id, reason: "User flagged via modal" }),
-              }).catch(() => {});
+              if (flagged) return; // already flagged, use banner to unflag
+              setShowFlagOptions(!showFlagOptions);
             }}
             className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               flagged ? "text-[var(--tier-exp)] bg-red-500/10" : "text-[var(--muted)] hover:text-[var(--tier-exp)] hover:bg-[var(--subtle-hover)]"
             }`}
-            title={flagged ? "Station flagged" : "Report incorrect data"}
+            title={flagged ? "Station flagged" : "Report an issue"}
           >
             <Flag className="h-3.5 w-3.5" fill={flagged ? "currentColor" : "none"} strokeWidth={2} />
           </button>
@@ -140,13 +136,61 @@ export default function StationModal({
         </div>
 
         <div className="p-4 overflow-y-auto flex-1 min-h-0">
-          {/* Flagged banner */}
+          {/* Flag reason picker */}
+          {showFlagOptions && !flagged && (
+            <div className="mb-3 rounded-xl bg-[var(--subtle)] border border-[var(--subtle-border)] p-3">
+              <div className="text-[11px] font-semibold text-[var(--foreground)] mb-2">What&apos;s wrong with this station?</div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { reason: "Wrong price", label: "Wrong price", icon: <DollarSign className="h-4 w-4" strokeWidth={2} />, color: "text-[var(--tier-mid)]" },
+                  { reason: "Closed permanently", label: "Closed down", icon: <Ban className="h-4 w-4" strokeWidth={2} />, color: "text-[var(--tier-exp)]" },
+                  { reason: "Temporarily closed", label: "Temp. closed", icon: <Clock className="h-4 w-4" strokeWidth={2} />, color: "text-orange-400" },
+                  { reason: "Wrong location", label: "Wrong pin", icon: <MapPinOff className="h-4 w-4" strokeWidth={2} />, color: "text-blue-400" },
+                ].map(({ reason, label, icon, color }) => (
+                  <button
+                    key={reason}
+                    onClick={() => {
+                      flagStation(station.id);
+                      setFlagged(true);
+                      setShowFlagOptions(false);
+                      fetch("/api/flag", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ stationName: station.name, stationId: station.id, reason }),
+                      }).catch(() => {});
+                    }}
+                    className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border border-[var(--subtle-border)] hover:bg-[var(--card)] transition-colors !cursor-pointer"
+                  >
+                    <span className={color}>{icon}</span>
+                    <span className="text-[11px] font-medium text-[var(--foreground)]">{label}</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowFlagOptions(false)}
+                className="w-full text-center mt-2 py-1 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Flagged banner with undo */}
           {flagged && (
             <div className="mb-3 rounded-xl bg-red-500/10 border border-red-500/20 px-3 py-2 flex items-center gap-2">
               <Flag className="h-4 w-4 text-[var(--tier-exp)] shrink-0" fill="currentColor" strokeWidth={1} />
-              <span className="text-xs text-[var(--tier-exp)]">
-                Flagged as potentially incorrect. This station will be hidden from your recommendations.
+              <span className="text-xs text-[var(--tier-exp)] flex-1">
+                Flagged — hidden from your recommendations.
               </span>
+              <button
+                onClick={() => {
+                  unflagStation(station.id);
+                  setFlagged(false);
+                }}
+                className="text-[10px] font-semibold text-[var(--tier-exp)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+              >
+                Undo
+              </button>
             </div>
           )}
 

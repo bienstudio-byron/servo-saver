@@ -5,6 +5,7 @@ import {
   ComparisonResult,
   TollSegment,
 } from "@/types/toll";
+import { ATO_RATE_PER_KM } from "@/stores/vehicle-store";
 
 const WEEKS_PER_YEAR = 52;
 
@@ -32,6 +33,20 @@ function calculateFuelCost(
 }
 
 /**
+ * Vehicle running cost per km.
+ * "fuelOnly" = fuel consumption cost. "fullCost" = ATO cents-per-km rate (88c/km).
+ */
+function calculateDrivingCost(
+  distanceKm: number,
+  consumptionL100: number,
+  fuelPriceCents: number,
+  costModel: "fuelOnly" | "fullCost" = "fuelOnly"
+): number {
+  if (costModel === "fullCost") return distanceKm * ATO_RATE_PER_KM;
+  return calculateFuelCost(distanceKm, consumptionL100, fuelPriceCents);
+}
+
+/**
  * Travel time: use ORS duration directly.
  * ORS already factors in road types and speed limits.
  * No artificial multipliers — we show the routing engine's estimate as-is.
@@ -41,10 +56,11 @@ export function calculateRouteCost(
   tollCents: number,
   settings: UserSettings
 ): RouteCost {
-  const fuelCost = calculateFuelCost(
+  const fuelCost = calculateDrivingCost(
     route.distance,
     settings.fuelConsumption,
-    settings.fuelPriceCentsPerLitre
+    settings.fuelPriceCentsPerLitre,
+    settings.costModel
   );
   const tollCost = tollCents / 100;
   const timeCost = (route.duration / 60) * settings.timeValuePerHour;

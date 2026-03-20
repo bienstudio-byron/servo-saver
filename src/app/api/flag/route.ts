@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: "PetrolSaver <alerts@petrolsaver.live>",
       to: "petrolsaver.live@gmail.com",
-      subject: `🚩 Station flagged: ${stationName}`,
+      subject: `🚩 ${reason || "Flagged"}: ${stationName}`,
       html: `
         <div style="font-family: -apple-system, sans-serif; padding: 20px;">
           <h2>Station Flagged</h2>

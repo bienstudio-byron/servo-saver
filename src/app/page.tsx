@@ -10,6 +10,8 @@ import AdSlot from "@/components/shared/AdSlot";
 import AlertSignup from "@/components/shared/AlertSignup";
 import InsightBanner from "@/components/shared/InsightBanner";
 import ModeTabBar from "@/components/shared/ModeTabBar";
+import NavBar from "@/components/shared/NavBar";
+import VehicleSetup from "@/components/shared/VehicleSetup";
 import TollMode from "@/components/tolls/TollMode";
 import { useFuelStore } from "@/stores/fuel-store";
 import { PriceThresholdsProvider } from "@/stores/price-context";
@@ -179,13 +181,10 @@ export default function HomePage() {
   return (
     <PriceThresholdsProvider stations={stations} selectedFuelType={selectedFuelType}>
       {/* Everything is fixed — nothing in document flow */}
-      <div className="fixed inset-0 flex flex-col" style={{ zIndex: 0 }}>
-        {/* Mode tab bar */}
-        <ModeTabBar />
-        {/* Insight ticker banner — fuel mode only */}
-        {mode !== "tolls" && <InsightBanner />}
-        {/* Main content */}
-        <div className="relative flex-1 min-h-0">
+      <div className="fixed inset-0" style={{ zIndex: 0 }}>
+        <div className="relative w-full h-full">
+          {/* NavBar — shared across both modes */}
+          <NavBar />
           {mode === "tolls" ? (
             <TollMode />
           ) : (
@@ -241,6 +240,8 @@ export default function HomePage() {
           </div>
         </div>
       )}
+      {/* Vehicle setup modal */}
+      <VehicleSetup />
     </PriceThresholdsProvider>
   );
 }

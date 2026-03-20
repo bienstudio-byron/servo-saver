@@ -158,6 +158,15 @@ body {
   100% { transform: scale(3.5); opacity: 0; }
 }
 
+@keyframes pulse-once {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.animate-pulse-once {
+  animation: pulse-once 1s ease-out;
+}
+
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

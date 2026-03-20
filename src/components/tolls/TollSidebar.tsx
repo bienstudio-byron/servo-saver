@@ -5,17 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Search, X, Pencil, Route, Clock, Fuel, DollarSign, MapPin, Zap, TriangleAlert, ChevronDown, Car } from "lucide-react";
 import { useTollStore } from "@/stores/toll-store";
 import { useFuelStore } from "@/stores/fuel-store";
+import { useVehicleStore } from "@/stores/vehicle-store";
 import { geocode, type GeocodingResult } from "@/lib/openroute";
 import { haversineDistance } from "@/lib/geo";
 import type { TimePeriod, TollSegment } from "@/types/toll";
+import SidebarFooter from "@/components/shared/SidebarFooter";
 
-const VEHICLES = [
-  { id: "car", label: "Car", consumption: 8.5 },
-  { id: "suv", label: "SUV", consumption: 10.5 },
-  { id: "ute", label: "Ute", consumption: 11.0 },
-  { id: "small", label: "Small", consumption: 6.5 },
-  { id: "hybrid", label: "Hybrid", consumption: 4.5 },
-] as const;
+// Vehicle info comes from useVehicleStore (shared profile)
 
 const PERIODS: { id: TimePeriod; label: string; desc: string }[] = [
   { id: "peak", label: "Peak", desc: "7-9am, 4-7pm" },
@@ -132,6 +128,8 @@ function Row({ icon, label, value, color, sub }: {
 
 export default function TollSidebar() {
   const { comparison, settings, loading, error, quotaExceeded, updateSettings, selectOrigin, selectDest } = useTollStore();
+  const mode = useFuelStore((s) => s.mode);
+  const setMode = useFuelStore((s) => s.setMode);
   const userLocation = useFuelStore((s) => s.userLocation);
   const allStations = useFuelStore((s) => s.allStations);
   const globalFuelType = useFuelStore((s) => s.selectedFuelType);
@@ -149,10 +147,17 @@ export default function TollSidebar() {
   const [originLoading, setOriginLoading] = useState(false);
   const [localOrigin, setLocalOrigin] = useState<{ lat: number; lng: number; name: string } | null>(null);
 
-  // Settings state
-  const [selectedVehicle, setSelectedVehicle] = useState("car");
+  // Vehicle from shared profile
+  const vehicleProfile = useVehicleStore((s) => s.profile);
+  const setShowVehicleSetup = useVehicleStore((s) => s.setShowSetup);
+  const costModel = useVehicleStore((s) => s.costModel);
   const [tollFuelType, setTollFuelType] = useState(globalFuelType);
   const [step, setStep] = useState<"search" | "results">("search");
+
+  // Sync vehicle profile + cost model to toll settings in real-time
+  useEffect(() => {
+    updateSettings({ fuelConsumption: vehicleProfile.consumption, costModel });
+  }, [vehicleProfile.consumption, costModel]);
 
   const destInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -239,8 +244,7 @@ export default function TollSidebar() {
       ? { lat: userLocation.lat, lng: userLocation.lng, label: locationName || "Your location" }
       : null;
     if (!orig) return;
-    const v = VEHICLES.find((v) => v.id === selectedVehicle);
-    if (v) updateSettings({ fuelConsumption: v.consumption });
+    updateSettings({ fuelConsumption: vehicleProfile.consumption, costModel });
     selectOrigin(orig);
     selectDest({ lat: localDest.lat, lng: localDest.lng, label: localDest.name });
   };
@@ -252,20 +256,48 @@ export default function TollSidebar() {
   };
 
   const originDisplayName = localOrigin?.name || locationName || "Your location";
-  const vehicle = VEHICLES.find((v) => v.id === selectedVehicle) || VEHICLES[0];
+  const vehicle = vehicleProfile;
 
   return (
+    <div className="absolute bottom-4 left-4 z-[1000] w-[380px] max-h-[85vh] flex flex-col items-stretch">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-      className="w-full md:flex-1 md:rounded-none border-r border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl overflow-hidden flex flex-col"
+      className="w-full max-h-[85vh] rounded-2xl border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
     >
-      {/* Header — desktop only (mobile uses tab bar) */}
-      <div className="hidden md:flex items-center gap-2 px-4 py-3 shrink-0 border-b border-[var(--subtle-border)]">
-        <img src="/logos/nav-icon.png" alt="" className="h-6 w-6" />
-        <span className="text-sm font-bold text-[var(--foreground)]">Toll<span className="text-[#4285f4]">Saver</span></span>
-        <span className="text-[10px] text-[var(--muted)] truncate ml-auto">{locationName || ""}</span>
+      {/* Header: logo + inline tabs */}
+      <div className="flex items-center px-3.5 py-2 shrink-0 border-b border-[var(--subtle-border)]">
+        <img src="/logos/nav-icon.png" alt="TollSaver" className="h-5 w-5" />
+        <span className="text-[13px] font-bold text-[var(--foreground)] ml-1.5">
+          Toll<span className="text-[#4285f4]">Saver</span>
+        </span>
+        <div className="flex items-center gap-0.5 ml-auto bg-[var(--background)] rounded-lg p-0.5 border border-[var(--subtle-border)]">
+          {([
+            { id: "petrol" as const, label: "Fuel", icon: Fuel },
+            { id: "tolls" as const, label: "Tolls", icon: Route },
+          ]).map((m) => {
+            const active = mode === m.id;
+            const Icon = m.icon;
+            return (
+              <button
+                key={m.id}
+                onClick={() => setMode(m.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                  active
+                    ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <Icon className={`h-3 w-3 ${active ? "text-[var(--accent-text)]" : ""}`} strokeWidth={2.5} />
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
+        {locationName && (
+          <span className="text-[10px] text-[var(--muted)] truncate ml-auto">{locationName}</span>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -433,19 +465,14 @@ export default function TollSidebar() {
 
               {/* Editable settings chips */}
               <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-                <SettingsChip label="" value={vehicle.label}>
-                  {(close) => (
-                    <div className="p-1">
-                      {VEHICLES.map((v) => (
-                        <button key={v.id} onClick={() => { setSelectedVehicle(v.id); updateSettings({ fuelConsumption: v.consumption }); close(); }}
-                          className={`w-full text-left px-3 py-2 text-[11px] transition-colors cursor-pointer flex justify-between ${selectedVehicle === v.id ? "bg-[var(--subtle)] font-semibold text-[var(--foreground)]" : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"}`}>
-                          <span>{v.label}</span>
-                          <span className="font-mono text-[var(--muted)]">{v.consumption}L</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </SettingsChip>
+                <button
+                  onClick={() => setShowVehicleSetup(true)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer border bg-[var(--subtle)] text-[var(--muted)] border-[var(--subtle-border)] hover:text-[var(--foreground)]"
+                >
+                  <Car className="h-2.5 w-2.5" strokeWidth={2} />
+                  <span className="font-bold font-mono">{vehicle.name.split(" ").pop()}</span>
+                  <span className="opacity-60">{vehicle.consumption}L</span>
+                </button>
 
                 <SettingsChip label="" value={PERIODS.find((p) => p.id === settings.timePeriod)?.label || "Peak"}>
                   {(close) => (
@@ -542,7 +569,7 @@ export default function TollSidebar() {
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${comparison.freeCost.adjustedDuration} min`} sub={timeDiffAbs > 0 && freeIsBetter ? `+${timeDiffAbs} min vs toll` : undefined} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label="Fuel" value={`$${comparison.freeCost.fuelCost.toFixed(2)}`} sub={`${comparison.freeRoute.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} />
+                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${comparison.freeCost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${comparison.freeRoute.distance}km × 88¢/km` : `${comparison.freeRoute.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<DollarSign className="h-3 w-3" strokeWidth={2} />} label="Tolls" value="$0.00" color="text-[var(--tier-cheap)]" />
                       {settings.timeValuePerHour > 0 && (<><div className="border-t border-[var(--subtle-border)]/50" /><Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time cost" value={`$${comparison.freeCost.timeCost.toFixed(2)}`} sub={`${comparison.freeCost.adjustedDuration}min × $${settings.timeValuePerHour}/hr`} /></>)}
@@ -560,7 +587,7 @@ export default function TollSidebar() {
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time" value={`${comparison.tollCost.adjustedDuration} min`} sub={timeDiffAbs > 0 && !freeIsBetter ? `${timeDiffAbs} min faster` : undefined} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
-                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label="Fuel" value={`$${comparison.tollCost.fuelCost.toFixed(2)}`} sub={`${comparison.tollRoute.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} />
+                      <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${comparison.tollCost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${comparison.tollRoute.distance}km × 88¢/km` : `${comparison.tollRoute.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} />
                       <div className="border-t border-[var(--subtle-border)]/50" />
                       <Row icon={<TriangleAlert className="h-3 w-3" strokeWidth={2} />} label="Tolls" value={`$${comparison.tollCost.tollCost.toFixed(2)}`} color="text-[var(--tier-exp)]" />
                       {settings.timeValuePerHour > 0 && (<><div className="border-t border-[var(--subtle-border)]/50" /><Row icon={<Clock className="h-3 w-3" strokeWidth={2} />} label="Time cost" value={`$${comparison.tollCost.timeCost.toFixed(2)}`} sub={`${comparison.tollCost.adjustedDuration}min × $${settings.timeValuePerHour}/hr`} /></>)}
@@ -616,14 +643,8 @@ export default function TollSidebar() {
 
       </div>
 
-      {/* Footer */}
-      <div className="shrink-0 border-t border-[var(--subtle-border)]">
-        <div className="px-3 py-2 flex items-center justify-center gap-1.5">
-          <a href="/how-it-works/tolls" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
-          <a href="/terms" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
-          <a href="/privacy" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
-        </div>
-      </div>
+      <SidebarFooter howItWorksUrl="/how-it-works/tolls" />
     </motion.div>
+    </div>
   );
 }

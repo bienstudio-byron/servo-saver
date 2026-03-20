@@ -53,6 +53,7 @@ export interface UserSettings {
   timeValuePerHour: number; // $/hr, 0 = don't count
   tripsPerWeek: number; // 0 = one-off
   timePeriod: TimePeriod;
+  costModel?: "fuelOnly" | "fullCost"; // "fullCost" = ATO 88c/km rate
 }
 
 export interface RouteCost {

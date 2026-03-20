@@ -2,28 +2,19 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Navigation, Info, ChevronDown, Pencil, X, Heart, Droplets, Gauge, TriangleAlert } from "lucide-react";
-import type { StationWithPrices } from "@/types/fuel";
+import { Navigation, Info, ChevronDown, Pencil, X, Heart, Droplets, Gauge, TriangleAlert, Car } from "lucide-react";
+import type { RankedOption } from "@/types/fuel";
 import { haversineDistance } from "@/lib/geo";
 import { useFuelStore } from "@/stores/fuel-store";
+import { useVehicleStore } from "@/stores/vehicle-store";
 import { usePriceThresholds } from "@/stores/price-context";
-import { getPriceTier } from "@/lib/price-utils";
 import BrandLogo from "@/components/shared/BrandLogo";
 import InlineReportForm from "@/components/shared/InlineReportForm";
+import SidebarShell from "@/components/shared/SidebarShell";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
+import { titleCase, TAG_DESCRIPTIONS, formatUpdated, getTierColor, getTagStyle } from "@/lib/station-utils";
 
-export interface RankedOption {
-  station: StationWithPrices;
-  price: number;
-  distance: number;
-  detourKm: number;
-  detourMins: number;
-  netSavings: number;
-  tag: string;
-  isStale: boolean;
-  updatedAt: string;
-  source?: "official" | "community";
-}
+export type { RankedOption };
 
 interface TripSummaryCardProps {
   options: RankedOption[];
@@ -33,18 +24,8 @@ interface TripSummaryCardProps {
   onSelectIdx: (idx: number) => void;
 }
 
-const DEFAULT_CONSUMPTION = 8.5;
-const DEFAULT_TANK_SIZE = 55;
 const MAX_RANGE_KM = 800;
 const ROAD_FACTOR = 1.35;
-
-const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-
-const TAG_DESCRIPTIONS: Record<string, string> = {
-  "Best for you": "Saves you the most after accounting for detour costs",
-  "Good deal": "Below average price and worth the trip",
-  "Nearby": "Convenient, but not the cheapest option",
-};
 
 export default function TripSummaryCard({ options, closestOpt, onEditTrip, selectedIdx, onSelectIdx }: TripSummaryCardProps) {
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -56,6 +37,9 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
   const setTripOrigin = useFuelStore((s) => s.setTripOrigin);
   const setSelectedStation = useFuelStore((s) => s.setSelectedStation);
   const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
+  const fillLabel = useFuelStore((s) => s.fillLabel);
+  const fillMode = useFuelStore((s) => s.fillMode);
+  const vehicleProfile = useVehicleStore((s) => s.profile);
   const thresholds = usePriceThresholds();
 
   const [showMore, setShowMore] = useState(false);
@@ -68,43 +52,15 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
   const tripDistance = origin
     ? haversineDistance(origin.lat, origin.lng, tripDestination.lat, tripDestination.lng) * ROAD_FACTOR
     : 0;
-  const litresFillingUp = Math.max(0, DEFAULT_TANK_SIZE * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
+  const tankSize = vehicleProfile.tankSize;
+  const litresFillingUp = Math.max(0, tankSize * (1 - Math.min(1, rangeKm / MAX_RANGE_KM)));
   const fillCost = litresFillingUp * selected.price / 100;
   const saving = selected.netSavings;
 
   const originName = tripOrigin?.name || "Your location";
 
-  const getTierColor = (price: number) => {
-    const tier = getPriceTier(price, thresholds);
-    switch (tier) {
-      case "cheap": return "text-[var(--tier-cheap)]";
-      case "mid": return "text-[var(--tier-mid)]";
-      case "expensive": return "text-[var(--tier-exp)]";
-      default: return "text-[var(--muted)]";
-    }
-  };
-
-  const getTagStyle = (price: number) => {
-    const tier = getPriceTier(price, thresholds);
-    switch (tier) {
-      case "cheap": return "text-[var(--tier-cheap)] bg-[var(--tier-cheap)]/15";
-      case "mid": return "text-[var(--tier-mid)] bg-[var(--tier-mid)]/15";
-      case "expensive": return "text-[var(--tier-exp)] bg-[var(--tier-exp)]/15";
-      default: return "text-[var(--muted)] bg-[var(--muted)]/15";
-    }
-  };
-
-  const formatUpdated = (iso: string, source?: "official" | "community") => {
-    const d = new Date(iso);
-    const now = new Date();
-    const diffHrs = Math.floor((now.getTime() - d.getTime()) / 3600000);
-    const prefix = source === "community" ? "Reported" : "Updated";
-    if (diffHrs < 1) return `${prefix} just now`;
-    if (diffHrs < 24) return `${prefix} ${diffHrs}h ago`;
-    const diffDays = Math.floor(diffHrs / 24);
-    if (diffDays === 1) return `${prefix} yesterday`;
-    return `${prefix} ${diffDays}d ago`;
-  };
+  const tierColor = (price: number) => getTierColor(price, thresholds);
+  const tagStyle = (price: number) => getTagStyle(price, thresholds);
 
   const handleClearTrip = () => {
     setTripMode("nearby");
@@ -115,13 +71,8 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
   const otherOptions = options.filter((_, i) => i !== selectedIdx);
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-[1000] md:right-auto md:bottom-4 md:left-3 md:w-[24rem] flex flex-col items-end">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.3 }}
-        className="w-full max-h-[55vh] md:max-h-[70vh] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--subtle-border)] bg-[var(--card)]/95 backdrop-blur-xl shadow-2xl overflow-clip flex flex-col"
-      >
+    <SidebarShell mobileMaxHeight="max-h-[55vh]">
+
         {/* Trip header */}
         <div className="px-4 pt-4 pb-2 flex items-center justify-between">
           <div className="min-w-0 flex-1">
@@ -151,16 +102,21 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
         </div>
 
         {/* Settings */}
-        <div className="px-4 pb-3 flex items-center gap-3 text-[11px] text-[var(--muted)]">
-          <button onClick={onEditTrip} className="inline-flex items-center gap-1 underline underline-offset-2 decoration-[var(--subtle-border)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+        <div className="px-4 pb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--muted)]">
+          <span className="inline-flex items-center gap-1">
+            <Car className="h-3 w-3" strokeWidth={2} />
+            {vehicleProfile.name}
+          </span>
+          <span className="text-[var(--subtle-border)]">·</span>
+          <span className="inline-flex items-center gap-1">
             <Droplets className="h-3 w-3" strokeWidth={2} />
             {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType}
-          </button>
+          </span>
           <span className="text-[var(--subtle-border)]">·</span>
-          <button onClick={onEditTrip} className="inline-flex items-center gap-1 underline underline-offset-2 decoration-[var(--subtle-border)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
+          <span className="inline-flex items-center gap-1">
             <Gauge className="h-3 w-3" strokeWidth={2} />
-            ~{rangeKm}km range
-          </button>
+            {fillLabel ? fillLabel : `~${Math.round(litresFillingUp)}L to fill`}
+          </span>
         </div>
 
         {/* Recommendation explanation */}
@@ -199,7 +155,7 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-[var(--foreground)] text-sm truncate">{titleCase(selected.station.name)}</span>
                     {selected.tag && (
-                      <span className={`text-[8px] font-medium uppercase shrink-0 px-1.5 py-0.5 rounded ${getTagStyle(selected.price)}`}>
+                      <span className={`text-[8px] font-medium uppercase shrink-0 px-1.5 py-0.5 rounded ${tagStyle(selected.price)}`}>
                         {selected.tag}
                       </span>
                     )}
@@ -208,14 +164,14 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                     {(selected.distance + selected.detourKm).toFixed(1)}km · {formatUpdated(selected.updatedAt, selected.source)}
                   </div>
                 </div>
-                <div className={`text-xl font-semibold font-mono shrink-0 ${getTierColor(selected.price)}`}>
+                <div className={`text-xl font-semibold font-mono shrink-0 ${tierColor(selected.price)}`}>
                   {selected.price.toFixed(1)}<span className="text-xs text-[var(--muted)]">c</span>
                 </div>
               </div>
 
               {/* Tag explanation */}
               {selected.tag && TAG_DESCRIPTIONS[selected.tag] && (
-                <div className={`text-[10px] px-2 py-1.5 rounded mt-2 ${getTagStyle(selected.price)}`}>
+                <div className={`text-[10px] px-2 py-1.5 rounded mt-2 ${tagStyle(selected.price)}`}>
                   <span className="font-medium">{selected.tag}</span> — {TAG_DESCRIPTIONS[selected.tag]}
                 </div>
               )}
@@ -224,7 +180,7 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
               {litresFillingUp > 0 && (
                 <div className="flex items-center justify-between bg-[var(--subtle)] rounded px-2.5 py-2 mt-2">
                   <div className="text-[10px] text-[var(--muted)]">
-                    Fill up ~{Math.round(litresFillingUp)}L to full
+                    Estimated cost{fillLabel && fillLabel.startsWith("$") ? ` (${fillLabel} · ~${Math.round(litresFillingUp)}L)` : ` (full tank · ~${Math.round(litresFillingUp)}L)`}
                   </div>
                   <div className="text-sm font-semibold font-mono text-[var(--foreground)]">
                     ${fillCost.toFixed(2)}
@@ -311,7 +267,7 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
                             )}
                           </div>
                         </div>
-                        <div className={`font-bold font-mono shrink-0 text-xs ${getTierColor(opt.price)}`}>
+                        <div className={`font-bold font-mono shrink-0 text-xs ${tierColor(opt.price)}`}>
                           {opt.price.toFixed(1)}c
                         </div>
                       </button>
@@ -323,15 +279,6 @@ export default function TripSummaryCard({ options, closestOpt, onEditTrip, selec
           </div>
         )}
 
-        {/* Footer */}
-        <div className="shrink-0 border-t border-[var(--subtle-border)]">
-          <div className="px-3 py-2 flex items-center justify-center gap-1.5">
-            <a href="/how-it-works" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">How it works</a>
-            <a href="/terms" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Terms</a>
-            <a href="/privacy" className="text-[9px] font-mono text-[var(--muted)] hover:text-[var(--foreground)] px-2 py-0.5 rounded-full border border-[var(--subtle-border)] hover:bg-[var(--subtle-hover)] transition-colors cursor-pointer">Privacy</a>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+    </SidebarShell>
   );
 }

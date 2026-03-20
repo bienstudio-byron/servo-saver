@@ -85,7 +85,7 @@ export default function HowItWorksPage() {
                   <p className="text-[var(--muted)] text-xs">
                     How much further you&apos;d need to drive compared to the nearest station.
                     We estimate road distance at 1.35× the straight-line distance and calculate
-                    the fuel you&apos;d burn on the detour (assuming 8.5L/100km average consumption).
+                    the fuel you&apos;d burn on the detour using your vehicle&apos;s consumption rate.
                   </p>
                 </div>
               </div>
@@ -121,11 +121,9 @@ export default function HowItWorksPage() {
               <div className="text-[var(--muted)] mt-3">// How much extra you&apos;d drive (trip mode)</div>
               <div><span className="text-[#4285f4]">detour_km</span> = (you → station → dest) - (you → dest)</div>
               <div className="text-[var(--muted)] mt-3">// Fuel burned on the detour</div>
-              <div><span className="text-amber-400">fuel_cost</span> = (detour_km ÷ 100) × 8.5 × station_price</div>
-              <div className="text-[var(--muted)] mt-3">// How full is your tank (based on range slider)</div>
-              <div><span className="text-[#4285f4]">tank_percent</span> = your_range_km ÷ 800</div>
-              <div className="text-[var(--muted)] mt-3">// How many litres you&apos;re filling</div>
-              <div><span className="text-[#4285f4]">litres_filling</span> = tank_size × (1 - tank_percent)</div>
+              <div><span className="text-amber-400">fuel_cost</span> = (detour_km ÷ 100) × your_consumption × station_price</div>
+              <div className="text-[var(--muted)] mt-3">// How many litres you&apos;re filling (set via gauge, litres, or $)</div>
+              <div><span className="text-[#4285f4]">litres_filling</span> = your_fill_amount</div>
               <div className="text-[var(--muted)] mt-3">// Raw savings vs nearest station</div>
               <div><span className="text-emerald-400">price_savings</span> = (nearest_price - station_price) × litres_filling</div>
               <div className="text-[var(--muted)] mt-3">// What you actually save</div>
@@ -136,39 +134,171 @@ export default function HowItWorksPage() {
               We then rank stations by <strong className="text-[var(--foreground)]">net savings</strong> — the amount you actually
               save after accounting for the fuel cost of getting there.
             </p>
+
+            <div className="text-[var(--muted)] mt-3">
+              <div className="text-[var(--foreground)] font-semibold mb-1.5">Break-even distance</div>
+              <p className="text-xs leading-relaxed mb-2">
+                For every recommendation with a detour, we show you the <strong className="text-[var(--foreground)]">break-even distance</strong> —
+                the maximum detour where the cheaper price still saves you money. If the station is within this distance, the detour pays off. If not, you&apos;re better off filling up closer.
+              </p>
+            </div>
+
+            <div className="rounded-lg bg-[var(--background)] p-4 font-mono text-xs space-y-2">
+              <div className="text-[var(--muted)]">// Maximum worthwhile detour distance</div>
+              <div><span className="text-emerald-400">break_even_km</span> = (price_diff_per_litre × litres_filling) ÷ fuel_cost_per_km</div>
+              <div className="text-[var(--muted)] mt-3">// Example: 20c cheaper, filling 40L, car uses 8.5L/100km at $2/L</div>
+              <div><span className="text-emerald-400">break_even</span> = ($0.20 × 40) ÷ ($0.17/km) = <span className="text-[var(--foreground)]">47km</span></div>
+              <div className="text-[var(--muted)] mt-3">// At ATO rates (88c/km) the picture changes dramatically</div>
+              <div><span className="text-amber-400">break_even</span> = ($0.20 × 40) ÷ ($0.88/km) = <span className="text-[var(--foreground)]">9.1km</span></div>
+            </div>
+
+            <p className="text-[var(--muted)] text-xs mt-3">
+              This is why a 20c saving doesn&apos;t always justify driving across town. The break-even
+              metric helps you decide at a glance whether a detour is truly worth it for your situation.
+            </p>
+
+            <div className="text-[var(--muted)] mt-4">
+              <div className="text-[var(--foreground)] font-semibold mb-1.5">What you see on each station card</div>
+              <p className="text-xs leading-relaxed mb-3">
+                When you expand a station, you see a full breakdown table. Here&apos;s what each row means:
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-[var(--subtle-border)] overflow-hidden text-xs">
+              <div className="flex justify-between px-3 py-2 bg-[var(--background)]">
+                <span className="text-[var(--foreground)] font-semibold">Row</span>
+                <span className="text-[var(--foreground)] font-semibold">What it means</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--muted)]">Detour</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">Extra km vs the closest station, estimated at 1.35× straight-line</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--muted)]">Fuel for detour</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">Fuel burned on the extra drive, using your car&apos;s consumption</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--muted)]">Time cost</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">Optional — your hourly rate × detour time. Set via the More filter.</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--muted)]">Price savings</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">Cheaper price × litres you&apos;re filling. The raw saving before costs.</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)] bg-[var(--subtle)]/30">
+                <span className="text-[var(--foreground)] font-medium">Net saving</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">Price savings minus all costs. Positive = you save. Negative = detour costs more.</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--muted)]">Verdict</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">&ldquo;No-brainer&rdquo;, &ldquo;Worth the drive&rdquo;, &ldquo;Borderline&rdquo;, or &ldquo;Not worth the drive&rdquo; — plain language with break-even distance.</span>
+              </div>
+              <div className="flex justify-between px-3 py-2 border-t border-[var(--subtle-border)]">
+                <span className="text-[var(--muted)]">Estimated cost</span>
+                <span className="text-[var(--muted)] text-right max-w-[60%]">Total cost to fill at this station&apos;s price, based on your fill setting (gauge, litres, or $).</span>
+              </div>
+            </div>
+
+            <p className="text-[var(--muted)] text-xs mt-3">
+              On desktop, hover the <strong className="text-[var(--foreground)]">ⓘ</strong> icon next to any row for a quick explanation.
+            </p>
+          </div>
+        </section>
+
+        {/* Cost Models */}
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">4</span>
+            Detour cost: fuel only vs full cost
+          </h2>
+          <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-4 text-sm text-[var(--muted)] leading-relaxed">
+            <p>
+              When we calculate how much a detour costs, you can choose between two models
+              via the <strong className="text-[var(--foreground)]">More</strong> filter chip:
+            </p>
+
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="h-8 w-8 rounded-lg bg-[#4285f4]/10 flex items-center justify-center shrink-0">
+                  <span className="text-[#4285f4] text-sm font-bold">⛽</span>
+                </div>
+                <div>
+                  <div className="text-[var(--foreground)] font-semibold mb-0.5">Fuel only (default)</div>
+                  <p className="text-[var(--muted)] text-xs">
+                    Only counts the petrol burned on the detour. Cheapest interpretation — a 5km
+                    detour at $2/L costs about $0.85. Best if you only care about out-of-pocket fuel cost.
+                  </p>
+                  <div className="rounded-lg bg-[var(--background)] p-2 font-mono text-[10px] mt-1.5">
+                    cost = (detour_km ÷ 100) × your_consumption × fuel_price
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                  <span className="text-amber-400 text-sm font-bold">$</span>
+                </div>
+                <div>
+                  <div className="text-[var(--foreground)] font-semibold mb-0.5">Full cost (ATO 88¢/km)</div>
+                  <p className="text-[var(--muted)] text-xs">
+                    Uses the Australian Tax Office&apos;s cents-per-kilometre rate, which covers fuel <em>plus</em> tyres,
+                    servicing, insurance, registration, and depreciation. The same 5km detour now costs $4.40.
+                    This dramatically changes whether a detour is worth it.
+                  </p>
+                  <div className="rounded-lg bg-[var(--background)] p-2 font-mono text-[10px] mt-1.5">
+                    cost = detour_km × $0.88
+                  </div>
+                  <p className="text-[var(--muted)] text-[10px] mt-1.5">
+                    Rate: 88c/km for 2025-26.{" "}
+                    <a href="https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/deductions-for-motor-vehicle-expenses/cents-per-kilometre-method" className="text-[var(--accent-text)] hover:text-[var(--foreground)]" target="_blank" rel="noopener noreferrer">ATO source</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-3">
+              <p className="text-xs text-[var(--foreground)]">
+                <strong>Why it matters:</strong> A 20c/L price saving on a 40L fill is $8.
+                At fuel-only rates, that saving justifies a 47km detour.
+                At ATO rates, it only justifies 9km. Most people underestimate
+                the true cost of driving — the ATO mode gives you the honest picture.
+              </p>
+            </div>
           </div>
         </section>
 
         {/* The Rankings */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">4</span>
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">5</span>
             What the labels mean
           </h2>
           <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-4 text-sm text-[var(--muted)] leading-relaxed">
             <div className="flex gap-3">
-              <span className="text-emerald-400 font-bold text-xs bg-emerald-500/10 px-2 py-1 rounded shrink-0 h-fit">BEST VALUE</span>
-              <p className="text-[var(--muted)] text-xs">Highest net savings after detour cost. The smartest pick — balances price vs distance.</p>
+              <span className="text-[var(--tier-cheap)] font-bold text-xs bg-[var(--tier-cheap)]/15 px-2 py-1 rounded shrink-0 h-fit uppercase">Top pick</span>
+              <p className="text-[var(--muted)] text-xs">Best value after factoring in the drive. The top-ranked station — best balance of price, distance, and your fill amount.</p>
             </div>
             <div className="flex gap-3">
-              <span className="text-[#4285f4] font-bold text-xs bg-[#4285f4]/10 px-2 py-1 rounded shrink-0 h-fit">CHEAPEST</span>
-              <p className="text-[var(--muted)] text-xs">Lowest raw price per litre within your range. Might be further away but has the biggest price drop.</p>
+              <span className="text-[var(--tier-cheap)] font-bold text-xs bg-[var(--tier-cheap)]/15 px-2 py-1 rounded shrink-0 h-fit uppercase">Worth it</span>
+              <p className="text-[var(--muted)] text-xs">Solid saving — the detour pays off. Cheaper than the closest station with positive net savings after detour.</p>
             </div>
             <div className="flex gap-3">
-              <span className="text-[var(--muted)] font-bold text-xs bg-[var(--subtle)] px-2 py-1 rounded shrink-0 h-fit">CLOSEST</span>
-              <p className="text-[var(--muted)] text-xs">The nearest station to you. Shown for convenience — useful when you&apos;re low on fuel or in a rush.</p>
+              <span className="text-[var(--muted)] font-bold text-xs bg-[var(--muted)]/15 px-2 py-1 rounded shrink-0 h-fit uppercase">Closest</span>
+              <p className="text-[var(--muted)] text-xs">Nearest servo to you. Shown for convenience — useful when you&apos;re running on fumes or short on time.</p>
             </div>
-            <div className="flex gap-3">
-              <span className="text-red-400 font-bold text-xs bg-red-500/10 px-2 py-1 rounded shrink-0 h-fit">AVOID</span>
-              <p className="text-[var(--muted)] text-xs">The most expensive option nearby. Shown as contrast so you can see what you&apos;d waste. Not clickable.</p>
-            </div>
+            <p className="text-xs">
+              Label colours match the station&apos;s price tier — <span className="text-[var(--tier-cheap)]">green</span> for cheap,
+              <span className="text-[var(--tier-mid)]"> amber</span> for mid-range,
+              <span className="text-[var(--tier-exp)]"> red</span> for expensive.
+              Stations are ranked by true cost (price + detour), not just raw price.
+            </p>
           </div>
         </section>
 
         {/* Traffic Light System */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">5</span>
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">6</span>
             Price colours explained
           </h2>
           <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-3 text-sm text-[var(--muted)] leading-relaxed">
@@ -196,7 +326,7 @@ export default function HowItWorksPage() {
         {/* Trip Mode */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">6</span>
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">7</span>
             Trip mode
           </h2>
           <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-3 text-sm text-[var(--muted)] leading-relaxed">
@@ -221,18 +351,18 @@ export default function HowItWorksPage() {
         {/* Assumptions */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">7</span>
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">8</span>
             Assumptions we make
           </h2>
           <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 text-sm text-[var(--muted)] leading-relaxed">
             <div className="space-y-2">
               <div className="flex justify-between py-1.5 border-b border-[var(--subtle-border)]">
                 <span className="text-[var(--muted)]">Tank size</span>
-                <span className="text-[var(--foreground)] font-mono">55 litres</span>
+                <span className="text-[var(--foreground)] font-mono">From your vehicle profile</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--subtle-border)]">
                 <span className="text-[var(--muted)]">Fuel consumption</span>
-                <span className="text-[var(--foreground)] font-mono">8.5 L/100km</span>
+                <span className="text-[var(--foreground)] font-mono">From your vehicle profile</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--subtle-border)]">
                 <span className="text-[var(--muted)]">Road distance factor</span>
@@ -251,18 +381,18 @@ export default function HowItWorksPage() {
                 <span className="text-[var(--foreground)] font-mono">15 km</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-[var(--subtle-border)]">
-                <span className="text-[var(--muted)]">Full tank range</span>
-                <span className="text-[var(--foreground)] font-mono">800 km</span>
+                <span className="text-[var(--muted)]">Detour cost model</span>
+                <span className="text-[var(--foreground)] font-mono">Fuel only or ATO 88¢/km</span>
               </div>
               <div className="flex justify-between py-1.5">
-                <span className="text-[var(--muted)]">Litres to fill</span>
-                <span className="text-[var(--foreground)] font-mono">tank × (1 - range/800)</span>
+                <span className="text-[var(--muted)]">Fill amount</span>
+                <span className="text-[var(--foreground)] font-mono">Set via gauge, litres, or $</span>
               </div>
             </div>
             <p className="text-[var(--muted)] text-xs mt-4">
-              These are averages for a typical passenger car in metropolitan Melbourne.
-              Your actual savings may vary based on your vehicle&apos;s fuel efficiency, traffic conditions,
-              and the actual road route taken.
+              Tank size and fuel consumption come from your vehicle profile (set via the Car chip).
+              If you skip vehicle setup, defaults are 55L tank and 8.5L/100km.
+              Road distance is estimated at 1.35× straight-line distance — actual routes may differ.
             </p>
           </div>
         </section>
@@ -270,7 +400,7 @@ export default function HowItWorksPage() {
         {/* No Affiliation */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">8</span>
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">9</span>
             Independence
           </h2>
           <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-3 text-sm text-[var(--muted)] leading-relaxed">

@@ -68,6 +68,7 @@ export const useTollStore = create<TollStore>((set, get) => ({
     timeValuePerHour: 0,
     tripsPerWeek: 0,
     timePeriod: getCurrentTimePeriod(),
+    costModel: "fuelOnly" as "fuelOnly" | "fullCost",
   },
   comparison: null,
 
