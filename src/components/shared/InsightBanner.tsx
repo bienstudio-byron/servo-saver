@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { useFuelStore } from "@/stores/fuel-store";
+import { useVehicleStore } from "@/stores/vehicle-store";
 import { FUEL_TYPE_LABELS } from "@/lib/constants";
 import { haversineDistance } from "@/lib/geo";
 
@@ -32,6 +33,7 @@ function useTypewriter(text: string, speed = 40) {
 export default function InsightBanner() {
   const stations = useFuelStore((s) => s.allStations);
   const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
+  const tankSize = useVehicleStore((s) => s.profile).tankSize;
   const userLocation = useFuelStore((s) => s.userLocation);
   const searchOrigin = useFuelStore((s) => s.searchOrigin);
   const [locationName, setLocationName] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export default function InsightBanner() {
     const localAvg = localPrices.reduce((a, b) => a + b, 0) / localPrices.length;
     const spread = Math.max(...localPrices) - localBest;
     const diff = localAvg - stateAvg;
-    const tankSavings = spread > 1 ? (spread * 55) / 100 : 0;
+    const tankSavings = spread > 1 ? (spread * tankSize) / 100 : 0;
     const fuel = FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType;
     const loc = locationName ?? "nearby";
 
