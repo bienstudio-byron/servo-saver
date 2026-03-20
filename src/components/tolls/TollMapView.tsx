@@ -7,8 +7,11 @@ import { MAP_CENTER } from "@/lib/constants";
 import { useTollStore } from "@/stores/toll-store";
 import { useFuelStore } from "@/stores/fuel-store";
 import { useTheme } from "@/lib/theme";
+import { haversineDistance } from "@/lib/geo";
 import { getMarkersForSegments } from "@/lib/toll-detector";
+import { getBrandLogoUrl, getBrandColor, getBrandInitial } from "@/lib/brand-logos";
 import type { LatLng } from "@/types/toll";
+import type { StationWithPrices } from "@/types/fuel";
 import "leaflet/dist/leaflet.css";
 
 function toLeaflet(points: LatLng[]): [number, number][] {
@@ -71,6 +74,55 @@ function TollPriceTag({ position, price, name }: { position: { lat: number; lng:
   );
 }
 
+function findCheapestNearRoute(polyline: LatLng[], stations: StationWithPrices[], fuelType: string, radiusKm: number) {
+  const step = Math.max(1, Math.floor(polyline.length / 50));
+  const samples = polyline.filter((_, i) => i % step === 0 || i === polyline.length - 1);
+  let best: { station: StationWithPrices; price: number } | null = null;
+  for (const s of stations) {
+    const p = s.prices.find((pr) => pr.fuelType === fuelType);
+    if (!p || p.price < 50 || p.price > 500) continue;
+    for (const pt of samples) {
+      if (haversineDistance(s.latitude, s.longitude, pt.lat, pt.lng) <= radiusKm) {
+        if (!best || p.price < best.price) best = { station: s, price: p.price };
+        break;
+      }
+    }
+  }
+  return best;
+}
+
+function FuelStationPin({ station, price, routeColor }: { station: StationWithPrices; price: number; routeColor: string }) {
+  const brandName = station.brand?.name ?? "?";
+  const logoUrl = getBrandLogoUrl(brandName);
+  const icon = useMemo(() => {
+    const logoHtml = logoUrl
+      ? `<img src="${logoUrl}" style="width:18px;height:18px;border-radius:4px;object-fit:contain;background:#fff;flex-shrink:0;" onerror="this.style.display='none';this.nextSibling.style.display='flex'" /><div style="display:none;width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`
+      : `<div style="width:18px;height:18px;border-radius:4px;background:${getBrandColor(brandName)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:9px;flex-shrink:0">${getBrandInitial(brandName)}</div>`;
+    return L.divIcon({
+      html: `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;border-radius:6px;background:var(--card,#1a1a1a);border:2px solid ${routeColor};box-shadow:0 2px 8px rgba(0,0,0,0.4);cursor:pointer;white-space:nowrap;transform:translate(-50%,-50%);width:fit-content;">
+        ${logoHtml}
+        <span style="font-size:11px;font-weight:700;font-family:ui-monospace,monospace;color:var(--foreground,#e8eaed)">${price.toFixed(1)}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="${routeColor}" stroke-width="2.5"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c-2.04 2.03-5.09 2.72-7.81 1.76"/><path d="M3.8 3.8c2.04-2.03 5.09-2.72 7.81-1.76"/><path d="M21 12a9 9 0 0 0-9-9"/><path d="M3 12a9 9 0 0 0 9 9"/></svg>
+      </div>`,
+      className: "",
+      iconSize: [0, 0],
+      iconAnchor: [0, 0],
+    });
+  }, [price, routeColor, logoUrl, brandName]);
+
+  return (
+    <Marker position={[station.latitude, station.longitude]} icon={icon} zIndexOffset={1500}>
+      <Tooltip direction="top" offset={[0, -16]}>
+        <div style={{ fontFamily: "system-ui", fontSize: "12px" }}>
+          <strong>{station.name}</strong><br />
+          {price.toFixed(1)}c/L · {brandName}<br />
+          <em style={{ fontSize: "10px", color: "#666" }}>Cheapest on {routeColor === "#4285f4" ? "free" : "toll"} route</em>
+        </div>
+      </Tooltip>
+    </Marker>
+  );
+}
+
 export default function TollMapView() {
   const tollRoute = useTollStore((s) => s.tollRouteData);
   const freeRoute = useTollStore((s) => s.freeRouteData);
@@ -79,6 +131,8 @@ export default function TollMapView() {
   const comparison = useTollStore((s) => s.comparison);
   const settings = useTollStore((s) => s.settings);
   const userLocation = useFuelStore((s) => s.userLocation);
+  const allStations = useFuelStore((s) => s.allStations);
+  const selectedFuelType = useFuelStore((s) => s.selectedFuelType);
   const { theme } = useTheme();
   const tileUrl = theme === "light"
     ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -156,6 +210,20 @@ export default function TollMapView() {
       {tollMarkers.map((m) => (
         <TollPriceTag key={m.id} position={m.position} price={m.tollCents} name={m.segmentName} />
       ))}
+
+      {/* Cheapest fuel stations on each route */}
+      {comparison && freeRoute && (() => {
+        const freeBest = findCheapestNearRoute(freeRoute.polyline, allStations, selectedFuelType, 3);
+        const tollBest = tollRoute ? findCheapestNearRoute(tollRoute.polyline, allStations, selectedFuelType, 3) : null;
+        return (
+          <>
+            {freeBest && <FuelStationPin station={freeBest.station} price={freeBest.price} routeColor={FREE_COLOR} />}
+            {tollBest && tollBest.station.id !== freeBest?.station.id && (
+              <FuelStationPin station={tollBest.station} price={tollBest.price} routeColor={TOLL_COLOR} />
+            )}
+          </>
+        );
+      })()}
 
       {/* Origin marker */}
       {origin && (
