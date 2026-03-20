@@ -473,13 +473,13 @@ export default function NavBar() {
                     {!tollStore.loading && (
                       <motion.button whileTap={{ scale: 0.98 }}
                         onClick={() => {
+                          // Close immediately
+                          setExpanded(null);
                           // If no origin set, use GPS
                           if (!tollStore.origin && userLocation) {
                             tollStore.selectOrigin({ lat: userLocation.lat, lng: userLocation.lng, label: gpsSuburb || locationName || "Your location" });
-                          }
-                          if (tollStore.origin && tollStore.destination) {
+                          } else if (tollStore.origin && tollStore.destination) {
                             tollStore.compare();
-                            setExpanded(null);
                           }
                         }}
                         disabled={!tollStore.destination}
