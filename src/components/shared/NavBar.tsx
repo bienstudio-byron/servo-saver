@@ -416,7 +416,7 @@ export default function NavBar() {
 
                 {/* ─── Trip panel ─── */}
                 {expanded === "trip" && appMode === "tolls" && (
-                  <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                  <div className="p-4 space-y-3 max-h-[50vh] md:max-h-[60vh] overflow-y-auto">
                     {/* Toll: Origin */}
                     <div>
                       <label className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block mb-1">From</label>
@@ -471,7 +471,7 @@ export default function NavBar() {
                 )}
 
                 {expanded === "trip" && appMode !== "tolls" && (
-                  <div className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                  <div className="p-4 space-y-3 max-h-[50vh] md:max-h-[60vh] overflow-y-auto">
                     {/* From */}
                     <div>
                       <label className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block mb-1">From</label>
@@ -535,7 +535,7 @@ export default function NavBar() {
 
                 {/* ─── Car panel ─── */}
                 {expanded === "car" && (
-                  <div className="flex flex-col max-h-[60vh]">
+                  <div className="flex flex-col max-h-[50vh] md:max-h-[60vh]">
                     {!carCustom ? (
                       <>
                         {/* Scrollable search + results */}
@@ -756,126 +756,6 @@ export default function NavBar() {
             Filters
           </motion.button>
       </div>{/* end barRef */}
-
-      {/* ─── Mobile expanded panels — REMOVED, pill bar expands in-place on both mobile + desktop ─── */}
-      {false && createPortal(
-        <div className="fixed inset-0 z-[4000] flex items-end justify-center md:hidden" onClick={() => setExpanded(null)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative z-10 w-full rounded-t-2xl bg-[var(--card)] border-t border-[var(--subtle-border)] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-[var(--foreground)]">
-                {expanded === "trip" ? (appMode === "tolls" ? "Compare routes" : "Plan a trip") : expanded === "car" ? "Your vehicle" : "How much to fill?"}
-              </h2>
-              <button onClick={() => setExpanded(null)} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
-                <X className="h-5 w-5" strokeWidth={2} />
-              </button>
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0">
-              {/* Reuse the same panel content — trip */}
-              {expanded === "trip" && appMode === "tolls" && (
-                <div className="p-4 space-y-3">
-                  <div>
-                    <label className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block mb-1">From</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4285f4] pointer-events-none" strokeWidth={2} />
-                      <input type="text" value={tollOriginQuery} onChange={(e) => handleTollOriginInput(e.target.value)}
-                        placeholder={gpsSuburb || "Your location (GPS)"} style={{ fontSize: "16px" }}
-                        className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-xl pl-9 pr-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors" />
-                    </div>
-                    {tollOriginResults.length > 0 && (
-                      <div className="mt-1.5 rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] overflow-hidden">
-                        {tollOriginResults.map((r, i) => (
-                          <button key={i} onClick={() => handleSelectTollOrigin(r)}
-                            className="w-full text-left px-3 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer">
-                            {r.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block mb-1">To</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--tier-exp)] pointer-events-none" strokeWidth={2} />
-                      <input type="text" value={tollDestQuery} onChange={(e) => handleTollDestInput(e.target.value)}
-                        placeholder="Where are you going?" style={{ fontSize: "16px" }}
-                        className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-xl pl-9 pr-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors" />
-                    </div>
-                    {tollDestResults.length > 0 && (
-                      <div className="mt-1.5 rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] overflow-hidden">
-                        {tollDestResults.map((r, i) => (
-                          <button key={i} onClick={() => { handleSelectTollDest(r); setExpanded(null); }}
-                            className="w-full text-left px-3 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer">
-                            {r.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              {expanded === "trip" && appMode !== "tolls" && (
-                <div className="p-4 space-y-3">
-                  <div>
-                    <label className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block mb-1">From</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4285f4] pointer-events-none" strokeWidth={2} />
-                      <input type="text" value={originQuery} onChange={(e) => handleOriginInput(e.target.value)}
-                        placeholder={gpsSuburb || "Your location (GPS)"} style={{ fontSize: "16px" }}
-                        className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-xl pl-9 pr-3 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors" />
-                    </div>
-                    {originResults.length > 0 && (
-                      <div className="mt-1.5 rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] overflow-hidden">
-                        {originResults.map((r, i) => (
-                          <button key={i} onClick={() => handleSelectOrigin(r)}
-                            className="w-full text-left px-3 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer">
-                            {r.display_name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider block mb-1">To</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--tier-exp)] pointer-events-none" strokeWidth={2} />
-                      <input ref={destInputRef} type="text" value={destQuery} onChange={(e) => handleDestInput(e.target.value)}
-                        placeholder="Where are you going?" style={{ fontSize: "16px" }}
-                        className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-xl pl-9 pr-9 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors" />
-                    </div>
-                    {destResults.length > 0 && (
-                      <div className="mt-1.5 rounded-xl border border-[var(--subtle-border)] bg-[var(--background)] overflow-hidden">
-                        {destResults.map((r, i) => (
-                          <button key={i} onClick={() => handleSelectDest(r)}
-                            className="w-full text-left px-3 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer">
-                            {r.display_name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <motion.button whileTap={{ scale: 0.98 }} onClick={handleGo} disabled={!localDest}
-                    className={`w-full py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                      localDest ? "bg-[var(--foreground)] text-[var(--card)] hover:opacity-90 shadow-lg" : "bg-[var(--subtle)] text-[var(--muted)] cursor-not-allowed"
-                    }`}>
-                    <Search className="h-4 w-4" strokeWidth={2.5} />
-                    Find cheapest fuel
-                  </motion.button>
-                </div>
-              )}
-              {/* Car + Fill panels reuse the same content from the desktop expanded panels — keeping it DRY by triggering the same expanded state */}
-            </div>
-          </motion.div>
-        </div>,
-        document.body
-      )}
 
       {/* ─── Filters modal (portal) ─── */}
       {modal === "filters" && typeof document !== "undefined" && createPortal(
