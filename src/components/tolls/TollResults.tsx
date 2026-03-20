@@ -13,39 +13,53 @@ import type { StationWithPrices } from "@/types/fuel";
 import BrandLogo from "@/components/shared/BrandLogo";
 import SidebarFooter from "@/components/shared/SidebarFooter";
 
-/** Find cheapest station within radiusKm of a route polyline */
-function findCheapestNearRoute(
+type RouteStation = { station: StationWithPrices; price: number; distToRoute: number; distAlongRoute: number };
+
+/** Find cheapest stations within radiusKm of a route polyline, filtered by reachable range */
+function findStationsNearRoute(
   polyline: LatLng[],
   stations: StationWithPrices[],
   fuelType: string,
-  radiusKm: number
-): { station: StationWithPrices; price: number; distToRoute: number } | null {
-  // Sample every ~500m along the polyline for performance
+  radiusKm: number,
+  maxRangeKm?: number,
+  originLat?: number,
+  originLng?: number,
+  count = 3
+): RouteStation[] {
   const sampleStep = Math.max(1, Math.floor(polyline.length / Math.max(polyline.length * 0.5, 50)));
   const samples = polyline.filter((_, i) => i % sampleStep === 0 || i === polyline.length - 1);
 
-  let best: { station: StationWithPrices; price: number; distToRoute: number } | null = null;
+  const results: RouteStation[] = [];
 
   for (const s of stations) {
     const p = s.prices.find((pr) => pr.fuelType === fuelType);
     if (!p || p.price < 50 || p.price > 500) continue;
 
-    // Find minimum distance to any sample point on route
+    // Check if reachable with current fuel
+    if (maxRangeKm && originLat != null && originLng != null) {
+      const distFromOrigin = haversineDistance(originLat, originLng, s.latitude, s.longitude) * 1.35;
+      if (distFromOrigin > maxRangeKm * 0.7) continue; // 70% safe range
+    }
+
     let minDist = Infinity;
-    for (const pt of samples) {
-      const d = haversineDistance(s.latitude, s.longitude, pt.lat, pt.lng);
-      if (d < minDist) minDist = d;
-      if (d < radiusKm) break; // early exit
+    let bestSampleIdx = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const d = haversineDistance(s.latitude, s.longitude, samples[i].lat, samples[i].lng);
+      if (d < minDist) { minDist = d; bestSampleIdx = i; }
+      if (d < radiusKm) break;
     }
 
     if (minDist <= radiusKm) {
-      if (!best || p.price < best.price) {
-        best = { station: s, price: p.price, distToRoute: Math.round(minDist * 10) / 10 };
-      }
+      results.push({
+        station: s,
+        price: p.price,
+        distToRoute: Math.round(minDist * 10) / 10,
+        distAlongRoute: Math.round((bestSampleIdx / samples.length) * 100),
+      });
     }
   }
 
-  return best;
+  return results.sort((a, b) => a.price - b.price).slice(0, count);
 }
 
 const PERIODS: { id: TimePeriod; label: string; desc: string }[] = [
@@ -152,16 +166,17 @@ export default function TollResults() {
   const [fuelRadius, setFuelRadius] = useState<1 | 3 | 5>(3);
   const [showAltRoute, setShowAltRoute] = useState(false);
 
-  // Find cheapest stations near each route
+  const rangeKm = useFuelStore((s) => s.rangeKm);
+  const origin = useTollStore.getState().origin;
+
+  // Find cheapest stations near each route (filtered by fuel range)
   const routeStations = useMemo(() => {
-    if (!comparison) return { free: null, toll: null };
-    const freeRoute = comparison.freeRoute.polyline;
-    const tollRoute = comparison.tollRoute.polyline;
+    if (!comparison) return { free: [] as RouteStation[], toll: [] as RouteStation[] };
     return {
-      free: findCheapestNearRoute(freeRoute, allStations, selectedFuelType, fuelRadius),
-      toll: findCheapestNearRoute(tollRoute, allStations, selectedFuelType, fuelRadius),
+      free: findStationsNearRoute(comparison.freeRoute.polyline, allStations, selectedFuelType, fuelRadius, rangeKm, origin?.lat, origin?.lng),
+      toll: findStationsNearRoute(comparison.tollRoute.polyline, allStations, selectedFuelType, fuelRadius, rangeKm, origin?.lat, origin?.lng),
     };
-  }, [comparison, allStations, selectedFuelType, fuelRadius]);
+  }, [comparison, allStations, selectedFuelType, fuelRadius, rangeKm]);
 
   // Don't render if no comparison and not loading
   if (!comparison && !loading && !error && !quotaExceeded) return null;
@@ -251,6 +266,20 @@ export default function TollResults() {
                       </div>
                     )}
                   </SettingsChip>
+
+                  <SettingsChip label="Time:" value={settings.timeValuePerHour === 0 ? "ignore" : `$${settings.timeValuePerHour}/hr`} active={settings.timeValuePerHour > 0}>
+                    {(close) => (
+                      <div className="p-1">
+                        <div className="px-3 py-1.5 text-[9px] text-[var(--muted)]">What&apos;s your time worth? This is crucial for toll decisions.</div>
+                        {[0, 20, 30, 40, 50, 75, 100].map((n) => (
+                          <button key={n} onClick={() => { updateSettings({ timeValuePerHour: n }); close(); }}
+                            className={`w-full text-left px-3 py-2 text-[11px] transition-colors cursor-pointer ${settings.timeValuePerHour === n ? "bg-[var(--subtle)] font-semibold text-[var(--foreground)]" : "text-[var(--foreground)] hover:bg-[var(--subtle-hover)]"}`}>
+                            {n === 0 ? "Ignore time" : `$${n}/hr`}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </SettingsChip>
                 </div>
 
                 {!hasTolls ? (
@@ -269,8 +298,8 @@ export default function TollResults() {
                   <>
                     {/* Recommended route (expanded by default) */}
                     {(() => {
-                      const rec = freeIsBetter ? { route: comparison.freeRoute, cost: comparison.freeCost, label: "Free route", color: "#4285f4", tollCost: 0, station: routeStations.free } : { route: comparison.tollRoute, cost: comparison.tollCost, label: "Toll route", color: "#ef4444", tollCost: comparison.tollCost.tollCost, station: routeStations.toll };
-                      const alt = freeIsBetter ? { route: comparison.tollRoute, cost: comparison.tollCost, label: "Toll route", color: "#ef4444", tollCost: comparison.tollCost.tollCost, station: routeStations.toll } : { route: comparison.freeRoute, cost: comparison.freeCost, label: "Free route", color: "#4285f4", tollCost: 0, station: routeStations.free };
+                      const rec = freeIsBetter ? { route: comparison.freeRoute, cost: comparison.freeCost, label: "Free route", color: "#4285f4", tollCost: 0, stations: routeStations.free } : { route: comparison.tollRoute, cost: comparison.tollCost, label: "Toll route", color: "#ef4444", tollCost: comparison.tollCost.tollCost, stations: routeStations.toll };
+                      const alt = freeIsBetter ? { route: comparison.tollRoute, cost: comparison.tollCost, label: "Toll route", color: "#ef4444", tollCost: comparison.tollCost.tollCost, stations: routeStations.toll } : { route: comparison.freeRoute, cost: comparison.freeCost, label: "Free route", color: "#4285f4", tollCost: 0, stations: routeStations.free };
 
                       const renderRouteCard = (r: typeof rec, isRecommended: boolean, expanded: boolean, onToggle?: () => void) => (
                         <div className={`bg-[var(--background)] border rounded-xl overflow-hidden ${isRecommended ? `border-[${r.color}]/40` : "border-[var(--subtle-border)]"}`}>
@@ -290,25 +319,40 @@ export default function TollResults() {
                               <Row icon={<Fuel className="h-3 w-3" strokeWidth={2} />} label={costModel === "fullCost" ? "Driving (ATO)" : "Fuel"} value={`$${r.cost.fuelCost.toFixed(2)}`} sub={costModel === "fullCost" ? `${r.route.distance}km × 88¢/km` : `${r.route.distance}km × ${vehicle.consumption}L/100km × ${settings.fuelPriceCentsPerLitre}c/L`} tip={costModel === "fullCost" ? "Full vehicle cost at ATO rate." : "Fuel cost based on your vehicle."} />
                               <div className="border-t border-[var(--subtle-border)]/50" />
                               <Row icon={r.tollCost > 0 ? <TriangleAlert className="h-3 w-3" strokeWidth={2} /> : <DollarSign className="h-3 w-3" strokeWidth={2} />} label="Tolls" value={r.tollCost > 0 ? `$${r.tollCost.toFixed(2)}` : "$0.00"} color={r.tollCost > 0 ? "text-[var(--tier-exp)]" : "text-[var(--tier-cheap)]"} tip={r.tollCost > 0 ? "Toll charges on this route." : "No tolls."} />
-                              {/* Best fuel stop on this route */}
-                              {r.station && (
+                              {/* Fuel stops on this route */}
+                              {r.stations.length > 0 && (
                                 <>
                                   <div className="border-t border-[var(--subtle-border)]" />
                                   <div className="px-3.5 py-2">
-                                    <div className="text-[9px] text-[var(--muted)] uppercase tracking-wider font-semibold mb-1.5">Best fuel stop</div>
-                                    <div className="flex items-center gap-2">
-                                      <BrandLogo brandName={r.station.station.brand?.name ?? "?"} size="sm" />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="text-[11px] font-medium text-[var(--foreground)] truncate">{r.station.station.name}</div>
-                                        <div className="text-[9px] text-[var(--muted)]">{r.station.price.toFixed(1)}c/L · {r.station.distToRoute}km from route</div>
-                                      </div>
-                                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${r.station.station.latitude},${r.station.station.longitude}`}
-                                        target="_blank" rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)] text-[9px] font-bold hover:opacity-90 transition-opacity cursor-pointer shrink-0">
-                                        <Navigation className="h-3 w-3" strokeWidth={2} />
-                                        Go
-                                      </a>
+                                    <div className="text-[9px] text-[var(--muted)] uppercase tracking-wider font-semibold mb-1.5">
+                                      {r.stations.length === 1 ? "Best fuel stop" : `Top ${r.stations.length} fuel stops`} (within {fuelRadius}km)
                                     </div>
+                                    <div className="space-y-1.5">
+                                      {r.stations.map((fs, idx) => (
+                                        <div key={fs.station.id} className="flex items-center gap-2">
+                                          <span className="text-[9px] font-mono text-[var(--muted)] w-3 shrink-0">{idx + 1}</span>
+                                          <BrandLogo brandName={fs.station.brand?.name ?? "?"} size="sm" />
+                                          <div className="flex-1 min-w-0">
+                                            <div className="text-[11px] font-medium text-[var(--foreground)] truncate">{fs.station.name}</div>
+                                            <div className="text-[9px] text-[var(--muted)]">{fs.price.toFixed(1)}c/L · {fs.distToRoute}km off route · {fs.distAlongRoute}% along</div>
+                                          </div>
+                                          <a href={`https://www.google.com/maps/dir/?api=1&destination=${fs.station.latitude},${fs.station.longitude}`}
+                                            target="_blank" rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)] text-[9px] font-bold hover:opacity-90 transition-opacity cursor-pointer shrink-0">
+                                            <Navigation className="h-3 w-3" strokeWidth={2} />
+                                            Go
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                              {r.stations.length === 0 && (
+                                <>
+                                  <div className="border-t border-[var(--subtle-border)]" />
+                                  <div className="px-3.5 py-2 text-[10px] text-[var(--muted)]">
+                                    No fuel stations within {fuelRadius}km that you can reach with your current fuel level
                                   </div>
                                 </>
                               )}
