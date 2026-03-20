@@ -72,28 +72,18 @@ export async function POST(req: NextRequest) {
     }
 
     const deviceHash = deviceId ? hashDevice(deviceId) : hashDevice(ip);
-    const supabase = getSupabase();
-
-    // Check for duplicates via RPC
-    const { data: isDupe } = await supabase.rpc("check_flag_duplicate", {
-      p_station_id: stationId,
-      p_device_hash: deviceHash,
-    });
-
-    if (!isDupe) {
-      // Insert via RPC (bypasses PostgREST schema cache)
+    try {
+      const supabase = getSupabase();
       const { error: insertError } = await supabase.rpc("insert_station_flag", {
         p_station_id: stationId,
         p_station_name: stationName,
         p_reason: reason || "Not specified",
         p_device_hash: deviceHash,
       });
-
-      if (insertError) {
-        console.error("insert_station_flag error:", insertError.message);
-      }
-
-      flagCache.ts = 0;
+      if (insertError) console.error("insert_station_flag error:", insertError.message);
+      else flagCache.ts = 0;
+    } catch (dbErr) {
+      console.error("Supabase flag write failed:", dbErr);
     }
 
     // Email notification (best-effort)
