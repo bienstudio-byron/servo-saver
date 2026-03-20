@@ -49,9 +49,9 @@ function findCheapestNearRoute(
 }
 
 const PERIODS: { id: TimePeriod; label: string; desc: string }[] = [
-  { id: "peak", label: "Peak", desc: "7-9am, 4-7pm" },
-  { id: "offPeak", label: "Off-Peak", desc: "Other weekday" },
-  { id: "weekend", label: "Weekend", desc: "Sat + Sun" },
+  { id: "peak", label: "Peak toll pricing", desc: "7-9am, 4-7pm weekdays" },
+  { id: "offPeak", label: "Off-peak toll pricing", desc: "Other weekday hours" },
+  { id: "weekend", label: "Weekend toll pricing", desc: "Sat + Sun (often cheaper)" },
 ];
 
 function Tip({ text }: { text: string }) {
@@ -225,7 +225,7 @@ export default function TollResults() {
               <div className="px-4 pb-3 space-y-2.5">
                 {/* Settings chips */}
                 <div className="flex flex-wrap gap-1.5">
-                  <SettingsChip label="" value={PERIODS.find((p) => p.id === settings.timePeriod)?.label || "Peak"}>
+                  <SettingsChip label="Tolls:" value={PERIODS.find((p) => p.id === settings.timePeriod)?.label.replace(" toll pricing", "") || "Peak"}>
                     {(close) => (
                       <div className="p-1">
                         {PERIODS.map((p) => (
@@ -335,6 +335,17 @@ export default function TollResults() {
                           ? `Toll saves ${timeDiffAbs} min but costs $${comparison.tollCost.tollCost.toFixed(2)} in tolls`
                           : `Toll costs $${comparison.tollCost.tollCost.toFixed(2)} but saves ${timeDiffAbs} min`}
                       </p>
+                      {/* Time value nudge */}
+                      {settings.timeValuePerHour === 0 && timeDiffAbs > 0 && (
+                        <p className="text-[10px] text-[var(--accent-text)] mt-1.5">
+                          {timeDiffAbs > 0 && `💡 If your time is worth $${Math.ceil(savingsAbs / (timeDiffAbs / 60))}/hr or more, the ${freeIsBetter ? "toll" : "free"} route is actually better. Set your time value in Filters.`}
+                        </p>
+                      )}
+                      {settings.timeValuePerHour > 0 && timeDiffAbs > 0 && (
+                        <p className="text-[10px] text-[var(--muted)] mt-1">
+                          At ${settings.timeValuePerHour}/hr, {timeDiffAbs} min = ${((timeDiffAbs / 60) * settings.timeValuePerHour).toFixed(2)} in time value
+                        </p>
+                      )}
                       {comparison.annualSavings !== null && (
                         <p className="text-[12px] font-bold mt-2" style={{ color: "var(--tier-cheap)" }}>
                           {settings.tripsPerWeek}x/week = <span className="font-mono">${Math.abs(comparison.annualSavings).toFixed(0)}</span> saved/year
