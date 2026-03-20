@@ -249,10 +249,17 @@ export default function NavBar() {
     if (modal === "filters") { setBrandQuery(""); setTimeout(() => brandInputRef.current?.focus(), 50); }
   }, [modal]);
 
-  // Sync vehicle profile to toll settings
+  // Sync vehicle profile + live fuel price to toll settings
   useEffect(() => {
     tollStore.updateSettings({ fuelConsumption: vehicleProfile.consumption, costModel });
   }, [vehicleProfile.consumption, costModel]);
+
+  // Sync live fuel price to toll settings
+  useEffect(() => {
+    if (avgPrice > 0) {
+      tollStore.updateSettings({ fuelPriceCentsPerLitre: Math.round(avgPrice) });
+    }
+  }, [avgPrice]);
 
   // Close on click outside
   useEffect(() => {
