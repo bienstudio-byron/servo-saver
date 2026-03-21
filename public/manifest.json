@@ -1,16 +1,27 @@
 {
-  "name": "PetrolSaver",
+  "name": "PetrolSaver — Cheapest Fuel in Australia",
   "short_name": "PetrolSaver",
-  "description": "Find the cheapest fuel prices in Victoria, Australia",
+  "description": "Compare fuel prices across 6,000+ stations in VIC, NSW, TAS & WA. Find cheap petrol near you.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#1a1a1a",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["auto", "finance", "utilities"],
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/nav-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }

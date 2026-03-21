@@ -12,6 +12,7 @@ import InsightBanner from "@/components/shared/InsightBanner";
 import ModeTabBar from "@/components/shared/ModeTabBar";
 import NavBar from "@/components/shared/NavBar";
 import VehicleSetup from "@/components/shared/VehicleSetup";
+import InstallPrompt from "@/components/shared/InstallPrompt";
 import TollMode from "@/components/tolls/TollMode";
 import { useFuelStore } from "@/stores/fuel-store";
 import { useVehicleStore } from "@/stores/vehicle-store";
@@ -37,6 +38,11 @@ export default function HomePage() {
   useEffect(() => {
     // Hydrate vehicle store from localStorage (SSR-safe)
     useVehicleStore.getState().hydrate();
+
+    // Register service worker for PWA
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
 
     // Hydrate persisted filters
     try {
@@ -253,6 +259,8 @@ export default function HomePage() {
       )}
       {/* Vehicle setup modal */}
       <VehicleSetup />
+      {/* PWA install prompt */}
+      <InstallPrompt />
     </PriceThresholdsProvider>
   );
 }
