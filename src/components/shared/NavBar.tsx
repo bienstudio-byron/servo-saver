@@ -809,6 +809,40 @@ export default function NavBar() {
               </button>
             </div>
             <div className="overflow-y-auto flex-1 min-h-0">
+              {/* Location */}
+              <div className="border-b border-[var(--subtle-border)]">
+                <div className="px-5 py-2 text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider">Location</div>
+                <div className="px-3 pb-2.5">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted)] pointer-events-none" strokeWidth={2} />
+                    <input type="text" value={locQuery} onChange={(e) => handleLocInput(e.target.value)}
+                      placeholder={locationSource === "manual" && locationName ? locationName.split(",")[0] : gpsSuburb || "Search suburb..."}
+                      style={{ fontSize: "16px" }}
+                      className="w-full bg-[var(--subtle)] border border-[var(--subtle-border)] rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#4285f4] transition-colors" />
+                  </div>
+                  {locResults.length > 0 && (
+                    <div className="mt-1.5 rounded-lg border border-[var(--subtle-border)] bg-[var(--background)] overflow-hidden">
+                      {locResults.map((r, i) => (
+                        <button key={i} onClick={() => { handleSelectLocation(r); setModal(null); }}
+                          className="w-full text-left px-3 py-2 text-[11px] text-[var(--foreground)] hover:bg-[var(--subtle-hover)] transition-colors border-b border-[var(--subtle-border)] last:border-0 truncate cursor-pointer">
+                          {r.display_name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <button onClick={() => { handleUseGps(); setModal(null); }}
+                      className="text-[10px] text-[var(--accent-text)] hover:text-[var(--foreground)] transition-colors cursor-pointer flex items-center gap-1">
+                      <LocateFixed className="h-3 w-3" strokeWidth={2} />
+                      Use GPS
+                    </button>
+                    {locationSource === "manual" && locationName && (
+                      <span className="text-[9px] text-[var(--muted)]">· Set to {locationName.split(",")[0]}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Brands */}
               <div className="border-b border-[var(--subtle-border)]">
                 <div className="px-5 py-2 text-[10px] font-semibold text-[var(--muted)] uppercase tracking-wider flex justify-between">
