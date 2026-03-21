@@ -61,10 +61,15 @@ export default function InlineReportForm({
       const res = await fetch("/api/community-price", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stationId, fuelType: selectedFuelType, price, deviceId: getDeviceId() }),
+        body: JSON.stringify({ stationId, fuelType: selectedFuelType, price, deviceId: getDeviceId(), currentPrice }),
       });
       if (res.status === 429) { setStatus("rate-limited"); return; }
-      if (!res.ok) { setStatus("error"); setErrorMsg("Something went wrong"); return; }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setStatus("error");
+        setErrorMsg(data.error || "Something went wrong");
+        return;
+      }
       setStatus("success");
       onSuccess?.();
       setTimeout(onClose, 1200);
@@ -87,8 +92,8 @@ export default function InlineReportForm({
           <ArrowLeft className="h-4 w-4" strokeWidth={2} />
         </button>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold text-[var(--foreground)] truncate">Report {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} price</div>
-          <div className="text-[10px] text-[var(--muted)] truncate">{stationName}</div>
+          <div className="text-xs font-semibold text-[var(--foreground)] truncate">Update {FUEL_TYPE_LABELS[selectedFuelType] ?? selectedFuelType} price</div>
+          <div className="text-[10px] text-[var(--muted)] truncate">{stationName} · Currently {currentPrice.toFixed(1)}c/L</div>
         </div>
       </div>
 

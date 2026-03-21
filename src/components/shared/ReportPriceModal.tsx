@@ -74,6 +74,7 @@ export default function ReportPriceModal({
           fuelType,
           price,
           deviceId: getDeviceId(),
+          currentPrice,
         }),
       });
 

@@ -191,10 +191,14 @@ export default function NavBar() {
   const fuelLabel = selectedFuelType === "DSL" ? "Diesel" : selectedFuelType === "PDSL" ? "P.Diesel" : selectedFuelType;
   const isTripActive = tripMode === "trip" && tripDestination;
 
+  const TOP_BRANDS = ["7-Eleven", "BP", "Shell", "Ampol", "Caltex", "United", "Costco", "EG Ampol", "Metro Petroleum", "Liberty", "Puma"];
   const availableBrands = useMemo(() => {
     const brands = new Set<string>();
     allStations.forEach((s) => { if (s.brand?.name) brands.add(s.brand.name); });
-    return [...brands].sort();
+    const all = [...brands];
+    const top = TOP_BRANDS.filter((b) => all.includes(b));
+    const rest = all.filter((b) => !TOP_BRANDS.includes(b)).sort();
+    return [...top, ...rest];
   }, [allStations]);
 
   const avgPrice = useMemo(() => {

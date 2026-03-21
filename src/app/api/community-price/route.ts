@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { stationId, fuelType, price, deviceId } = body;
+    const { stationId, fuelType, price, deviceId, currentPrice } = body;
 
     // Validate
     if (!stationId || !fuelType || !price || !deviceId) {
@@ -75,6 +75,15 @@ export async function POST(req: Request) {
     const numPrice = Number(price);
     if (isNaN(numPrice) || numPrice <= 0 || numPrice >= 500) {
       return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+    }
+
+    // Guardrail: reject prices >20% different from the current official price
+    if (currentPrice && !isNaN(Number(currentPrice))) {
+      const diff = Math.abs(numPrice - Number(currentPrice));
+      const pctDiff = diff / Number(currentPrice);
+      if (pctDiff > 0.2) {
+        return NextResponse.json({ error: `Price seems too different from the current price (${Number(currentPrice).toFixed(1)}c/L). Maximum 20% difference allowed.` }, { status: 400 });
+      }
     }
 
     // Hash device ID for privacy
