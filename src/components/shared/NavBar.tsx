@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, MapPin, Car, Gauge, SlidersHorizontal, Pencil, Check, LocateFixed, Fuel, Route, Store, ArrowRight } from "lucide-react";
+import { Search, X, MapPin, Car, Gauge, Droplets, SlidersHorizontal, Pencil, Check, LocateFixed, Fuel, Route, Store, ArrowRight } from "lucide-react";
 import { useFuelStore, type AppMode } from "@/stores/fuel-store";
 import { useTollStore } from "@/stores/toll-store";
 import { useVehicleStore } from "@/stores/vehicle-store";
@@ -398,7 +398,7 @@ export default function NavBar() {
                 label: vehicleProfile.name,
                 mobileLabel: vehicleProfile.name.split(" ").slice(-2).join(" "),
                 extra: null, nudge: showCarNudge },
-              { id: "fill" as ExpandedPanel, icon: Gauge, iconColor: "text-[var(--muted)]",
+              { id: "fill" as ExpandedPanel, icon: Droplets, iconColor: "text-[var(--muted)]",
                 label: fillLabel,
                 mobileLabel: fillLabel,
                 extra: null },
