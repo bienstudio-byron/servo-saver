@@ -123,10 +123,9 @@ export default function RootLayout({
         <main>{children}</main>
         <Analytics />
         <Script
-          async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4918791662575228"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
         />
       </body>
     </html>

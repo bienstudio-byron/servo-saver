@@ -23,20 +23,22 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
 
   if (enableNsw) {
     providers.push({
-      name: "NSW",
+      name: "NSW+TAS",
       fetch: async () => {
         const { nswProvider } = await import("./providers/nsw-provider");
-        return nswProvider.fetchStations();
-      },
-    });
-  }
+        const allStations = await nswProvider.fetchStations();
 
-  if (enableNsw && enableTas) {
-    providers.push({
-      name: "TAS",
-      fetch: async () => {
-        const { tasProvider } = await import("./providers/tas-provider");
-        return tasProvider.fetchStations();
+        if (enableTas) {
+          // Split NSW results: stations below -39.5° latitude are TAS
+          return allStations.map((s) => {
+            if (s.latitude < -39.5) {
+              return { ...s, id: s.id.replace("nsw:", "tas:"), state: "TAS" };
+            }
+            return s;
+          });
+        }
+
+        return allStations;
       },
     });
   }
