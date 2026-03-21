@@ -258,46 +258,60 @@ src/
 - No fake multipliers — same fuel formula for both routes, distance difference IS the cost difference
 - All API keys server-side via `/api/toll` and `/api/geocode` proxies
 
-## Roadmap (from user feedback, updated 2026-03-20)
+## Roadmap (updated 2026-03-21)
 
-### Recently completed
+### Completed (this sprint)
 
-- [x] **Vehicle profiles** — Zustand store (`vehicle-store.ts`) with localStorage persistence. 100+ AU cars in `vehicles.ts` database (Small, Medium, SUV, Ute, Van, Large, Performance, Hybrid categories). Full-screen setup modal (`VehicleSetup.tsx`) with search + custom entry. Integrated into FillStrategy (replaces hardcoded 55L/8.5L), ModeToggle (vehicle chip), TollSidebar + TollMobileSheet (fuel cost calc uses profile consumption). Auto-sets fuel type on vehicle selection. Skip defaults to average car. First-run onboarding forces setup before app use.
-- [x] **Manual location setting** — Location chip in filter row with geocoding search dropdown. Persists to localStorage. Skips GPS auto-detect when manual location is saved. "Use my GPS" button to clear override. Works for both Fuel and Tolls. Fixes VPN users getting wrong location.
-- [x] **Station reporting / flagging** — Flag button with reason picker (wrong price, closed down, temp closed, wrong pin) as 2×2 icon grid in both FillStrategy cards and StationModal. Sends reason to /api/flag email. Unflag with undo in StationModal. Price ranking + 30-day price history sparkline surfaced inline in station cards (no longer hidden behind Details button).
-- [x] **Fuel level by litres + dollars + gauge** — Three-mode fill input (Gauge/Litres/$) via segmented toggle in tank chip dropdown. Litres mode: number input + quick-picks (10/20/30/40/Full). Dollar mode: budget input + quick-picks ($20/$40/$50/$80/Full), back-calculates litres from avg local price. All modes write to same rangeKm engine input. Fill intent label propagates to station cards ("Fill ~27L ($50 worth)" vs "Fill ~27L to full"). Slider text removed from inside gauge bar for readability.
-- [x] **Break-even distance metric** — Shows max worthwhile detour distance in station card breakdown table. Formula: `(price_diff_per_litre × litres_filling) / fuel_cost_per_km`. Plain-language verdicts: "Easy win", "Worth the detour", "Marginal", "Detour eats the saving". Also added to /how-it-works page with worked examples. Desktop hover tooltips on all breakdown rows.
-- [x] **ATO wear & tear mode** — "Fuel only" vs "Full cost (ATO 88¢/km)" toggle in More filter chip. Persisted to localStorage. Affects: FillStrategy detour cost + break-even + verdicts, TollSaver route cost comparison (toll-calculator.ts), TollSidebar display labels. Both how-it-works pages updated with dual formula explanations. When ATO mode is on, More chip shows "ATO" badge. ATO rate covers fuel + tyres + servicing + insurance + depreciation — dramatically shrinks break-even distances (47km → 9km for same scenario).
+- [x] **Vehicle profiles** — 100+ AU cars database, custom entry, localStorage persistence. Affects all calculations.
+- [x] **Manual location setting** — Location search in Settings modal + "Use GPS" fallback. Persists to localStorage.
+- [x] **Station flagging (global)** — Supabase-backed. Flag reasons (wrong price, closed, wrong pin). Visible to ALL users: greyed out in list + red flag badge on map pins. 24hr auto-expiry. Rate limited.
+- [x] **Fill by litres/dollars/gauge** — Three-mode input. All write to same engine. Fill intent propagates to station cards.
+- [x] **Break-even verdicts** — Plain language: "No-brainer", "Worth the drive", "Borderline", "Not worth the drive". Shows break-even distance.
+- [x] **ATO wear & tear mode** — 88¢/km toggle. Affects fuel + toll calculators. Persisted to localStorage.
+- [x] **Detour tolerance** — 1/3/5km radius toggle for fuel trip mode + toll route fuel stops.
+- [x] **Airbnb-style NavBar** — Expanding pill bar (trip/car/fill segments animate in-place). Shared across Fuel + Tolls modes.
+- [x] **Floating panel layout** — Replaced sidebar with floating card (desktop: bottom-left, mobile: bottom sheet). One component for both breakpoints.
+- [x] **TollSaver redesign** — Search moved to NavBar. Results as floating card with collapsible route cards, best fuel stops per route with "Go" directions, time value nudge, toll breakdown.
+- [x] **Cheapest fuel on route** — Top 3 stations per route (toll + free), filtered by fuel range, with map pins + brand logos.
+- [x] **Feedback system** — Feedback modal via Resend email. Combined /legal page (terms + privacy).
+- [x] **Settings persistence** — Time value, brands, cost model, location all persist to localStorage across sessions.
+- [x] **Bad data filtering** — Prices <50c/L or >500c/L filtered from recommendations + map. Community price reports rejected if >20% different from official.
+- [x] **Tasmania + Western Australia** — TAS via NSW FuelCheck API (split by latitude). WA via FuelWatch RSS (no auth, XML parsing).
+- [x] **Code refactor** — Shared types (`RankedOption`), shared utils (`station-utils.ts`), `SidebarShell`, `SidebarFooter`. Removed duplication.
+- [x] **Personality overhaul** — "Top pick", "Worth it", "No-brainer" copy. Tier-colored station borders. Ranking pills. Desktop tooltips.
+- [x] **Security hardening** — HTML escaping in flag/feedback APIs. Rate limiting. Input validation.
 
-### Stage 1: Fix trust-breaking issues
+### Stage 1: Accuracy + routing (next priority)
 
-1. **Actual road distance + route display for trip mode** — Replace `straight_line × 1.35` with real road distance from ORS/OSRM routing for station detour calculations. Show actual road routes on map instead of crow-flies straight lines between origin→station→destination. Current straight lines are confusing and misleading — users can't tell if the detour is highway-convenient or requires 15min of back-roads. Fixes inaccuracies near lakes, rivers, bridges. Multiple users have flagged this.
+1. **Actual road distance for trip mode** — Replace `straight_line × 1.35` with real ORS/OSRM routing for station detour calculations. Show actual routes on map. Multiple users flagged straight lines as misleading. Biggest remaining trust issue.
 
-2. **Detour time + $/minute savings** — Show estimated detour time cost alongside dollar savings. Display savings-per-minute so users can judge if a detour is worth their time. e.g., "Save $3.71, +12 min detour ($0.31/min)". Relates to #1 (needs real routing for accurate time estimates).
+2. **Detour time + $/minute** — Needs real routing (#1) for accurate time. Show savings-per-minute so users can judge detour value.
 
-### Stage 2: Better UX + expansion
+3. **QLD fuel data** — Registration submitted at fuelpricesqld.com.au. Awaiting API tokens. Provider ready to build (same pattern as VIC/NSW/TAS/WA).
 
-5. **Multi fuel type comparison** — Show P95 AND P98 prices side by side per station. Highlight when premium is cheaper than regular (happens at independents). Change FillStrategy to accept `string[]` for fuel types.
+4. **Toll time estimates disclaimer** — ORS uses static speed limits, not real-time traffic. Peak hour toll roads are much faster IRL. Need clearer messaging or traffic-aware routing (Google Maps API, paid).
 
-6. **TollSaver: $/hr total cost metric** — Show total trip cost divided by time as an explicit $/hr metric. Helps users compare routes on a cost-efficiency basis beyond just toll vs free.
+### Stage 2: Features
 
-7. **QLD fuel data** — Add Queensland as third provider. QLD OESR fuel API or equivalent. Same provider pattern as VIC/NSW. Brisbane TollSaver already has toll data — need fuel prices to match.
+5. **Multi fuel type comparison** — Show P95 AND P98 side by side per station. Highlight when premium is cheaper.
 
-### Stage 3: Multi-stop + prediction
+6. **Intermediate destinations** — Multi-stop planner for Fuel + Tolls. Waypoints along route. Killer for road trips.
 
-8. **Intermediate destinations (Fuel + Tolls)** — Multi-stop planner for both modes. For Fuel: given current fuel level + route with waypoints, find optimal refuel stops considering price + remaining range. For Tolls: recalculate toll vs free for multi-leg journey. Shared waypoint infrastructure. Multiple users requested this. Killer feature for road trips.
+7. **Price prediction / cycle timing** — Historical prices in Supabase. Weekly cycle detection. "Wait" vs "fill now" recommendations.
 
-9. **Price prediction / cycle timing** — Track historical prices in Supabase. Detect weekly fuel price cycles (VIC/NSW follow predictable patterns). Show "prices likely dropping tomorrow — wait" or "fill now, spike coming." Needs: daily price snapshot cron, cycle detection algorithm, confidence thresholds. A user confirmed they've been 20-50c under average for years using a Python script for this — validates the concept.
+8. **Skip forced onboarding** — Default to "Average car" silently. Let users change via Car segment in NavBar. Reduces friction for new users.
 
-### Stage 4: Personalisation
+### Stage 3: Personalisation
 
-10. **Loyalty / voucher discounts** — "My discounts" settings. Simple v1: per-brand cents-off (e.g., "I get 4c off at Coles"). Complex v2: integrate Coles/Flybuys, Shell Go+, 7-Eleven Fuel Lock APIs. Apply discounts to recommendation engine — a Coles station at 195c becomes 191c for a Flybuys user.
+9. **Loyalty / voucher discounts** — Per-brand cents-off. v2: integrate Coles/Flybuys, Shell Go+, 7-Eleven Fuel Lock APIs.
 
-11. **Busy station wait time estimate** — Factor in estimated busyness/wait times at popular cheap stations. If there's a 20min queue, the savings may not be worth it. Could use Google Places popular times data or crowd-sourced reports. Display as "likely busy" warning on recommendations. A user pointed out that 20+ mins queued on a main road makes cheap fuel not worth it unless you have time to kill.
+10. **Busy station wait time** — Google Places popular times or crowd-sourced. "Likely busy" warning on cheap stations.
 
-### Known issues to fix
+### Known issues
 
-- Closed stations showing stale prices — need better staleness filtering or user flagging
-- Trip mode shows straight lines on map instead of actual routes — confusing and misleading (ties to #1)
+- Trip mode shows straight lines on map instead of actual routes (ties to #1)
 - Trip mode uses straight-line × 1.35 for distance — inaccurate near geographic features (ties to #1)
-- ORS free tier limit (2,000 req/day) — may need upgrade or OSRM self-hosting if TollSaver usage grows, especially with real routing for fuel trip mode (#1)
+- ORS free tier limit (2,000 req/day) — may need upgrade or OSRM self-hosting
+- Melbourne→Sydney toll detection: Hume Fwy is toll-free but metro tolls (CityLink/M2) at each end may be missed
+- TollMobileSheet still has its own vehicle selector separate from shared store (being phased out)
+- Hydration warnings may appear briefly on first load (vehicle store defers localStorage read to after mount)

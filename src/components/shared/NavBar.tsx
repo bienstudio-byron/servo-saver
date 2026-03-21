@@ -787,7 +787,8 @@ export default function NavBar() {
             }`}
           >
             <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
-            Filters{hasActiveFilters ? ` (${activeFilterCount})` : ""}
+            <span className="hidden md:inline">Settings{hasActiveFilters ? ` (${activeFilterCount})` : ""}</span>
+            {hasActiveFilters && <span className="md:hidden text-[10px]">{activeFilterCount}</span>}
           </motion.button>
       </div>{/* end barRef */}
 
@@ -803,7 +804,7 @@ export default function NavBar() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-5 pt-5 pb-3 flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-[var(--foreground)]">Filters</h2>
+              <h2 className="text-lg font-bold text-[var(--foreground)]">Settings</h2>
               <button onClick={() => setModal(null)} className="p-1.5 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors cursor-pointer">
                 <X className="h-5 w-5" strokeWidth={2} />
               </button>

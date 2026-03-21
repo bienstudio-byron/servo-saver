@@ -395,7 +395,7 @@ function MobileFloatingButtons({ onRecentre, mapCentre }: { onRecentre?: () => v
         className={`${floatingBtnClass} ${hasActiveFilters ? "!bg-[var(--foreground)] !text-[var(--card)] !border-[var(--foreground)]" : ""}`}
       >
         <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={2} />
-        Filters{hasActiveFilters ? ` (${(costModelActive ? 1 : 0) + (brandsActive ? 1 : 0) + (timeActive ? 1 : 0)})` : ""}
+        Settings{hasActiveFilters ? ` (${(costModelActive ? 1 : 0) + (brandsActive ? 1 : 0) + (timeActive ? 1 : 0)})` : ""}
       </motion.button>
 
       {onRecentre && (
