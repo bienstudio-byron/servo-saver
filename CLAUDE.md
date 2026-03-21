@@ -309,9 +309,6 @@ src/
 
 ### Known issues
 
-- Trip mode shows straight lines on map instead of actual routes (ties to #1)
+- Trip mode shows straight lines on map instead of actual routes — needs ORS routing integration (ties to #1)
 - Trip mode uses straight-line × 1.35 for distance — inaccurate near geographic features (ties to #1)
-- ORS free tier limit (2,000 req/day) — may need upgrade or OSRM self-hosting
-- Melbourne→Sydney toll detection: Hume Fwy is toll-free but metro tolls (CityLink/M2) at each end may be missed
-- TollMobileSheet still has its own vehicle selector separate from shared store (being phased out)
-- Hydration warnings may appear briefly on first load (vehicle store defers localStorage read to after mount)
+- ORS free tier limit (2,000 req/day) — monitor usage, may need upgrade if TollSaver + real routing both use ORS
