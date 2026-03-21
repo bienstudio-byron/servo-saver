@@ -16,9 +16,9 @@ const STORAGE_KEY = "petrolsaver-vehicle";
 const COST_MODEL_KEY = "petrolsaver-cost-model";
 
 const DEFAULT_VEHICLE: VehicleProfile = {
-  name: "Average car",
-  tankSize: 55,
-  consumption: 8.5,
+  name: "Toyota Corolla Hatch",
+  tankSize: 50,
+  consumption: 6.8,
   fuelType: "U91",
 };
 
@@ -39,7 +39,7 @@ interface VehicleStore {
 export const useVehicleStore = create<VehicleStore>((set, get) => ({
   // Always start with defaults (SSR-safe)
   profile: DEFAULT_VEHICLE,
-  isSetUp: false,
+  isSetUp: true, // Default to true — skip forced onboarding, users change via NavBar car segment
   showSetup: false,
   costModel: "fuelOnly",
   hydrated: false,

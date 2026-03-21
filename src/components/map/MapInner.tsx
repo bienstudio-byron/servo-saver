@@ -6,6 +6,7 @@ import {
   TileLayer,
   Marker,
   Polyline,
+  Tooltip,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -391,13 +392,12 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
   const activeRouteStation = useFuelStore((s) => s.activeRouteStation);
 
   // Global flags
-  const [globalFlaggedIds, setGlobalFlaggedIds] = useState<Set<string>>(new Set());
+  const [globalFlags, setGlobalFlags] = useState<Record<string, { count: number; reasons: string[] }>>({});
+  const globalFlaggedIds = useMemo(() => new Set(Object.keys(globalFlags)), [globalFlags]);
   useEffect(() => {
     fetch("/api/flag")
       .then((r) => r.json())
-      .then((data) => {
-        if (data.flags) setGlobalFlaggedIds(new Set(Object.keys(data.flags)));
-      })
+      .then((data) => { if (data.flags) setGlobalFlags(data.flags); })
       .catch(() => {});
   }, []);
 
@@ -464,7 +464,15 @@ export default function MapInner({ stations, selectedFuelType, loading }: MapInn
               )}
               zIndexOffset={highlight === "focused" ? 1200 : highlight === "recommended" ? 1000 : 0}
               eventHandlers={{ click: () => useFuelStore.getState().setPinClickedStationId(station.id) }}
-            />
+            >
+              {globalFlags[station.id] && (
+                <Tooltip direction="top" offset={[0, -12]}>
+                  <span style={{ fontSize: "11px" }}>
+                    ⚠️ {globalFlags[station.id].reasons[0]} · {globalFlags[station.id].count} report{globalFlags[station.id].count > 1 ? "s" : ""}
+                  </span>
+                </Tooltip>
+              )}
+            </Marker>
           );
         })}
 

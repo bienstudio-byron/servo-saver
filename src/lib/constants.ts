@@ -45,6 +45,6 @@ export const NSW_API_BASE_URL = "https://api.onegov.nsw.gov.au/FuelCheckApp/v1/f
 export const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 // Calculator defaults
-export const DEFAULT_TANK_SIZE = 55; // litres (matches vehicle-store default)
-export const DEFAULT_FUEL_CONSUMPTION = 8.5; // L/100km
+export const DEFAULT_TANK_SIZE = 50; // litres (Toyota Corolla Hatch — matches vehicle-store default)
+export const DEFAULT_FUEL_CONSUMPTION = 6.8; // L/100km (Toyota Corolla Hatch)
 export const WEEKS_PER_YEAR = 52;

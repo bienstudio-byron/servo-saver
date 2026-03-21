@@ -51,6 +51,16 @@ export default function NavBar() {
 
   const vehicleProfile = useVehicleStore((s) => s.profile);
   const setVehicleProfile = useVehicleStore((s) => s.setProfile);
+  const [showCarNudge, setShowCarNudge] = useState(false);
+
+  // Show pulse on car segment if user hasn't set their vehicle
+  useEffect(() => {
+    const hasSetCar = localStorage.getItem("petrolsaver-vehicle");
+    if (!hasSetCar) {
+      const timer = setTimeout(() => setShowCarNudge(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const costModel = useVehicleStore((s) => s.costModel);
   const setCostModel = useVehicleStore((s) => s.setCostModel);
 
@@ -155,6 +165,7 @@ export default function NavBar() {
   }, [carQuery]);
 
   const handleSaveCustomCar = () => {
+    setShowCarNudge(false);
     const profile: VehicleProfile = {
       name: customName || "My car",
       tankSize: parseFloat(customTank) || 55,
@@ -172,6 +183,7 @@ export default function NavBar() {
     const profile: VehicleProfile = { name: vehicleDisplayName(v), tankSize: v.tankSize, consumption: v.consumption, fuelType: v.fuelType };
     setVehicleProfile(profile);
     setSelectedFuelType(v.fuelType);
+    setShowCarNudge(false);
     try { localStorage.setItem("petrolsaver-fuel-chosen", v.fuelType); } catch {}
     setCarQuery("");
     setExpanded(null);
@@ -385,7 +397,7 @@ export default function NavBar() {
               { id: "car" as ExpandedPanel, icon: Car, iconColor: "text-[var(--muted)]",
                 label: vehicleProfile.name,
                 mobileLabel: vehicleProfile.name.split(" ").slice(-2).join(" "),
-                extra: null },
+                extra: null, nudge: showCarNudge },
               { id: "fill" as ExpandedPanel, icon: Gauge, iconColor: "text-[var(--muted)]",
                 label: fillLabel,
                 mobileLabel: fillLabel,
@@ -402,7 +414,7 @@ export default function NavBar() {
                     onClick={() => setExpanded(expanded === seg.id ? null : seg.id)}
                     className={`flex items-center gap-2 py-3 text-[13px] font-medium cursor-pointer whitespace-nowrap w-full justify-center transition-colors ${
                       isFirst && !expanded ? "rounded-l-full pl-5 pr-3" : isLast && !expanded ? "rounded-r-full pr-5 pl-3" : "px-3"
-                    } ${isActive ? "bg-[var(--subtle)] text-[var(--foreground)]" : "text-[var(--foreground)]"}`}
+                    } ${isActive ? "bg-[var(--subtle)] text-[var(--foreground)]" : "text-[var(--foreground)]"} ${"nudge" in seg && seg.nudge ? "animate-pill-nudge" : ""}`}
                   >
                     <Icon className={`h-4 w-4 shrink-0 ${seg.iconColor}`} strokeWidth={1.5} />
                     <span className="hidden md:inline truncate">{seg.label}</span>
