@@ -14,27 +14,58 @@ export async function fetchFuelTypes(): Promise<FuelType[]> {
 // Orchestrator: fetch from all enabled providers
 export async function fetchMergedStations(): Promise<StationWithPrices[]> {
   const enableNsw = process.env.ENABLE_NSW === "true";
+  const enableTas = process.env.ENABLE_TAS !== "false"; // on by default if NSW is on
+  const enableWa = process.env.ENABLE_WA !== "false"; // on by default
 
-  if (!enableNsw) {
+  const providers: { name: string; fetch: () => Promise<StationWithPrices[]> }[] = [
+    { name: "VIC", fetch: () => vicProvider.fetchStations() },
+  ];
+
+  if (enableNsw) {
+    providers.push({
+      name: "NSW",
+      fetch: async () => {
+        const { nswProvider } = await import("./providers/nsw-provider");
+        return nswProvider.fetchStations();
+      },
+    });
+  }
+
+  if (enableNsw && enableTas) {
+    providers.push({
+      name: "TAS",
+      fetch: async () => {
+        const { tasProvider } = await import("./providers/tas-provider");
+        return tasProvider.fetchStations();
+      },
+    });
+  }
+
+  if (enableWa) {
+    providers.push({
+      name: "WA",
+      fetch: async () => {
+        const { waProvider } = await import("./providers/wa-provider");
+        return waProvider.fetchStations();
+      },
+    });
+  }
+
+  if (providers.length === 1) {
     // Fast path: VIC only
     return vicProvider.fetchStations();
   }
 
-  // Fetch both providers in parallel — if one fails, the other still works
-  const { nswProvider } = await import("./providers/nsw-provider");
-  const results = await Promise.allSettled([
-    vicProvider.fetchStations(),
-    nswProvider.fetchStations(),
-  ]);
+  // Fetch all providers in parallel — if one fails, the others still work
+  const results = await Promise.allSettled(providers.map((p) => p.fetch()));
 
   const stations: StationWithPrices[] = [];
 
-  const providerNames = ["VIC", "NSW"];
   results.forEach((result, i) => {
     if (result.status === "fulfilled") {
       stations.push(...result.value);
     } else {
-      console.error(`${providerNames[i]} provider failed:`, result.reason);
+      console.error(`${providers[i].name} provider failed:`, result.reason);
     }
   });
 
@@ -42,5 +73,6 @@ export async function fetchMergedStations(): Promise<StationWithPrices[]> {
     throw new Error("All fuel data providers failed");
   }
 
+  console.log(`Loaded ${stations.length} stations from ${providers.map((p) => p.name).join(", ")}`);
   return stations;
 }

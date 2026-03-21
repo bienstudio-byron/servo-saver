@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     google: "65gTOEq9cJSkP5I9-dFIjWW0bzfw4Nf7YpH5Or5JUMk",
   },
   title: {
-    default: "PetrolSaver — Cheapest Fuel Prices in Victoria & NSW",
+    default: "PetrolSaver — Cheapest Fuel Prices in Australia",
     template: "%s | PetrolSaver",
   },
   description:
@@ -63,15 +63,15 @@ export const metadata: Metadata = {
     locale: "en_AU",
     url: "https://petrolsaver.live",
     siteName: "PetrolSaver",
-    title: "PetrolSaver — Cheapest Fuel Prices in Victoria & NSW",
+    title: "PetrolSaver — Cheapest Fuel Prices in Australia",
     description:
       "Compare fuel prices across 4,000+ stations in Victoria and New South Wales, Australia. Find the cheapest petrol, diesel, and LPG near you on an interactive map.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PetrolSaver — Cheapest Fuel Prices in Victoria & NSW",
+    title: "PetrolSaver — Cheapest Fuel Prices in Australia",
     description:
-      "Compare fuel prices across 4,000+ stations in Victoria & NSW. Find cheap petrol near you.",
+      "Compare fuel prices across 6,000+ stations in VIC, NSW, TAS &amp; WA. Find cheap petrol near you.",
   },
   robots: {
     index: true,
