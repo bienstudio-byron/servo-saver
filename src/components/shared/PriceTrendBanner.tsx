@@ -164,7 +164,7 @@ export default function PriceTrendBanner() {
                   </div>
                 </div>
                 <p className="text-[9px] text-[var(--muted)]">
-                  Based on {selectedFuelType} average across all stations. Updates daily.
+                  {selectedFuelType} national average across {trend.dailyAvgs.length > 0 ? "4,000+" : "all"} stations in VIC, NSW, TAS &amp; WA. Not specific to your suburb.
                   {" "}<a href="/how-it-works#price-trends" className="text-[var(--accent-text)] hover:text-[var(--foreground)] transition-colors">How this works →</a>
                 </p>
               </div>

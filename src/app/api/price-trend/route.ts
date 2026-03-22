@@ -95,19 +95,19 @@ export async function GET(req: NextRequest) {
 
     if (direction === "rising") {
       urgency = "fill-now";
-      message = `Prices rising — fill soon. Up ${Math.abs(changeFromYesterday).toFixed(1)}c since yesterday, ${Math.abs(changeFromWeekAgo).toFixed(1)}c this week.`;
+      message = `National avg rising — fill soon. Up ${Math.abs(changeFromYesterday).toFixed(1)}c since yesterday, +${Math.abs(changeFromWeekAgo).toFixed(1)}c this week.`;
     } else if (direction === "falling") {
       urgency = "wait";
-      message = `Prices dropping — wait if you can. Down ${Math.abs(changeFromYesterday).toFixed(1)}c since yesterday.`;
+      message = `National avg dropping — wait if you can. Down ${Math.abs(changeFromYesterday).toFixed(1)}c since yesterday.`;
     } else if (diffFromAvg < -3) {
       urgency = "fill-now";
-      message = `Prices below average — good time to fill. ${Math.abs(diffFromAvg).toFixed(1)}c below the weekly average.`;
+      message = `National avg below normal — good time to fill. ${Math.abs(diffFromAvg).toFixed(1)}c below the weekly average.`;
     } else if (diffFromAvg > 3) {
       urgency = "wait";
-      message = `Prices above average — wait if you can. ${diffFromAvg.toFixed(1)}c above the weekly average.`;
+      message = `National avg above normal — wait if you can. ${diffFromAvg.toFixed(1)}c above the weekly average.`;
     } else {
       urgency = "neutral";
-      message = "Prices are steady. No strong trend right now.";
+      message = "National avg is steady. No strong trend right now.";
     }
 
     const result = {
