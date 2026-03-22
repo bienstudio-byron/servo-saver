@@ -165,6 +165,7 @@ export default function PriceTrendBanner() {
                 </div>
                 <p className="text-[9px] text-[var(--muted)]">
                   Based on {selectedFuelType} average across all stations. Updates daily.
+                  {" "}<a href="/how-it-works#price-trends" className="text-[var(--accent-text)] hover:text-[var(--foreground)] transition-colors">How this works →</a>
                 </p>
               </div>
             </motion.div>

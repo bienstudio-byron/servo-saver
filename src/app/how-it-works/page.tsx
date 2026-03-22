@@ -391,8 +391,96 @@ export default function HowItWorksPage() {
             </div>
             <p className="text-[var(--muted)] text-xs mt-4">
               Tank size and fuel consumption come from your vehicle profile (set via the Car chip).
-              If you skip vehicle setup, defaults are 55L tank and 8.5L/100km.
+              If you haven&apos;t set your vehicle, we default to a Toyota Corolla Hatch (50L tank, 6.8L/100km).
               Road distance is estimated at 1.35× straight-line distance — actual routes may differ.
+            </p>
+          </div>
+        </section>
+
+        {/* Price Trends */}
+        <section className="mb-10" id="price-trends">
+          <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">9</span>
+            Price trends — &ldquo;Fill now&rdquo; vs &ldquo;Wait&rdquo;
+          </h2>
+          <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-4 text-sm text-[var(--muted)] leading-relaxed">
+            <p>
+              At the top of your station list, you&apos;ll sometimes see a banner telling you whether to
+              <strong className="text-[var(--foreground)]"> fill now</strong> or
+              <strong className="text-[var(--foreground)]"> wait</strong>. Here&apos;s how we work that out.
+            </p>
+
+            <div className="text-[var(--foreground)] font-semibold">What we measure</div>
+            <p className="text-xs">
+              Every day, we snapshot the price at every station in our database. We then compute the
+              daily average across all stations for your selected fuel type. With 7+ days of data,
+              we can detect whether prices are trending up, down, or sideways.
+            </p>
+
+            <div className="space-y-3 mt-3">
+              <div className="flex gap-3">
+                <div className="h-8 w-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                  <span className="text-red-400 text-sm font-bold">&uarr;</span>
+                </div>
+                <div>
+                  <div className="text-[var(--foreground)] font-semibold mb-0.5">Fill now (prices rising)</div>
+                  <p className="text-[var(--muted)] text-xs">
+                    The last 3 days show an upward trend of more than 1c/L. Today&apos;s average is higher than
+                    yesterday&apos;s. Prices are likely to keep climbing — fill up sooner to avoid paying more.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <span className="text-emerald-400 text-sm font-bold">&darr;</span>
+                </div>
+                <div>
+                  <div className="text-[var(--foreground)] font-semibold mb-0.5">Wait (prices falling)</div>
+                  <p className="text-[var(--muted)] text-xs">
+                    The last 3 days show a downward trend of more than 1c/L. If you can wait a day or two,
+                    you&apos;ll likely pay less. Australian fuel prices often follow weekly cycles — they spike
+                    early in the week and bottom out mid-week.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="h-8 w-8 rounded-lg bg-[var(--subtle)] flex items-center justify-center shrink-0">
+                  <span className="text-[var(--muted)] text-sm font-bold">&minus;</span>
+                </div>
+                <div>
+                  <div className="text-[var(--foreground)] font-semibold mb-0.5">No rush (stable)</div>
+                  <p className="text-[var(--muted)] text-xs">
+                    Prices are within 1c of the weekly average. No strong trend either way — fill when convenient.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-[var(--background)] p-4 font-mono text-xs space-y-2">
+              <div className="text-[var(--muted)]">// How we detect the trend</div>
+              <div><span className="text-[#4285f4]">daily_avg</span> = average price across all stations for fuel type</div>
+              <div><span className="text-[#4285f4]">direction</span> = compare last 3 days (rising if +1c, falling if -1c)</div>
+              <div><span className="text-[#4285f4]">vs_yesterday</span> = today&apos;s avg - yesterday&apos;s avg</div>
+              <div><span className="text-[#4285f4]">vs_week_avg</span> = today&apos;s avg - 7-day average</div>
+              <div className="text-[var(--muted)] mt-2">// Urgency</div>
+              <div>if rising OR today &lt; week_avg - 3c → <span className="text-red-400 font-bold">fill now</span></div>
+              <div>if falling OR today &gt; week_avg + 3c → <span className="text-emerald-400 font-bold">wait</span></div>
+              <div>else → <span className="text-[var(--muted)]">no rush</span></div>
+            </div>
+
+            <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 p-3">
+              <p className="text-xs text-[var(--foreground)]">
+                <strong>Important:</strong> This is based on historical averages, not a crystal ball.
+                External events (oil price changes, public holidays, supply disruptions) can override
+                normal patterns. Use it as a guide, not a guarantee.
+              </p>
+            </div>
+
+            <p className="text-xs">
+              Tap the trend banner to expand it and see the daily breakdown — today&apos;s price,
+              yesterday&apos;s, the 7-day average, and a sparkline showing the trend visually.
             </p>
           </div>
         </section>
@@ -400,7 +488,7 @@ export default function HowItWorksPage() {
         {/* No Affiliation */}
         <section className="mb-10">
           <h2 className="text-xl font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
-            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">9</span>
+            <span className="h-7 w-7 rounded-lg bg-[#4285f4]/15 flex items-center justify-center text-sm">10</span>
             Independence
           </h2>
           <div className="rounded-xl border border-[var(--subtle-border)] bg-[var(--card)] p-5 space-y-3 text-sm text-[var(--muted)] leading-relaxed">
