@@ -65,6 +65,7 @@ function Tip({ text }: { text: string }) {
 }
 
 import TripSummaryCard from "./TripSummaryCard";
+import PriceTrendBanner from "@/components/shared/PriceTrendBanner";
 function DesktopHeader({ locationName, searchOrigin }: { locationName: string | null; searchOrigin: { lat: number; lng: number } | null }) {
   const tripMode = useFuelStore((s) => s.tripMode);
   const tripDestination = useFuelStore((s) => s.tripDestination);
@@ -1215,6 +1216,9 @@ export default function FillStrategy({ stations, selectedFuelType, loading, onRe
 
       {/* Header — desktop only */}
       <DesktopHeader locationName={locationName} searchOrigin={searchOrigin} />
+
+      {/* Price trend banner */}
+      <PriceTrendBanner />
 
       {/* Handle bar — tap to expand/collapse (hidden when card is showing on mobile) */}
       {selectedOpt === null && (
